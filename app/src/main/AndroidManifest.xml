@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.limelight">
+    package="in.oneplay">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -95,7 +95,7 @@
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.PcView" />
+                android:value="in.oneplay.PcView" />
         </activity>
         <activity
             android:name=".AppView"
@@ -103,7 +103,7 @@
             android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.PcView" />
+                android:value="in.oneplay.PcView" />
         </activity>
         <activity
             android:name=".preferences.StreamSettings"
@@ -112,7 +112,7 @@
             android:label="Streaming Settings">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.PcView" />
+                android:value="in.oneplay.PcView" />
         </activity>
         <activity
             android:name=".preferences.AddComputerManually"
@@ -122,7 +122,7 @@
             android:label="Add Computer Manually">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.PcView" />
+                android:value="in.oneplay.PcView" />
         </activity>
         <!-- This will fall back to sensorLandscape at runtime on Android 4.2 and below -->
         <activity
@@ -138,7 +138,7 @@
             android:preferMinimalPostProcessing="true">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.AppView" />
+                android:value="in.oneplay.AppView" />
 
             <!-- Special metadata for NVIDIA Shield devices to prevent input buffering
                  and most importantly, opt out of mouse acceleration while streaming -->
@@ -166,7 +166,7 @@
             android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.limelight.PcView" />
+                android:value="in.oneplay.PcView" />
         </activity>
     </application>
 

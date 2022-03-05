@@ -30,7 +30,7 @@ android {
                 }
             }
 
-            applicationId "com.limelight.root"
+            applicationId "in.oneplay.root"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "true"
         }
@@ -42,7 +42,7 @@ android {
                 }
             }
 
-            applicationId "com.limelight"
+            applicationId "in.oneplay"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
