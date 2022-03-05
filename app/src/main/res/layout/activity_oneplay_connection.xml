@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".OneplayConnection">
+
+    <LinearLayout
+        android:id="@+id/action_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:translationY="-16dp"
+        tools:ignore="UselessParent"
+        tools:targetApi="lollipop">
+
+        <ImageView
+            android:id="@+id/action_button_logo"
+            android:layout_width="116dp"
+            android:layout_height="116dp"
+            android:contentDescription="Home page button"
+            android:padding="16dp"
+            android:src="@mipmap/ic_launcher"
+            tools:ignore="HardcodedText" />
+
+        <ProgressBar
+            android:id="@+id/action_button_progress"
+            android:padding="16dp"
+            android:layout_width="116dp"
+            android:layout_height="116dp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/action_button_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Click to go to the home page"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+</RelativeLayout>

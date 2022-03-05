@@ -52,6 +52,7 @@ import in.oneplay.nvstream.http.PairingManager.PairState;
 
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -207,6 +208,12 @@ public class NvHTTP {
         }
 
         this.pm = new PairingManager(this, cryptoProvider);
+    }
+
+    public void addInterceptor(Interceptor interceptor) {
+        this.httpClient = this.httpClient.newBuilder()
+                .addInterceptor(interceptor)
+                .build();
     }
 
     static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
