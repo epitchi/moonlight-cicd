@@ -91,7 +91,7 @@
     <string name="summary_checkbox_xb1_driver">Вмикає вбудований USB драйвер для пристроїв без власної підтримки контролерів Xbox</string>
     <string name="category_ui_settings">Налаштування інтерфейсу</string>
     <string name="title_language_list">Мова</string>
-    <string name="summary_language_list">Мова, яка буде використовуватися в Moonlight</string>
+    <string name="summary_language_list">Мова, яка буде використовуватися в Oneplay</string>
     <string name="title_checkbox_small_icon_mode">Використовувати маленькі іконки</string>
     <string name="summary_checkbox_small_icon_mode">Використовувати маленькі іконки в сітці додатків, для відображення більшої кількості елементів на екрані</string>
     <string name="category_host_settings">Налаштування хоста</string>
@@ -115,7 +115,7 @@
     <string name="help">Допомога</string>
     <string name="applist_connect_msg">Підключення до пристрою…</string>
     <string name="title_decoding_error">Збій відео розцифрувача</string>
-    <string name="message_decoding_error">Стався збій Moonlight через несумітність з відео розцифрувачем даного пристрою. Спробуйте змінити налаштування трансляції якщо збої продовжуватимуться.</string>
+    <string name="message_decoding_error">Стався збій Oneplay через несумітність з відео розцифрувачем даного пристрою. Спробуйте змінити налаштування трансляції якщо збої продовжуватимуться.</string>
     <string name="title_decoding_reset">Налаштування відео скинуті</string>
     <string name="message_decoding_reset">Відео розцифрувач вашого пристрою продовжує давати збої з поточними налаштуваннями трансляції. Налаштування трансляції були скинуті до значень за замовчуванням.</string>
     <string name="error_usb_prohibited">USB доступ заборонений адміністратором пристрою. Перевірте налаштування Knox або MDM.</string>
@@ -123,7 +123,7 @@
     <string name="title_checkbox_enable_pip">Увімкнути режим перегляду \"Картинка в картинці\"</string>
     <string name="summary_checkbox_enable_pip">Дозволяє переглядати трансляцію (але не керувати нею) під час роботи в інших додатках</string>
     <string name="title_checkbox_usb_bind_all">Вимкнути рідну підтримку Xbox контролерів від Андроїда</string>
-    <string name="summary_checkbox_usb_bind_all">Використовувати USB драйвер Moonlight для усіх підтриманих контролерів, навіть якщо існує рідна підтримка</string>
+    <string name="summary_checkbox_usb_bind_all">Використовувати USB драйвер Oneplay для усіх підтриманих контролерів, навіть якщо існує рідна підтримка</string>
     <string name="title_checkbox_mouse_emulation">Емуляція миші через контролер</string>
     <string name="summary_checkbox_mouse_emulation">Довге натиснення ґудзика Start, перемкне контролер в режим миші</string>
     <string name="title_reset_osc">Скинути власне розташування ґудзиків на екрані</string>
@@ -181,9 +181,9 @@
 \nВпевніться що у вас не відкриті додатки з DRM змістом на пристрої хоста. Ви також можете спробувати перезапустити його.
 \n
 \nЯкщо проблема не виправиться, спробуйте перевстановити драйвера для вашої відео карти та, GeForce Experience якщо встановлено.</string>
-    <string name="nettest_text_success">Схоже що ваша мережа не блокує Moonlight. Якщо у вас й надалі проблеми з підключенням, перевірте налаштування брандмауера.
+    <string name="nettest_text_success">Схоже що ваша мережа не блокує Oneplay. Якщо у вас й надалі проблеми з підключенням, перевірте налаштування брандмауера.
 \n
-\nЯкщо ви намагаєтеся транслювати через Інтернет, встановіть на своєму пристрої Moonlight Internet Hosting Tool, та запустіть випробування мережі щоб перевірити ваше з\'єднання до Інтернету.</string>
+\nЯкщо ви намагаєтеся транслювати через Інтернет, встановіть на своєму пристрої Oneplay Internet Hosting Tool, та запустіть випробування мережі щоб перевірити ваше з\'єднання до Інтернету.</string>
     <string name="resolution_prefix_native_fullscreen">Рідний повноекранний</string>
     <string name="resolution_prefix_native">Рідна</string>
     <string name="suffix_seekbar_bitrate_mbps">Мб/с</string>
@@ -202,14 +202,14 @@
     <string name="no_frame_received_error">Здається, ваше мережеве з\'єднання човпає. Спробуйте зменшити швидкість потоку (бітрейт) чи переключіть пристрій на швидшу мережу.</string>
     <string name="no_video_received_error">Не отримано відео від хоста.</string>
     <string name="video_decoder_init_failed">Не вдалося запустити відео розцифрувач. Ваш пристрій може не підтримувати розмір екрану чи частоту кадрів.</string>
-    <string name="nettest_text_blocked">Поточне мережеве з’єднання вашого пристрою блокує Moonlight. Трансляції через Інтернет можуть не працювати на цієї мережі.</string>
-    <string name="nettest_text_failure">Поточне мережеве з’єднання вашого пристрою блокує Moonlight. Трансляції через Інтернет можуть не працювати на цієї мережі.
+    <string name="nettest_text_blocked">Поточне мережеве з’єднання вашого пристрою блокує Oneplay. Трансляції через Інтернет можуть не працювати на цієї мережі.</string>
+    <string name="nettest_text_failure">Поточне мережеве з’єднання вашого пристрою блокує Oneplay. Трансляції через Інтернет можуть не працювати на цієї мережі.
 \n
 \nНаступні мережеві порти були заблоковані:
 \n</string>
-    <string name="nettest_text_inconclusive">Не вдалося перевірити мережу, тому що усі мережо-перевірочні сервери Moonlight недосяжні. Перевірте ваше з\'єднання з інтернетом та спробуйте знову.</string>
+    <string name="nettest_text_inconclusive">Не вдалося перевірити мережу, тому що усі мережо-перевірочні сервери Oneplay недосяжні. Перевірте ваше з\'єднання з інтернетом та спробуйте знову.</string>
     <string name="nettest_title_done">Перевірка мережі завершена</string>
-    <string name="nettest_text_waiting">Moonlight перевіряє мережеве з\'єднання щоб визначити чи заблокований NVIDIA GameStream.
+    <string name="nettest_text_waiting">Oneplay перевіряє мережеве з\'єднання щоб визначити чи заблокований NVIDIA GameStream.
 \n
 \nЦе займе кілька секунд…</string>
     <string name="nettest_title_waiting">Перевіряємо з\'єднання</string>

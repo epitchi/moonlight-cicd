@@ -3,7 +3,7 @@
     <string name="summary_reset_osc">Bütün ekran kontrollerini varsayılan boyutu ve pozisyonuna sıfırlar</string>
     <string name="title_checkbox_touchscreen_trackpad">Dokunmatik ekranı trackpad olarak kullan</string>
     <string name="category_input_settings">Girdi Ayarları</string>
-    <string name="summary_language_list">Moonlight için kullanılacak olan dil</string>
+    <string name="summary_language_list">Oneplay için kullanılacak olan dil</string>
     <string name="ip_hint">GeForce PC\'nin IP adresi</string>
     <string name="title_details">Detaylar</string>
     <string name="dialog_title_osc_opacity">Opaklığı değiştir</string>

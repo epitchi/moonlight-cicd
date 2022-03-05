@@ -22,7 +22,7 @@
     <string name="category_host_settings">Gazdabeállítások</string>
     <string name="summary_checkbox_small_icon_mode">Az alkalmazásrács kisebbik rajza lehetővé teszi, hogy több alkalmazás is látható legyen a képernyőn</string>
     <string name="title_checkbox_small_icon_mode">Használjon kis dobozos rajzokat</string>
-    <string name="summary_language_list">A Moonlight-hoz használt nyelv</string>
+    <string name="summary_language_list">A Oneplay-hoz használt nyelv</string>
     <string name="title_language_list">Nyelv</string>
     <string name="summary_checkbox_enable_pip">Lehetővé teszi az adatfolyam megtekintését (de nem vezérlését) multitasking közben</string>
     <string name="title_checkbox_enable_pip">Engedélyezze a Kép a képben megfigyelő módot</string>
@@ -49,7 +49,7 @@
     <string name="title_checkbox_mouse_nav_buttons">Engedélyezze az előre és hátra gombokat</string>
     <string name="summary_checkbox_mouse_emulation">A Start gomb hosszan tartó megnyomásával egér üzemmódba kapcsol a játéktábla</string>
     <string name="title_checkbox_mouse_emulation">Egér emuláció a játékvezérlőn keresztül</string>
-    <string name="summary_checkbox_usb_bind_all">Használja a Moonlight USB-illesztőprogramját az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox vezérlő támogatás van jelen</string>
+    <string name="summary_checkbox_usb_bind_all">Használja a Oneplay USB-illesztőprogramját az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox vezérlő támogatás van jelen</string>
     <string name="title_checkbox_usb_bind_all">Az natív Xbox játéktámogatás felülbírálása</string>
     <string name="summary_checkbox_xb1_driver">Beépített USB-illesztőprogramot engedélyez natív Xbox vezérlő támogatás nélküli eszközökhöz</string>
     <string name="title_checkbox_xb1_driver">Xbox 360 / One USB játékvezérlő</string>
@@ -149,7 +149,7 @@
     <string name="error_usb_prohibited">Az USB-hozzáférést az eszköz rendszergazdája tiltja. Ellenőrizze a Knox vagy az MDM beállításait.</string>
     <string name="message_decoding_reset">Az eszköz videodekóderje továbbra is összeomlik a kiválasztott adatfolyam-beállításoknál. A streaming beállításait visszaállította az alapértelmezettre.</string>
     <string name="title_decoding_reset">Videó Beállítások Alapra</string>
-    <string name="message_decoding_error">A Moonlight összeomlott, mert inkompatibilis volt az eszköz videó dekóderével. Győződjön meg arról, hogy a GeForce Experience frissítve van a számítógép legújabb verziójára. Próbálja meg módosítani a streaming beállításokat, ha az összeomlások továbbra is fennállnak.</string>
+    <string name="message_decoding_error">A Oneplay összeomlott, mert inkompatibilis volt az eszköz videó dekóderével. Győződjön meg arról, hogy a GeForce Experience frissítve van a számítógép legújabb verziójára. Próbálja meg módosítani a streaming beállításokat, ha az összeomlások továbbra is fennállnak.</string>
     <string name="title_decoding_error">A videó dekóder összeomlott</string>
     <string name="error_404">A GFE HTTP 404 hibát adott vissza. Győződjön meg arról, hogy a számítógépen támogatott GPU fut. A távoli asztali szoftver használata szintén ezt a hibát okozhatja. Próbálja újraindítani a gépet, vagy telepítse újra a GFE-t.</string>
     <string name="conn_error_title">Csatlakozási hiba</string>
@@ -175,17 +175,17 @@
     <string name="pair_pairing_msg">Kérjük, adja meg a következő PIN-kódot a cél PC-n:</string>
     <string name="pair_pc_ingame">A számítógép jelenleg játékban van. A párosítás előtt be kell zárni a játékot.</string>
     <string name="pair_pc_offline">A számítógép nem elérhető</string>
-    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.</string>
-    <string name="nettest_text_failure">Úgy tűnik, hogy eszközének jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.
+    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Oneplay-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.</string>
+    <string name="nettest_text_failure">Úgy tűnik, hogy eszközének jelenlegi hálózati kapcsolata blokkolja a Oneplay-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.
 \n
 \nA következő hálózati portokat blokkolták:
 \n</string>
-    <string name="nettest_text_inconclusive">A hálózati tesztet nem sikerült elvégezni, mert a Moonlight egyik kapcsolat tesztelő szervere sem volt elérhető. Ellenőrizze az internetkapcsolatot, vagy próbálkozzon újra később.</string>
-    <string name="nettest_text_success">Úgy tűnik, hogy a hálózata nem blokkolja a Moonlight-ot. Ha továbbra is problémái vannak a csatlakozással, ellenőrizze a számítógép tűzfalának beállításait.
+    <string name="nettest_text_inconclusive">A hálózati tesztet nem sikerült elvégezni, mert a Oneplay egyik kapcsolat tesztelő szervere sem volt elérhető. Ellenőrizze az internetkapcsolatot, vagy próbálkozzon újra később.</string>
+    <string name="nettest_text_success">Úgy tűnik, hogy a hálózata nem blokkolja a Oneplay-ot. Ha továbbra is problémái vannak a csatlakozással, ellenőrizze a számítógép tűzfalának beállításait.
 \n
-\nHa az interneten keresztül kíván közvetíteni, telepítse a Moonlight Internet Hosting Tool alkalmazást a számítógépére, és futtassa a mellékelt Internet Streaming Tester szoftvert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
+\nHa az interneten keresztül kíván közvetíteni, telepítse a Oneplay Internet Hosting Tool alkalmazást a számítógépére, és futtassa a mellékelt Internet Streaming Tester szoftvert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
     <string name="nettest_title_done">Hálózati kapcsolat teszt kész</string>
-    <string name="nettest_text_waiting">A Moonlight a hálózati kapcsolatot teszteli annak megállapítására, hogy az NVIDIA GameStream blokkolva van-e.
+    <string name="nettest_text_waiting">A Oneplay a hálózati kapcsolatot teszteli annak megállapítására, hogy az NVIDIA GameStream blokkolva van-e.
 \n
 \nEz eltarthat néhány másodpercig …</string>
     <string name="pcview_menu_test_network">Hálózati kapcsolat teszt</string>
