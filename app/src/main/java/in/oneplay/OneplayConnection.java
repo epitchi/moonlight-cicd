@@ -21,6 +21,7 @@ import in.oneplay.computers.ComputerDatabaseManager;
 import in.oneplay.computers.ComputerManagerService;
 import in.oneplay.grid.assets.DiskAssetLoader;
 import in.oneplay.nvstream.http.ComputerDetails;
+import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
@@ -321,7 +322,7 @@ public class OneplayConnection extends Activity {
         final boolean toastSuccess = success;
 
         if (toastSuccess) {
-            doAppList(computer, true, false);
+            ServerHelper.doStart(this, new NvApp("app", client.getGameId(), false), computer, managerBinder);
         } else {
             showErrorToast(toastMessage);
         }
