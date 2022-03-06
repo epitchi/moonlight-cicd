@@ -60,6 +60,8 @@ public class OneplayApi {
     private final String basePinRequestUrl;
     private String sessionKey;
     private String hostAddress;
+    private ClientConfig clientConfig;
+    private int gameId;
 
     public OneplayApi(Uri uri) throws IOException {
         try {
@@ -121,6 +123,14 @@ public class OneplayApi {
         return hostAddress;
     }
 
+    public ClientConfig getClientConfig() {
+        return clientConfig;
+    }
+
+    public int getGameId() {
+        return gameId;
+    }
+
     private String getOnePlayKey(Uri uri) throws IOException {
         try {
             if (verbose) {
@@ -158,18 +168,59 @@ public class OneplayApi {
 
         String serverAddress = "";
         String hostSessionKey = "";
+        ClientConfig clientConfig = null;
+        int gameId = -1;
         try {
             JSONObject serverData = new JSONObject(serverInfo).getJSONObject("data");
-            serverAddress = serverData
-                    .getJSONObject("server_details")
-                    .getString("server_ip");
+            serverAddress = serverData.getJSONObject("server_details").getString("server_ip");
             hostSessionKey = serverData.getString("host_session_key");
+            clientConfig = getClientConfig(serverData);
+            gameId = serverData.getJSONObject("game_details").getInt("id");
         } catch (JSONException e) {
             LimeLog.warning(e.getMessage());
         }
 
         this.hostAddress = serverAddress;
         this.sessionKey = hostSessionKey;
+        this.clientConfig = clientConfig;
+        this.gameId = gameId;
+    }
+
+    private ClientConfig getClientConfig(JSONObject data) throws JSONException {
+        JSONObject otherDetailsData = data.getJSONObject("other_details");
+        JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
+
+        ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails(
+                Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode", false),
+                Utils.getBoolean(advanceDetailsData, "absolute_touch_mode", true),
+                Utils.getBoolean(advanceDetailsData, "background_gamepad", false),
+                Utils.getBoolean(advanceDetailsData, "frame_pacing", false),
+                Utils.getBoolean(advanceDetailsData, "game_optimizations", true),
+                Utils.getBoolean(advanceDetailsData, "multi_color", true),
+                Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss", false),
+                Utils.getInt(advanceDetailsData, "packet_size", 0),
+                Utils.getBoolean(advanceDetailsData, "play_audio_on_host", false),
+                Utils.getBoolean(advanceDetailsData, "quit_app_after", true),
+                Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction", false),
+                Utils.getBoolean(advanceDetailsData, "swap_face_buttons", false),
+                Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons", false)
+        );
+
+        return new ClientConfig(
+                Utils.getString(advanceDetailsData, "audio_type", "stereo"),
+                Utils.getLong(advanceDetailsData, "bitrate_kbps", 40000),
+                Utils.getBoolean(advanceDetailsData, "capture_sys_keys", false),
+                Utils.getInt(advanceDetailsData, "game_fps", 60),
+                Utils.getBoolean(advanceDetailsData, "is_vsync_enabled", false),
+                Utils.getLong(advanceDetailsData, "max_bitrate_kbps", 40000),
+                Utils.getInt(advanceDetailsData, "max_fps", 60),
+                Utils.getString(advanceDetailsData, "max_resolution", "3840x2160"),
+                Utils.getString(advanceDetailsData, "resolution", "1280x720"),
+                Utils.getString(advanceDetailsData, "stream_codec", "auto"),
+                Utils.getString(advanceDetailsData, "video_decoder_selection", "auto"),
+                Utils.getString(advanceDetailsData, "window_mode", "fullscreen"),
+                advanceDetails
+        );
     }
 
     private boolean unpairAll() throws IOException {
