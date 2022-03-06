@@ -27,7 +27,6 @@ import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
 import in.oneplay.utils.Dialog;
 import in.oneplay.utils.ServerHelper;
-import in.oneplay.utils.SpinnerDialog;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -204,9 +203,6 @@ public class OneplayConnection extends Activity {
         boolean success;
         int portTestResult;
 
-        SpinnerDialog dialog = SpinnerDialog.displayDialog(this, "Please wait",
-                getResources().getString(R.string.msg_add_pc), false);
-
         ComputerDetails details = new ComputerDetails();
         try {
             details.manualAddress = host;
@@ -228,8 +224,6 @@ public class OneplayConnection extends Activity {
             // Don't bother with the test if we succeeded or the IP address was bogus
             portTestResult = MoonBridge.ML_TEST_RESULT_INCONCLUSIVE;
         }
-
-        dialog.dismiss();
 
         if (wrongSiteLocal) {
             Dialog.displayDialog(this, getResources().getString(R.string.conn_error_title), getResources().getString(R.string.addpc_wrong_sitelocal), false);
