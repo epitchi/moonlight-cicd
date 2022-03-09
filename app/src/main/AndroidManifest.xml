@@ -172,7 +172,11 @@
 
         <activity
             android:name=".OneplayConnection"
-            android:exported="true" >
+            android:exported="true"
+            android:noHistory="true"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
