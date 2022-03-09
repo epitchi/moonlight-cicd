@@ -32,12 +32,14 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -67,6 +69,7 @@ public class OneplayConnection extends Activity {
                     // Force a keypair to be generated early to avoid discovery delays
                     new AndroidCryptoProvider(OneplayConnection.this).getClientCertificate();
 
+                    // If the app not closed correctly close all apps and remove all exiting computers
                     removeAllComputers();
 
                     connectToComputer();
@@ -75,7 +78,6 @@ public class OneplayConnection extends Activity {
         }
 
         public void onServiceDisconnected(ComponentName className) {
-            removeAllComputers();
             managerBinder = null;
         }
     };
@@ -84,6 +86,7 @@ public class OneplayConnection extends Activity {
     public void onDestroy() {
         super.onDestroy();
         if (managerBinder != null) {
+            removeAllComputers();
             unbindService(serviceConnection);
         }
     }
@@ -137,11 +140,28 @@ public class OneplayConnection extends Activity {
         }).start();
     }
 
+    private void closeApps(ComputerDetails computer) {
+        String rawAppList = computer.rawAppList;
+
+        if (rawAppList == null) {
+            return;
+        }
+
+        try {
+            List<NvApp> apps = NvHTTP.getAppListByReader(new StringReader(rawAppList));
+            for (NvApp app : apps) {
+                ServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
+            }
+        } catch (XmlPullParserException | IOException ignored) { }
+    }
+
     private void removeAllComputers() {
         // Remove all previously saved computers
         ComputerDatabaseManager dbManager = new ComputerDatabaseManager(OneplayConnection.this);
         DiskAssetLoader diskAssetLoader = new DiskAssetLoader(OneplayConnection.this);
         for (ComputerDetails computer : dbManager.getAllComputers()) {
+            closeApps(computer);
+
             managerBinder.removeComputer(computer);
 
             diskAssetLoader.deleteAssetsForComputer(computer.uuid);
