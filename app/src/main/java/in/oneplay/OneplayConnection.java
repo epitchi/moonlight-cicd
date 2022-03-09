@@ -1,17 +1,22 @@
 package in.oneplay;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
-import android.widget.ImageView;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.binding.PlatformBinding;
@@ -43,9 +48,8 @@ import javax.annotation.Nullable;
 
 public class OneplayConnection extends Activity {
 
-    private View actionButton;
-    private ImageView logo;
-    private TextView title;
+    private WebView webView;
+    private Button button;
     private ProgressBar progress;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
@@ -89,41 +93,52 @@ public class OneplayConnection extends Activity {
         }
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_oneplay_connection);
 
-        actionButton = findViewById(R.id.action_button);
-        logo = findViewById(R.id.action_button_logo);
-        title = findViewById(R.id.action_button_title);
-        progress = findViewById(R.id.action_button_progress);
+        webView = findViewById(R.id.webview);
+        button = findViewById(R.id.button);
+        progress = findViewById(R.id.progress);
+
+        button.setVisibility(View.GONE);
+        button.setOnClickListener(null);
 
         Intent intent = getIntent();
 
         if (Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) {
-            logo.setVisibility(View.GONE);
-            title.setVisibility(View.GONE);
+            webView.setVisibility(View.GONE);
             progress.setVisibility(View.VISIBLE);
-            actionButton.setOnClickListener(null);
 
             // Bind to the ComputerManager service
             bindService(new Intent(OneplayConnection.this,
                     ComputerManagerService.class), serviceConnection, Service.BIND_AUTO_CREATE);
         } else {
-            logo.setVisibility(View.VISIBLE);
-            title.setVisibility(View.VISIBLE);
-            title.setText("Click to go to the home page"); //TODO move to resource
-            progress.setVisibility(View.GONE);
-            actionButton.setOnClickListener(view -> {
-                Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.oneplay.in/login/")); //TODO move to resource
-                startActivity(webIntent);
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.setWebViewClient(new WebViewClient() {
+                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    view.loadUrl(request.getUrl().toString());
+                    return true;
+                }
+
+                // For old devices
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    view.loadUrl(url);
+                    return true;
+                }
             });
+            webView.setVisibility(View.VISIBLE);
+            webView.loadUrl("https://www.oneplay.in/dashboard"); //TODO move to resource
+            progress.setVisibility(View.GONE);
         }
     }
 
     private void connectToComputer() {
-        runOnUiThread(() -> progress.setVisibility(View.VISIBLE));
         new Thread(() -> {
             Uri uri = getIntent().getData();
             try {
@@ -345,14 +360,17 @@ public class OneplayConnection extends Activity {
 
         runOnUiThread(() -> {
             progress.setVisibility(View.GONE);
+            button.setVisibility(View.VISIBLE);
+        });
 
-            title.setVisibility(View.VISIBLE);
-            title.setText("Try again"); //TODO move to resource
-            actionButton.setOnClickListener(view -> {
-                title.setVisibility(View.GONE);
-                connectToComputer();
-                actionButton.setOnClickListener(null);
+        button.setOnClickListener(view -> {
+            runOnUiThread(() -> {
+                progress.setVisibility(View.VISIBLE);
+                button.setVisibility(View.GONE);
+                button.setOnClickListener(null);
             });
+
+            connectToComputer();
         });
     }
 }

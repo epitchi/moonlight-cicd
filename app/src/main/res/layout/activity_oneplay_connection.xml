@@ -5,42 +5,27 @@
     android:layout_height="match_parent"
     tools:context=".OneplayConnection">
 
-    <LinearLayout
-        android:id="@+id/action_button"
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible" />
+
+    <ProgressBar
+        android:id="@+id/progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:gravity="center"
-        android:orientation="vertical"
         android:padding="16dp"
-        android:translationY="-16dp"
-        tools:ignore="UselessParent"
-        tools:targetApi="lollipop">
+        android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/action_button_logo"
-            android:layout_width="116dp"
-            android:layout_height="116dp"
-            android:contentDescription="Home page button"
-            android:padding="16dp"
-            android:src="@mipmap/ic_launcher"
-            tools:ignore="HardcodedText" />
-
-        <ProgressBar
-            android:id="@+id/action_button_progress"
-            android:padding="16dp"
-            android:layout_width="116dp"
-            android:layout_height="116dp"
-            android:visibility="gone"/>
-
-        <TextView
-            android:id="@+id/action_button_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Click to go to the home page"
-            android:textSize="16sp" />
-    </LinearLayout>
-
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center|center_vertical"
+        android:text="Try again"
+        android:textSize="16sp"
+        android:visibility="gone" />
 </RelativeLayout>
