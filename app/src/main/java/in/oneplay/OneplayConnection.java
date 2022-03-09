@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.binding.PlatformBinding;
@@ -25,7 +24,6 @@ import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
-import in.oneplay.utils.Dialog;
 import in.oneplay.utils.ServerHelper;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -135,7 +133,7 @@ public class OneplayConnection extends Activity {
                     doPair(client, computer);
                 }
             } catch (IOException exception) {
-                showErrorToast("Error create client!"); //TODO move to resource
+                processingError("Error create client!"); //TODO move to resource
             }
         }).start();
     }
@@ -246,7 +244,7 @@ public class OneplayConnection extends Activity {
         }
 
         if (wrongSiteLocal) {
-            Dialog.displayDialog(this, getResources().getString(R.string.conn_error_title), getResources().getString(R.string.addpc_wrong_sitelocal), false);
+            LimeLog.warning(getResources().getString(R.string.conn_error_title) + ": " + getResources().getString(R.string.addpc_wrong_sitelocal));
         } else if (!success) {
             String dialogText;
             if (portTestResult != MoonBridge.ML_TEST_RESULT_INCONCLUSIVE && portTestResult != 0) {
@@ -254,32 +252,33 @@ public class OneplayConnection extends Activity {
             } else {
                 dialogText = getResources().getString(R.string.addpc_fail);
             }
-            Dialog.displayDialog(this, getResources().getString(R.string.conn_error_title), dialogText, false);
+            LimeLog.warning(getResources().getString(R.string.conn_error_title) + ": " + dialogText);
         } else {
-            OneplayConnection.this.runOnUiThread(() -> Toast.makeText(OneplayConnection.this, getResources().getString(R.string.addpc_success), Toast.LENGTH_LONG).show());
             return details;
         }
 
-        showErrorToast(null);
+        processingError(null);
         return null;
     }
 
     private void doPair(final OneplayApi client, final ComputerDetails computer) {
         if (computer.state == ComputerDetails.State.OFFLINE ||
                 ServerHelper.getCurrentAddressFromComputer(computer) == null) {
-            showErrorToast(getResources().getString(R.string.pair_pc_offline));
+            processingError(getResources().getString(R.string.pair_pc_offline));
             return;
         }
         if (computer.runningGameId != 0) {
-            showErrorToast(getResources().getString(R.string.pair_pc_ingame));
+            processingError(getResources().getString(R.string.pair_pc_ingame));
             return;
         }
         if (managerBinder == null) {
-            showErrorToast(getResources().getString(R.string.error_manager_not_running));
+            processingError(getResources().getString(R.string.error_manager_not_running));
             return;
         }
 
-        runOnUiThread(() -> Toast.makeText(OneplayConnection.this, getResources().getString(R.string.pairing), Toast.LENGTH_SHORT).show());
+        if (BuildConfig.DEBUG) {
+            LimeLog.info(getResources().getString(R.string.pairing));
+        }
 
         NvHTTP httpConn;
         String message;
@@ -332,22 +331,19 @@ public class OneplayConnection extends Activity {
                 message = "Empty IOException";
         }
 
-        final String toastMessage = message;
-        final boolean toastSuccess = success;
-
-        if (toastSuccess) {
+        if (success) {
             ServerHelper.doStart(this, new NvApp("app", client.getGameId(), false), computer, managerBinder);
         } else {
-            showErrorToast(toastMessage);
+            processingError(message);
         }
     }
 
-    private void showErrorToast(String message) {
-        runOnUiThread(() -> {
-            if (message != null) {
-                Toast.makeText(OneplayConnection.this, message, Toast.LENGTH_LONG).show();
-            }
+    private void processingError(String message) {
+        if (message != null) {
+            LimeLog.warning(message);
+        }
 
+        runOnUiThread(() -> {
             progress.setVisibility(View.GONE);
 
             title.setVisibility(View.VISIBLE);
@@ -358,24 +354,5 @@ public class OneplayConnection extends Activity {
                 actionButton.setOnClickListener(null);
             });
         });
-    }
-
-    private void doAppList(ComputerDetails computer, boolean newlyPaired, boolean showHiddenGames) {
-        if (computer.state == ComputerDetails.State.OFFLINE) {
-            Toast.makeText(OneplayConnection.this, getResources().getString(R.string.error_pc_offline), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (managerBinder == null) {
-            Toast.makeText(OneplayConnection.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Intent i = new Intent(this, AppView.class);
-        i.putExtra(AppView.NAME_EXTRA, computer.name);
-        i.putExtra(AppView.UUID_EXTRA, computer.uuid);
-        i.putExtra(AppView.NEW_PAIR_EXTRA, newlyPaired);
-        i.putExtra(AppView.SHOW_HIDDEN_APPS_EXTRA, showHiddenGames);
-        startActivity(i);
-        finish();
     }
 }
