@@ -142,11 +142,11 @@ public class OneplayApi {
                 LimeLog.info(uri+" -> "+doc);
             }
 
-            Element script = doc.select("script").first();
+            Element a = doc.select("a").first();
 
-            if (script != null) {
-                Pattern p = Pattern.compile("window.location.href = \"oneplay:key\\?(.+?)\";");
-                Matcher m = p.matcher(script.html());
+            if (a != null) {
+                Pattern p = Pattern.compile("oneplay:key\\?(.+?)$");
+                Matcher m = p.matcher(a.attr("href"));
                 if (m.find()) {
                     return m.group(1);
                 }
