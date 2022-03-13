@@ -30,6 +30,7 @@ import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
+import in.oneplay.preferences.ServerPreferenceConfiguration;
 import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
@@ -239,6 +240,7 @@ public class OneplayConnection extends Activity {
             try {
                 OneplayApi client = OneplayApi.getInstance(this);
                 client.connectTo(uri);
+                ServerPreferenceConfiguration.savePreferences(this, client.getClientConfig());
                 doAddPc(client.getHostAddress());
                 if (computer != null) {
                     doPair(client, computer);
