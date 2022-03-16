@@ -3,5 +3,7 @@
 
     <string name="app_label" translatable="false">Oneplay (Debug)</string>
     <string name="app_label_root" translatable="false">Oneplay (Root Debug)</string>
+    
+    <string name="oneplay_api_get_session_link" translatable="false">https://svrdev.oneplay.in/application_services/client/get_session/</string>
 
 </resources>

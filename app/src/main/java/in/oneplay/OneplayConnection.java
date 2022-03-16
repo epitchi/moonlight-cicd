@@ -142,7 +142,7 @@ public class OneplayConnection extends Activity {
         new Thread(() -> {
             Uri uri = getIntent().getData();
             try {
-                OneplayApi client = new OneplayApi(uri);
+                OneplayApi client = new OneplayApi(this, uri);
                 ComputerDetails computer = doAddPc(client.getHostAddress());
                 if (computer != null) {
                     doPair(client, computer);

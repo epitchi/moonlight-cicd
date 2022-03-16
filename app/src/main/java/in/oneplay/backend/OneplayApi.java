@@ -1,10 +1,12 @@
 package in.oneplay.backend;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
+import in.oneplay.R;
 import in.oneplay.nvstream.http.GfeHttpResponseException;
 
 import org.json.JSONException;
@@ -48,8 +50,6 @@ public class OneplayApi {
     public static final int READ_TIMEOUT = 15000;
 
     private static final String CONNECTION_TYPE = "https";
-    private static final String ONEPLAY_API_DOMAIN = "client-apis.oneplay.in";
-    private static final String ONEPLAY_API_CLIENT_LAYER = "/router/client_layer";
     public static final int ONEPLAY_PIN_REQUEST_PORT = 47990;
 
     // Print URL and content to logcat on debug builds
@@ -63,13 +63,10 @@ public class OneplayApi {
     private ClientConfig clientConfig;
     private int gameId;
 
-    public OneplayApi(Uri uri) throws IOException {
+    public OneplayApi(Context context, Uri uri) throws IOException {
         try {
             this.baseServerInfoUrl = new URI(
-                    CONNECTION_TYPE,
-                    ONEPLAY_API_DOMAIN,
-                    ONEPLAY_API_CLIENT_LAYER,
-                    null
+                    context.getString(R.string.oneplay_api_get_session_link)
             ).toString();
         } catch (URISyntaxException e) {
             throw new IOException(e);
@@ -164,7 +161,7 @@ public class OneplayApi {
 
     private void getServerInfo(String sessionKey) throws IOException {
         String serverInfo = openHttpConnectionPostToString(
-                baseServerInfoUrl + "/session/" + sessionKey);
+                baseServerInfoUrl + sessionKey);
 
         String serverAddress = "";
         String hostSessionKey = "";

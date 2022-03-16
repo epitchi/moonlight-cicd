@@ -3,6 +3,8 @@
     <string name="app_label" translatable="false">Oneplay</string>
     <string name="app_label_root" translatable="false">Oneplay (Root)</string>
 
+    <string name="oneplay_api_get_session_link" translatable="false">https://client-apis.oneplay.in/client/v1/get_session/</string>
+
     <!-- Shortcut strings -->
     <string name="scut_deleted_pc">PC deleted</string>
     <string name="scut_not_paired">PC not paired</string>
