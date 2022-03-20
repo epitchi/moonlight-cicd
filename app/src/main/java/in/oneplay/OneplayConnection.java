@@ -15,7 +15,6 @@ import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -51,11 +50,8 @@ import java.util.List;
 public class OneplayConnection extends Activity {
 
     private static final int ONEPLAY_GAME_REQUEST_CODE = 1;
-    private static final String ONEPLAY_GAME_ERROR_ACTION = "in.oneplay.GAME_ERROR_ACTION";
-    private static final String ONEPLAY_GAME_ERROR_ID = "in.oneplay.GAME_ERROR_ID";
 
     private WebView webView;
-    private Button button;
     private ProgressBar progress;
     private Intent currentIntent;
     private boolean isFirstStart = true;
@@ -106,7 +102,6 @@ public class OneplayConnection extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         webView = findViewById(R.id.webview);
-        button = findViewById(R.id.button);
         progress = findViewById(R.id.progress);
     }
 
@@ -125,8 +120,6 @@ public class OneplayConnection extends Activity {
 
             webView.setVisibility(View.GONE);
             progress.setVisibility(View.VISIBLE);
-            button.setVisibility(View.GONE);
-            button.setOnClickListener(null);
 
             if (managerBinder == null) {
                 // Bind to the ComputerManager service
@@ -135,8 +128,6 @@ public class OneplayConnection extends Activity {
             } else {
                 connectToComputer();
             }
-        } else if (ONEPLAY_GAME_ERROR_ACTION.equals(currentIntent.getAction())) {
-            processingError("Game connection error: " + currentIntent.getIntExtra(ONEPLAY_GAME_ERROR_ID, 0), true);
         } else {
             webView.setWebViewClient(new WebViewClient() {
                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -197,12 +188,9 @@ public class OneplayConnection extends Activity {
 
             webView.setVisibility(View.VISIBLE);
             if (welcomeLink != null) {
-                LimeLog.severe(welcomeLink.toString());
                 webView.loadUrl(welcomeLink.toString());
             }
             progress.setVisibility(View.GONE);
-            button.setVisibility(View.GONE);
-            button.setOnClickListener(null);
         }
     }
 
@@ -219,14 +207,7 @@ public class OneplayConnection extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (ONEPLAY_GAME_REQUEST_CODE == requestCode) {
             if (RESULT_OK != resultCode) {
-                Intent newIntent = new Intent(
-                        ONEPLAY_GAME_ERROR_ACTION,
-                        null,
-                        OneplayConnection.this,
-                        OneplayConnection.class
-                );
-                newIntent.putExtra(ONEPLAY_GAME_ERROR_ID, resultCode);
-                startActivity(newIntent);
+                processingError("Game connection error: " + resultCode, true);
             }
 
             new Thread(() -> {
@@ -487,25 +468,14 @@ public class OneplayConnection extends Activity {
     }
 
     private void processingError(String message, boolean isRemoveComputer) {
+        if (message != null) {
+            LimeLog.severe(message);
+        }
+
         if (isRemoveComputer) {
             removeComputer();
         }
 
-        runOnUiThread(() -> {
-            if (message != null) {
-                LimeLog.severe(message);
-            }
-
-            webView.setVisibility(View.GONE);
-            progress.setVisibility(View.GONE);
-            button.setVisibility(View.VISIBLE);
-            button.setOnClickListener(view -> {
-                webView.setVisibility(View.GONE);
-                progress.setVisibility(View.VISIBLE);
-                button.setVisibility(View.GONE);
-                button.setOnClickListener(null);
-                connectToComputer();
-            });
-        });
+        startActivity(new Intent(Intent.ACTION_MAIN, null, OneplayConnection.this, OneplayConnection.class));
     }
 }
