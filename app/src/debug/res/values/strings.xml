@@ -3,7 +3,9 @@
 
     <string name="app_label" translatable="false">Oneplay (Debug)</string>
     <string name="app_label_root" translatable="false">Oneplay (Root Debug)</string>
-    
+
+    <string name="oneplay_app_welcome_link_path" translatable="false">/launch/play</string>
+    <string name="oneplay_app_welcome_link_query" translatable="false">id=5bfe0e968f8a399e1dfa001b02b66d6755c16bed22f2f4b0d0359309ddd03fec</string>
     <string name="oneplay_api_get_session_link" translatable="false">https://svrdev.oneplay.in/application_services/client/get_session/</string>
 
 </resources>

@@ -11,9 +11,6 @@ import in.oneplay.nvstream.http.GfeHttpResponseException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,13 +18,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -49,41 +43,80 @@ public class OneplayApi {
     public static final int CONNECTION_TIMEOUT = 10000;
     public static final int READ_TIMEOUT = 15000;
 
-    private static final String CONNECTION_TYPE = "https";
+    public static final String SSL_CONNECTION_TYPE = "https";
     public static final int ONEPLAY_PIN_REQUEST_PORT = 47990;
+
+    private static volatile OneplayApi instance;
 
     // Print URL and content to logcat on debug builds
     private static final boolean verbose = BuildConfig.DEBUG;
 
     private final OkHttpClient httpClient;
-    private final String baseServerInfoUrl;
-    private final String basePinRequestUrl;
+    private String baseServerInfoUrl;
+    private String baseQuitUrl;
+    private String basePinRequestUrl;
     private String sessionKey;
     private String hostAddress;
     private ClientConfig clientConfig;
     private int gameId;
 
-    public OneplayApi(Context context, Uri uri) throws IOException {
+    public static OneplayApi getInstance(Context context) {
+        OneplayApi localInstance = instance;
+        if (localInstance == null) {
+            synchronized (OneplayApi.class) {
+                localInstance = instance;
+                if (localInstance == null) {
+                    instance = localInstance = new OneplayApi(context);
+                }
+            }
+        }
+
+        return localInstance;
+    }
+
+    private OneplayApi(Context context) {
         try {
             this.baseServerInfoUrl = new URI(
                     context.getString(R.string.oneplay_api_get_session_link)
             ).toString();
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
+            this.baseQuitUrl = new URI(
+                    SSL_CONNECTION_TYPE,
+                    context.getString(R.string.oneplay_domain),
+                    context.getString(R.string.oneplay_app_quit_link_path),
+                    null
+            ).toString();
+        } catch (URISyntaxException ignored) {}
+
 
         this.httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build();
+    }
 
-        String onePlayKey = getOnePlayKey(uri);
-        getServerInfo(onePlayKey);
+    public String getSessionKey() {
+        return sessionKey;
+    }
+
+    public String getHostAddress() {
+        return hostAddress;
+    }
+
+    public ClientConfig getClientConfig() {
+        return clientConfig;
+    }
+
+    public int getGameId() {
+        return gameId;
+    }
+
+    public void connectTo(Uri uri) throws IOException {
+        loadServerInfo(uri.getQueryParameter("payload"));
 
         try {
             this.basePinRequestUrl = new URI(
-                    CONNECTION_TYPE,
+                    SSL_CONNECTION_TYPE,
                     null,
                     this.hostAddress,
                     ONEPLAY_PIN_REQUEST_PORT,
@@ -112,54 +145,7 @@ public class OneplayApi {
         };
     }
 
-    public String getSessionKey() {
-        return sessionKey;
-    }
-
-    public String getHostAddress() {
-        return hostAddress;
-    }
-
-    public ClientConfig getClientConfig() {
-        return clientConfig;
-    }
-
-    public int getGameId() {
-        return gameId;
-    }
-
-    private String getOnePlayKey(Uri uri) throws IOException {
-        try {
-            if (verbose) {
-                LimeLog.info("Requesting URL: "+uri);
-            }
-            Document doc = Jsoup.parse(new URL(uri.toString()), CONNECTION_TIMEOUT);
-
-            if (verbose) {
-                LimeLog.info(uri+" -> "+doc);
-            }
-
-            Element a = doc.select("a").first();
-
-            if (a != null) {
-                Pattern p = Pattern.compile("oneplay:key\\?(.+?)$");
-                Matcher m = p.matcher(a.attr("href"));
-                if (m.find()) {
-                    return m.group(1);
-                }
-            }
-
-            throw new IOException("Could not connect to url: " + uri + ". Will return the null session key.");
-        } catch (IOException e) {
-            if (verbose) {
-                e.printStackTrace();
-            }
-
-            throw e;
-        }
-    }
-
-    private void getServerInfo(String sessionKey) throws IOException {
+    private void loadServerInfo(String sessionKey) throws IOException {
         String serverInfo = openHttpConnectionPostToString(
                 baseServerInfoUrl + sessionKey);
 
@@ -229,6 +215,12 @@ public class OneplayApi {
         } catch (JSONException ignore) { }
 
         return false;
+    }
+
+    public void doQuit() throws IOException {
+        openHttpConnectionPostToString(baseQuitUrl + "?" +
+                "session_id=" + this.sessionKey + "&" +
+                "source=" + "android_app_" + "1.1");
     }
 
     private boolean setHostSessionKey(String key) {

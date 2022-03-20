@@ -150,6 +150,30 @@
                 android:name="com.nvidia.rawCursorInput"
                 android:value="true" />
         </activity>
+        <activity
+            android:name=".OneplayGameWrapper"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:screenOrientation="userLandscape"
+            android:noHistory="true"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:theme="@style/StreamTheme"
+            android:preferMinimalPostProcessing="true">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="in.oneplay.AppView" />
+
+            <!-- Special metadata for NVIDIA Shield devices to prevent input buffering
+                 and most importantly, opt out of mouse acceleration while streaming -->
+            <meta-data
+                android:name="com.nvidia.immediateInput"
+                android:value="true" />
+            <meta-data
+                android:name="com.nvidia.rawCursorInput"
+                android:value="true" />
+        </activity>
 
         <service
             android:name=".discovery.DiscoveryService"
@@ -173,7 +197,6 @@
         <activity
             android:name=".OneplayConnection"
             android:exported="true"
-            android:noHistory="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
@@ -194,7 +217,7 @@
 
                 <data
                     android:host="www.oneplay.in"
-                    android:pathPrefix="/play_demo"
+                    android:pathPrefix="/launch/app"
                     android:scheme="https" />
             </intent-filter>
         </activity>

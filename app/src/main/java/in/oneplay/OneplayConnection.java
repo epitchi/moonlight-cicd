@@ -1,6 +1,5 @@
 package in.oneplay;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Service;
@@ -11,17 +10,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.crypto.AndroidCryptoProvider;
-import in.oneplay.computers.ComputerDatabaseManager;
 import in.oneplay.computers.ComputerManagerService;
 import in.oneplay.grid.assets.DiskAssetLoader;
 import in.oneplay.nvstream.http.ComputerDetails;
@@ -30,6 +30,7 @@ import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
 import in.oneplay.utils.ServerHelper;
+import in.oneplay.utils.UiHelper;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -40,17 +41,25 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.cert.CertificateEncodingException;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 public class OneplayConnection extends Activity {
+
+    private static final int ONEPLAY_GAME_REQUEST_CODE = 1;
+    private static final String ONEPLAY_GAME_ERROR_ACTION = "in.oneplay.GAME_ERROR_ACTION";
+    private static final String ONEPLAY_GAME_ERROR_ID = "in.oneplay.GAME_ERROR_ID";
 
     private WebView webView;
     private Button button;
     private ProgressBar progress;
+    private Intent currentIntent;
+    private boolean isFirstStart = true;
+    private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -71,9 +80,6 @@ public class OneplayConnection extends Activity {
                     // Force a keypair to be generated early to avoid discovery delays
                     new AndroidCryptoProvider(OneplayConnection.this).getClientCertificate();
 
-                    // If the app not closed correctly close all apps and remove all exiting computers
-                    removeAllComputers();
-
                     connectToComputer();
                 }
             }.start();
@@ -85,70 +91,166 @@ public class OneplayConnection extends Activity {
     };
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (managerBinder != null) {
-            removeAllComputers();
-            unbindService(serviceConnection);
-        }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        currentIntent = getIntent();
+
+        UiHelper.setLocale(this);
+
         setContentView(R.layout.activity_oneplay_connection);
+
+        UiHelper.notifyNewRootView(this);
+
+        // Set default preferences if we've never been run
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         webView = findViewById(R.id.webview);
         button = findViewById(R.id.button);
         progress = findViewById(R.id.progress);
+    }
 
-        button.setVisibility(View.GONE);
-        button.setOnClickListener(null);
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        currentIntent = intent;
+    }
 
-        Intent intent = getIntent();
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-        if (Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) {
+        if (isFirstStart && Intent.ACTION_VIEW.equals(currentIntent.getAction()) && currentIntent.getData() != null) {
+            isFirstStart = false;
+
             webView.setVisibility(View.GONE);
             progress.setVisibility(View.VISIBLE);
+            button.setVisibility(View.GONE);
+            button.setOnClickListener(null);
 
-            // Bind to the ComputerManager service
-            bindService(new Intent(OneplayConnection.this,
-                    ComputerManagerService.class), serviceConnection, Service.BIND_AUTO_CREATE);
+            if (managerBinder == null) {
+                // Bind to the ComputerManager service
+                bindService(new Intent(OneplayConnection.this,
+                        ComputerManagerService.class), serviceConnection, Service.BIND_AUTO_CREATE);
+            } else {
+                connectToComputer();
+            }
+        } else if (ONEPLAY_GAME_ERROR_ACTION.equals(currentIntent.getAction())) {
+            processingError("Game connection error: " + currentIntent.getIntExtra(ONEPLAY_GAME_ERROR_ID, 0), true);
         } else {
-            webView.getSettings().setJavaScriptEnabled(true);
             webView.setWebViewClient(new WebViewClient() {
                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                    view.loadUrl(request.getUrl().toString());
-                    return true;
+                    Uri uri = request.getUrl();
+                    if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                            uri.getHost().equals(getString(R.string.oneplay_domain)) &&
+                            uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                        isFirstStart = true;
+                        Intent newIntent = new Intent(
+                                Intent.ACTION_VIEW,
+                                uri,
+                                OneplayConnection.this,
+                                OneplayConnection.class
+                        );
+                        startActivity(newIntent);
+
+                        return true;
+                    }
+                    return false;
                 }
 
                 // For old devices
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    view.loadUrl(url);
-                    return true;
+                    Uri uri = Uri.parse(url);
+                    if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                            uri.getHost().equals(getString(R.string.oneplay_domain)) &&
+                            uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                        isFirstStart = true;
+                        Intent newIntent = new Intent(
+                                Intent.ACTION_VIEW,
+                                uri,
+                                OneplayConnection.this,
+                                OneplayConnection.class
+                        );
+                        startActivity(newIntent);
+
+                        return true;
+                    }
+                    return false;
                 }
             });
+
+            URI welcomeLink = null;
+            try {
+                welcomeLink = new URI(
+                        OneplayApi.SSL_CONNECTION_TYPE,
+                        getString(R.string.oneplay_domain),
+                        getString(R.string.oneplay_app_welcome_link_path),
+                        getString(R.string.oneplay_app_welcome_link_query),
+                        null
+                );
+            } catch (URISyntaxException e) {
+                LimeLog.severe(e.getMessage());
+            }
+
             webView.setVisibility(View.VISIBLE);
-            webView.loadUrl("https://www.oneplay.in/dashboard"); //TODO move to resource
+            if (welcomeLink != null) {
+                LimeLog.severe(welcomeLink.toString());
+                webView.loadUrl(welcomeLink.toString());
+            }
             progress.setVisibility(View.GONE);
+            button.setVisibility(View.GONE);
+            button.setOnClickListener(null);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (managerBinder != null) {
+            removeComputer();
+            unbindService(serviceConnection);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (ONEPLAY_GAME_REQUEST_CODE == requestCode) {
+            if (RESULT_OK != resultCode) {
+                Intent newIntent = new Intent(
+                        ONEPLAY_GAME_ERROR_ACTION,
+                        null,
+                        OneplayConnection.this,
+                        OneplayConnection.class
+                );
+                newIntent.putExtra(ONEPLAY_GAME_ERROR_ID, resultCode);
+                startActivity(newIntent);
+            }
+
+            new Thread(() -> {
+                try {
+                    OneplayApi.getInstance(this).doQuit();
+                } catch (IOException ignore) {}
+                closeApps(computer);
+            }).start();
+
         }
     }
 
     private void connectToComputer() {
         new Thread(() -> {
-            Uri uri = getIntent().getData();
+            Uri uri = currentIntent.getData();
             try {
-                OneplayApi client = new OneplayApi(this, uri);
-                ComputerDetails computer = doAddPc(client.getHostAddress());
+                OneplayApi client = OneplayApi.getInstance(this);
+                client.connectTo(uri);
+                doAddPc(client.getHostAddress());
                 if (computer != null) {
                     doPair(client, computer);
                 }
-            } catch (IOException exception) {
-                processingError("Error create client!"); //TODO move to resource
+            } catch (IOException e) {
+                processingError(e.getMessage(), false);
             }
         }).start();
     }
@@ -168,23 +270,23 @@ public class OneplayConnection extends Activity {
         } catch (XmlPullParserException | IOException ignored) { }
     }
 
-    private void removeAllComputers() {
-        // Remove all previously saved computers
-        ComputerDatabaseManager dbManager = new ComputerDatabaseManager(OneplayConnection.this);
-        DiskAssetLoader diskAssetLoader = new DiskAssetLoader(OneplayConnection.this);
-        for (ComputerDetails computer : dbManager.getAllComputers()) {
-            closeApps(computer);
-
-            managerBinder.removeComputer(computer);
-
-            diskAssetLoader.deleteAssetsForComputer(computer.uuid);
-
-            // Delete hidden games preference value
-            getSharedPreferences(AppView.HIDDEN_APPS_PREF_FILENAME, MODE_PRIVATE)
-                    .edit()
-                    .remove(computer.uuid)
-                    .apply();
+    private void removeComputer() {
+        if (computer == null) {
+            return;
         }
+
+        managerBinder.removeComputer(computer);
+
+        DiskAssetLoader diskAssetLoader = new DiskAssetLoader(OneplayConnection.this);
+        diskAssetLoader.deleteAssetsForComputer(computer.uuid);
+
+        // Delete hidden games preference value
+        getSharedPreferences(AppView.HIDDEN_APPS_PREF_FILENAME, MODE_PRIVATE)
+                .edit()
+                .remove(computer.uuid)
+                .apply();
+
+        computer = null;
     }
 
     private boolean isWrongSubnetSiteLocalAddress(String address) {
@@ -230,16 +332,15 @@ public class OneplayConnection extends Activity {
         }
     }
 
-    @Nullable
-    private ComputerDetails doAddPc(String host) {
+    private void doAddPc(String host) {
         boolean wrongSiteLocal = false;
         boolean success;
         int portTestResult;
 
-        ComputerDetails details = new ComputerDetails();
+        computer = new ComputerDetails();
         try {
-            details.manualAddress = host;
-            success = managerBinder.addComputerBlocking(details);
+            computer.manualAddress = host;
+            success = managerBinder.addComputerBlocking(computer);
         } catch (IllegalArgumentException e) {
             // This can be thrown from OkHttp if the host fails to canonicalize to a valid name.
             // https://github.com/square/okhttp/blob/okhttp_27/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java#L705
@@ -269,25 +370,27 @@ public class OneplayConnection extends Activity {
             }
             LimeLog.warning(getResources().getString(R.string.conn_error_title) + ": " + dialogText);
         } else {
-            return details;
+            return;
         }
 
-        processingError(null);
-        return null;
+        processingError(null, false);
+
+        managerBinder.removeComputer(computer);
+        computer = null;
     }
 
     private void doPair(final OneplayApi client, final ComputerDetails computer) {
         if (computer.state == ComputerDetails.State.OFFLINE ||
                 ServerHelper.getCurrentAddressFromComputer(computer) == null) {
-            processingError(getResources().getString(R.string.pair_pc_offline));
+            processingError(getResources().getString(R.string.pair_pc_offline), true);
             return;
         }
         if (computer.runningGameId != 0) {
-            processingError(getResources().getString(R.string.pair_pc_ingame));
+            processingError(getResources().getString(R.string.pair_pc_ingame), true);
             return;
         }
         if (managerBinder == null) {
-            processingError(getResources().getString(R.string.error_manager_not_running));
+            processingError(getResources().getString(R.string.error_manager_not_running), true);
             return;
         }
 
@@ -347,30 +450,62 @@ public class OneplayConnection extends Activity {
         }
 
         if (success) {
-            ServerHelper.doStart(this, new NvApp("app", client.getGameId(), false), computer, managerBinder);
+            doStart(new NvApp("app", client.getGameId(), false), computer, managerBinder);
         } else {
-            processingError(message);
+            processingError(message, true);
         }
     }
 
-    private void processingError(String message) {
-        if (message != null) {
-            LimeLog.warning(message);
+    public void doStart(NvApp app, ComputerDetails computer,
+                               ComputerManagerService.ComputerManagerBinder managerBinder) {
+        if (computer.state == ComputerDetails.State.OFFLINE ||
+                ServerHelper.getCurrentAddressFromComputer(computer) == null) {
+            Toast.makeText(this, getString(R.string.pair_pc_offline), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        startActivityForResult(createStartIntent(app, computer, managerBinder), ONEPLAY_GAME_REQUEST_CODE);
+    }
+
+    public Intent createStartIntent(NvApp app, ComputerDetails computer,
+                                           ComputerManagerService.ComputerManagerBinder managerBinder) {
+        Intent intent = new Intent(this, OneplayGameWrapper.class);
+        intent.putExtra(Game.EXTRA_HOST, ServerHelper.getCurrentAddressFromComputer(computer));
+        intent.putExtra(Game.EXTRA_APP_NAME, app.getAppName());
+        intent.putExtra(Game.EXTRA_APP_ID, app.getAppId());
+        intent.putExtra(Game.EXTRA_APP_HDR, app.isHdrSupported());
+        intent.putExtra(Game.EXTRA_UNIQUEID, managerBinder.getUniqueId());
+        intent.putExtra(Game.EXTRA_PC_UUID, computer.uuid);
+        intent.putExtra(Game.EXTRA_PC_NAME, computer.name);
+        try {
+            if (computer.serverCert != null) {
+                intent.putExtra(Game.EXTRA_SERVER_CERT, computer.serverCert.getEncoded());
+            }
+        } catch (CertificateEncodingException e) {
+            e.printStackTrace();
+        }
+        return intent;
+    }
+
+    private void processingError(String message, boolean isRemoveComputer) {
+        if (isRemoveComputer) {
+            removeComputer();
         }
 
         runOnUiThread(() -> {
+            if (message != null) {
+                LimeLog.severe(message);
+            }
+
+            webView.setVisibility(View.GONE);
             progress.setVisibility(View.GONE);
             button.setVisibility(View.VISIBLE);
-        });
-
-        button.setOnClickListener(view -> {
-            runOnUiThread(() -> {
+            button.setOnClickListener(view -> {
+                webView.setVisibility(View.GONE);
                 progress.setVisibility(View.VISIBLE);
                 button.setVisibility(View.GONE);
                 button.setOnClickListener(null);
+                connectToComputer();
             });
-
-            connectToComputer();
         });
     }
 }
