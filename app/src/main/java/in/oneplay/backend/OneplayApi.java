@@ -220,7 +220,7 @@ public class OneplayApi {
     public void doQuit() throws IOException {
         openHttpConnectionPostToString(baseQuitUrl + "?" +
                 "session_id=" + this.sessionKey + "&" +
-                "source=" + "android_app_" + "1.1");
+                "source=" + "android_app_" + BuildConfig.VERSION_NAME);
     }
 
     private boolean setHostSessionKey(String key) {
