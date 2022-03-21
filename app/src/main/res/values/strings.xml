@@ -9,6 +9,7 @@
     <string name="oneplay_app_welcome_link_query" translatable="false" />
     <string name="oneplay_app_quit_link_path" translatable="false">/client/quit</string>
     <string name="oneplay_api_get_session_link" translatable="false">https://client-apis.oneplay.in/client/v1/get_session/</string>
+    <string name="oneplay_user_agent_base" translatable="false">OnePlayAndroid/V</string>
 
     <!-- Shortcut strings -->
     <string name="scut_deleted_pc">PC deleted</string>

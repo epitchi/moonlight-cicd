@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -103,6 +104,8 @@ public class OneplayConnection extends Activity {
 
         webView = findViewById(R.id.webview);
         progress = findViewById(R.id.progress);
+
+        initializeWebView();
     }
 
     @Override
@@ -129,50 +132,6 @@ public class OneplayConnection extends Activity {
                 connectToComputer();
             }
         } else {
-            webView.setWebViewClient(new WebViewClient() {
-                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                @Override
-                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                    Uri uri = request.getUrl();
-                    if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                            uri.getHost().equals(getString(R.string.oneplay_domain)) &&
-                            uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
-                        isFirstStart = true;
-                        Intent newIntent = new Intent(
-                                Intent.ACTION_VIEW,
-                                uri,
-                                OneplayConnection.this,
-                                OneplayConnection.class
-                        );
-                        startActivity(newIntent);
-
-                        return true;
-                    }
-                    return false;
-                }
-
-                // For old devices
-                @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    Uri uri = Uri.parse(url);
-                    if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                            uri.getHost().equals(getString(R.string.oneplay_domain)) &&
-                            uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
-                        isFirstStart = true;
-                        Intent newIntent = new Intent(
-                                Intent.ACTION_VIEW,
-                                uri,
-                                OneplayConnection.this,
-                                OneplayConnection.class
-                        );
-                        startActivity(newIntent);
-
-                        return true;
-                    }
-                    return false;
-                }
-            });
-
             URI welcomeLink = null;
             try {
                 welcomeLink = new URI(
@@ -218,6 +177,53 @@ public class OneplayConnection extends Activity {
             }).start();
 
         }
+    }
+
+    private void initializeWebView() {
+        webView.getSettings().setUserAgentString(getString(R.string.oneplay_user_agent_base) + BuildConfig.VERSION_NAME);
+        webView.setWebViewClient(new WebViewClient() {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                        uri.getHost().equals(getString(R.string.oneplay_domain)) &&
+                        uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                    isFirstStart = true;
+                    Intent newIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            uri,
+                            OneplayConnection.this,
+                            OneplayConnection.class
+                    );
+                    startActivity(newIntent);
+
+                    return true;
+                }
+                return false;
+            }
+
+            // For old devices
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Uri uri = Uri.parse(url);
+                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                        uri.getHost().equals(getString(R.string.oneplay_domain)) &&
+                        uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                    isFirstStart = true;
+                    Intent newIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            uri,
+                            OneplayConnection.this,
+                            OneplayConnection.class
+                    );
+                    startActivity(newIntent);
+
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     private void connectToComputer() {

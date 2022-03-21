@@ -52,6 +52,7 @@ public class OneplayApi {
     private static final boolean verbose = BuildConfig.DEBUG;
 
     private final OkHttpClient httpClient;
+    private final String userAgent;
     private String baseServerInfoUrl;
     private String baseQuitUrl;
     private String basePinRequestUrl;
@@ -93,6 +94,7 @@ public class OneplayApi {
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build();
+        this.userAgent = context.getString(R.string.oneplay_user_agent_base) + BuildConfig.VERSION_NAME;
     }
 
     public String getSessionKey() {
@@ -284,6 +286,7 @@ public class OneplayApi {
     private ResponseBody openHttpConnectionPost(String url, String requestBodyString) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
+                .header("User-Agent", userAgent)
                 .header("Connection", "close")
                 .post(RequestBody.create(
                         MediaType.get("application/json; charset=utf-8"),
