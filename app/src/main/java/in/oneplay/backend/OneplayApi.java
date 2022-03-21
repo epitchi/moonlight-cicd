@@ -220,9 +220,11 @@ public class OneplayApi {
     }
 
     public void doQuit() throws IOException {
-        openHttpConnectionPostToString(baseQuitUrl + "?" +
-                "session_id=" + this.sessionKey + "&" +
-                "source=" + "android_app_" + BuildConfig.VERSION_NAME);
+        try {
+            openHttpConnectionPostToString(baseQuitUrl + "?" +
+                    "session_id=" + this.sessionKey + "&" +
+                    "source=" + "android_app_" + BuildConfig.VERSION_NAME);
+        } catch (FileNotFoundException ignored) {}
     }
 
     private boolean setHostSessionKey(String key) {
