@@ -1,5 +1,6 @@
 package in.oneplay;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Service;
@@ -179,7 +180,11 @@ public class OneplayConnection extends Activity {
         }
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void initializeWebView() {
+        if (!BuildConfig.DEBUG) {
+            webView.getSettings().setJavaScriptEnabled(true);
+        }
         webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webView.getSettings().setUserAgentString(getString(R.string.oneplay_user_agent_base) + BuildConfig.VERSION_NAME);
         webView.setWebViewClient(new WebViewClient() {
