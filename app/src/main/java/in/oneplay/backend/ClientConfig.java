@@ -8,28 +8,28 @@ public class ClientConfig {
     /**
      * Bitrate. Bitrate must be in range: 500 - 150000 kbps.
      */
-    private final int bitrateKbps;
+    private final Integer bitrateKbps;
     /**
      * Get capture system-wide keyboard shortcuts mode (like Alt+Tab).
      * Available options: "never", "fullscreen", "always"
      */
-    private final boolean captureSysKeys;
+    private final Boolean captureSysKeys;
     /**
      * FPS. FPS must be in range 30 - 240.
      */
-    private final int gameFps;
+    private final Integer gameFps;
     /**
      * VSync.
      */
-    private final boolean isVsyncEnabled;
+    private final Boolean isVsyncEnabled;
     /**
      * Max bitrate.
      */
-    private final int maxBitrateKbps;
+    private final Integer maxBitrateKbps;
     /**
      * Max FPS.
      */
-    private final int maxFps;
+    private final Integer maxFps;
     /**
      * Max resolution.
      */
@@ -59,61 +59,61 @@ public class ClientConfig {
         /**
          * Check if remote desktop optimized mouse control is enabled. Will not work in most games.
          */
-        private final boolean absoluteMouseMode;
+        private final Boolean absoluteMouseMode;
         /**
          * Check if touchscreen in trackpad mode is enabled.
          */
-        private final boolean absoluteTouchMode;
+        private final Boolean absoluteTouchMode;
         /**
          * Check if gamepad input processing is enabled if the streaming client window loses focus.
          */
-        private final boolean backgroundGamepad;
+        private final Boolean backgroundGamepad;
         /**
          * Check if delay for frames that come too early is enabled.
          */
-        private final boolean framePacing;
+        private final Boolean framePacing;
         /**
          * Check if optimize game settings for streaming is enabled.
          */
-        private final boolean gameOptimizations;
+        private final Boolean gameOptimizations;
         /**
          * Multiple controllers support
          */
-        private final boolean multiControl;
+        private final Boolean multiControl;
         /**
          * Check if audio mute is enabled if the streaming client window loses focus.
          */
-        private final boolean muteOnFocusLoss;
+        private final Boolean muteOnFocusLoss;
         /**
          * Video packet size. 0 means that video packet size will be resolved later by the client
          * depending on NvComputer::isReachableOverVpn() output (Either 1024 or 1392).
          */
-        private final long packetSize;
+        private final Integer packetSize;
         /**
          * Check if play audio on the host PC is enabled.
          */
-        private final boolean playAudioOnHost;
+        private final Boolean playAudioOnHost;
         /**
          * Is app or game needs to be closed if the streaming client is closed.
          */
-        private final boolean quitAppAfter;
+        private final Boolean quitAppAfter;
         /**
          * Is invert scroll direction enabled.
          */
-        private final boolean reverseScrollDirection;
+        private final Boolean reverseScrollDirection;
         /**
          * Is swap A/B and X/Y gamepad buttons enabled (Nintendo-style).
          */
-        private final boolean swapFaceButtons;
+        private final Boolean swapFaceButtons;
         /**
          * Check if swap left and right mouse buttons is enabled.
          */
-        private final boolean swapMouseButtons;
+        private final Boolean swapMouseButtons;
 
-        public AdvanceDetails(boolean absoluteMouseMode, boolean absoluteTouchMode, boolean backgroundGamepad,
-                              boolean framePacing, boolean gameOptimizations, boolean multiControl, boolean muteOnFocusLoss,
-                              long packetSize, boolean playAudioOnHost, boolean quitAppAfter, boolean reverseScrollDirection,
-                              boolean swapFaceButtons, boolean swapMouseButtons) {
+        public AdvanceDetails(Boolean absoluteMouseMode, Boolean absoluteTouchMode, Boolean backgroundGamepad,
+                              Boolean framePacing, Boolean gameOptimizations, Boolean multiControl, Boolean muteOnFocusLoss,
+                              Integer packetSize, Boolean playAudioOnHost, Boolean quitAppAfter, Boolean reverseScrollDirection,
+                              Boolean swapFaceButtons, Boolean swapMouseButtons) {
             this.absoluteMouseMode = absoluteMouseMode;
             this.absoluteTouchMode = absoluteTouchMode;
             this.backgroundGamepad = backgroundGamepad;
@@ -129,61 +129,61 @@ public class ClientConfig {
             this.swapMouseButtons = swapMouseButtons;
         }
 
-        public boolean isAbsoluteMouseMode() {
+        public Boolean isAbsoluteMouseMode() {
             return absoluteMouseMode;
         }
 
-        public boolean isAbsoluteTouchMode() {
+        public Boolean isAbsoluteTouchMode() {
             return absoluteTouchMode;
         }
 
-        public boolean isBackgroundGamepad() {
+        public Boolean isBackgroundGamepad() {
             return backgroundGamepad;
         }
 
-        public boolean isFramePacing() {
+        public Boolean isFramePacing() {
             return framePacing;
         }
 
-        public boolean isGameOptimizations() {
+        public Boolean isGameOptimizations() {
             return gameOptimizations;
         }
 
-        public boolean isMultiControl() {
+        public Boolean isMultiControl() {
             return multiControl;
         }
 
-        public boolean isMuteOnFocusLoss() {
+        public Boolean isMuteOnFocusLoss() {
             return muteOnFocusLoss;
         }
 
-        public long getPacketSize() {
+        public Integer getPacketSize() {
             return packetSize;
         }
 
-        public boolean isPlayAudioOnHost() {
+        public Boolean isPlayAudioOnHost() {
             return playAudioOnHost;
         }
 
-        public boolean isQuitAppAfter() {
+        public Boolean isQuitAppAfter() {
             return quitAppAfter;
         }
 
-        public boolean isReverseScrollDirection() {
+        public Boolean isReverseScrollDirection() {
             return reverseScrollDirection;
         }
 
-        public boolean isSwapFaceButtons() {
+        public Boolean isSwapFaceButtons() {
             return swapFaceButtons;
         }
 
-        public boolean isSwapMouseButtons() {
+        public Boolean isSwapMouseButtons() {
             return swapMouseButtons;
         }
     }
 
-    public ClientConfig(String audioType, int bitrateKbps, boolean captureSysKeys, int gameFps,
-                        boolean isVsyncEnabled, int maxBitrateKbps, int maxFps, String maxResolution,
+    public ClientConfig(String audioType, Integer bitrateKbps, Boolean captureSysKeys, Integer gameFps,
+                        Boolean isVsyncEnabled, Integer maxBitrateKbps, Integer maxFps, String maxResolution,
                         String resolution, String streamCodec, String videoDecoderSelection, String windowMode,
                         AdvanceDetails advanceDetails) {
         this.audioType = audioType;
@@ -205,27 +205,27 @@ public class ClientConfig {
         return audioType;
     }
 
-    public int getBitrateKbps() {
+    public Integer getBitrateKbps() {
         return bitrateKbps;
     }
 
-    public boolean isCaptureSysKeys() {
+    public Boolean isCaptureSysKeys() {
         return captureSysKeys;
     }
 
-    public int getGameFps() {
+    public Integer getGameFps() {
         return gameFps;
     }
 
-    public boolean isVsyncEnabled() {
+    public Boolean isVsyncEnabled() {
         return isVsyncEnabled;
     }
 
-    public int getMaxBitrateKbps() {
+    public Integer getMaxBitrateKbps() {
         return maxBitrateKbps;
     }
 
-    public int getMaxFps() {
+    public Integer getMaxFps() {
         return maxFps;
     }
 
