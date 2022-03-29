@@ -37,6 +37,11 @@
         <item>@string/audioconf_51surround</item>
         <item>@string/audioconf_71surround</item>
     </string-array>
+    <string-array name="oneplay_audio_config_names" translatable="false">
+        <item>stereo</item>
+        <item>5.1-surround</item>
+        <item>7.1-surround</item>
+    </string-array>
     <string-array name="audio_config_values" translatable="false">
         <item>2</item>
         <item>51</item>
@@ -92,6 +97,11 @@
         <item>@string/videoformat_hevcalways</item>
         <item>@string/videoformat_hevcnever</item>
     </string-array>
+    <string-array name="oneplay_video_format_names" translatable="false">
+        <item>auto</item>
+        <item>H.264</item>
+        <item>HEVC</item>
+    </string-array>
     <string-array name="video_format_values" translatable="false">
         <item>auto</item>
         <item>forceh265</item>
@@ -109,5 +119,10 @@
         <item>balanced</item>
         <item>cap-fps</item>
         <item>smoothness</item>
+    </string-array>
+    <string-array name="oneplay_window_mode_names" translatable="false">
+        <item>fullscreen</item>
+        <item>windowed</item>
+        <item>borderless</item>
     </string-array>
 </resources>

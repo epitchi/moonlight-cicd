@@ -47,6 +47,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,6 +59,7 @@ public class OneplayConnection extends Activity {
     private ProgressBar progress;
     private Intent currentIntent;
     private boolean isFirstStart = true;
+    private ComputerManagerService.ApplistPoller poller;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
@@ -262,12 +264,22 @@ public class OneplayConnection extends Activity {
             return;
         }
 
-        try {
-            List<NvApp> apps = NvHTTP.getAppListByReader(new StringReader(rawAppList));
-            for (NvApp app : apps) {
-                ServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
-            }
-        } catch (XmlPullParserException | IOException ignored) { }
+        List<NvApp> apps = getAppList(rawAppList);
+        for (NvApp app : apps) {
+            ServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
+        }
+    }
+
+    private List<NvApp> getAppList(String rawAppList) {
+        List<NvApp> appList = new ArrayList<>();
+
+        if (rawAppList != null) {
+            try {
+                appList = NvHTTP.getAppListByReader(new StringReader(rawAppList));
+            } catch (XmlPullParserException | IOException ignored) { }
+        }
+
+        return appList;
     }
 
     private void removeComputer() {
@@ -450,9 +462,62 @@ public class OneplayConnection extends Activity {
         }
 
         if (success) {
-            doStart(new NvApp("app", computer.runningGameId, false), computer, managerBinder);
+            startComputerUpdates();
         } else {
             processingError(message, true);
+        }
+    }
+
+    private void startComputerUpdates() {
+        // Don't start polling if we're not bound
+        if (managerBinder == null) {
+            return;
+        }
+
+        managerBinder.startPolling(details -> {
+
+            // Don't care about other computers
+            if (!details.uuid.equalsIgnoreCase(computer.uuid)) {
+                return;
+            }
+
+            if (details.state == ComputerDetails.State.OFFLINE) {
+                // The PC is unreachable now
+                LimeLog.severe(getString(R.string.lost_connection));
+                finish();
+
+                return;
+            }
+
+            // Close immediately if the PC is no longer paired
+            if (details.state == ComputerDetails.State.ONLINE && details.pairState != PairingManager.PairState.PAIRED) {
+                LimeLog.severe(getString(R.string.scut_not_paired));
+                finish();
+
+                return;
+            }
+
+            if (details.rawAppList != null) {
+                stopComputerUpdates();
+
+                NvApp app = getAppList(details.rawAppList).get(0); // Always get first app (Desktop)
+                doStart(app, computer, managerBinder);
+            }
+        });
+
+        if (poller == null) {
+            poller = managerBinder.createAppListPoller(computer);
+        }
+        poller.start();
+    }
+
+    private void stopComputerUpdates() {
+        if (poller != null) {
+            poller.stop();
+        }
+
+        if (managerBinder != null) {
+            managerBinder.stopPolling();
         }
     }
 
