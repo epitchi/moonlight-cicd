@@ -176,34 +176,34 @@ public class OneplayApi {
         JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
 
         ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails(
-                Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode", false),
-                Utils.getBoolean(advanceDetailsData, "absolute_touch_mode", true),
-                Utils.getBoolean(advanceDetailsData, "background_gamepad", false),
-                Utils.getBoolean(advanceDetailsData, "frame_pacing", false),
-                Utils.getBoolean(advanceDetailsData, "game_optimizations", true),
-                Utils.getBoolean(advanceDetailsData, "multi_color", true),
-                Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss", false),
-                Utils.getInt(advanceDetailsData, "packet_size", 0),
-                Utils.getBoolean(advanceDetailsData, "play_audio_on_host", false),
-                Utils.getBoolean(advanceDetailsData, "quit_app_after", true),
-                Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction", false),
-                Utils.getBoolean(advanceDetailsData, "swap_face_buttons", false),
-                Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons", false)
+                Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"),
+                Utils.getBoolean(advanceDetailsData, "absolute_touch_mode"),
+                Utils.getBoolean(advanceDetailsData, "background_gamepad"),
+                Utils.getBoolean(advanceDetailsData, "frame_pacing"),
+                Utils.getBoolean(advanceDetailsData, "game_optimizations"),
+                Utils.getBoolean(advanceDetailsData, "multi_color"), //typo "multi_color" it means "multi controller"
+                Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"),
+                Utils.getInt(advanceDetailsData, "packet_size"),
+                Utils.getBoolean(advanceDetailsData, "play_audio_on_host"),
+                Utils.getBoolean(advanceDetailsData, "quit_app_after"),
+                Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"),
+                Utils.getBoolean(advanceDetailsData, "swap_face_buttons"),
+                Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons")
         );
 
         return new ClientConfig(
-                Utils.getString(advanceDetailsData, "audio_type", "stereo"),
-                Utils.getLong(advanceDetailsData, "bitrate_kbps", 40000),
-                Utils.getBoolean(advanceDetailsData, "capture_sys_keys", false),
-                Utils.getInt(advanceDetailsData, "game_fps", 60),
-                Utils.getBoolean(advanceDetailsData, "is_vsync_enabled", false),
-                Utils.getLong(advanceDetailsData, "max_bitrate_kbps", 40000),
-                Utils.getInt(advanceDetailsData, "max_fps", 60),
-                Utils.getString(advanceDetailsData, "max_resolution", "3840x2160"),
-                Utils.getString(advanceDetailsData, "resolution", "1280x720"),
-                Utils.getString(advanceDetailsData, "stream_codec", "auto"),
-                Utils.getString(advanceDetailsData, "video_decoder_selection", "auto"),
-                Utils.getString(advanceDetailsData, "window_mode", "fullscreen"),
+                Utils.getString(advanceDetailsData, "audio_type"),
+                Utils.getInt(advanceDetailsData, "bitrate_kbps"),
+                Utils.getBoolean(advanceDetailsData, "capture_sys_keys"),
+                Utils.getInt(advanceDetailsData, "game_fps"),
+                Utils.getBoolean(advanceDetailsData, "is_vsync_enabled"),
+                Utils.getInt(advanceDetailsData, "max_bitrate_kbps"),
+                Utils.getInt(advanceDetailsData, "max_fps"),
+                Utils.getString(advanceDetailsData, "max_resolution"),
+                Utils.getString(advanceDetailsData, "resolution"),
+                Utils.getString(advanceDetailsData, "stream_codec"),
+                Utils.getString(advanceDetailsData, "video_decoder_selection"),
+                Utils.getString(advanceDetailsData, "window_mode"),
                 advanceDetails
         );
     }
