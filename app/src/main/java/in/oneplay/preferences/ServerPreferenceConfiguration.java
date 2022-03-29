@@ -36,7 +36,7 @@ public class ServerPreferenceConfiguration {
     public static void savePreferences(Context context, ClientConfig config) {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 
-        editor.putString(FPS_PREF_STRING, Integer.toString(config.getGame_fps()));
+        editor.putString(FPS_PREF_STRING, Integer.toString(config.getGameFps()));
         editor.putString(VIDEO_FORMAT_PREF_STRING, config.getStreamCodec());
         editor.putString(RESOLUTION_PREF_STRING, config.getResolution());
 

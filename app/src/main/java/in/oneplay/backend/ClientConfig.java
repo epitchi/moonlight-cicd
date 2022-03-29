@@ -1,37 +1,117 @@
 package in.oneplay.backend;
 
 public class ClientConfig {
+    /**
+     * Audio mode. One of "stereo", "5.1-surround", "7.1-surround".
+     */
     private final String audioType;
-    private final long bitrateKbps;
+    /**
+     * Bitrate. Bitrate must be in range: 500 - 150000 kbps.
+     */
+    private final int bitrateKbps;
+    /**
+     * Get capture system-wide keyboard shortcuts mode (like Alt+Tab).
+     * Available options: "never", "fullscreen", "always"
+     */
     private final boolean captureSysKeys;
-    private final int game_fps;
+    /**
+     * FPS. FPS must be in range 30 - 240.
+     */
+    private final int gameFps;
+    /**
+     * VSync.
+     */
     private final boolean isVsyncEnabled;
-    private final long maxBitrateKbps;
-    private final int max_fps;
+    /**
+     * Max bitrate.
+     */
+    private final int maxBitrateKbps;
+    /**
+     * Max FPS.
+     */
+    private final int maxFps;
+    /**
+     * Max resolution.
+     */
     private final String maxResolution;
+    /**
+     * Screen resolution.
+     */
     private final String resolution;
+    /**
+     * Video codec. One of "auto", "H.264", "HEVC".
+     */
     private final String streamCodec;
+    /**
+     * Choose decoder mode automatically. Available options: "auto", "software", "hardware".
+     */
     private final String videoDecoderSelection;
+    /**
+     * Window mode. One of "fullscreen", "windowed", "borderless".
+     */
     private final String windowMode;
+    /**
+     * Advance details.
+     */
     private final AdvanceDetails advanceDetails;
 
     public static class AdvanceDetails {
+        /**
+         * Check if remote desktop optimized mouse control is enabled. Will not work in most games.
+         */
         private final boolean absoluteMouseMode;
+        /**
+         * Check if touchscreen in trackpad mode is enabled.
+         */
         private final boolean absoluteTouchMode;
+        /**
+         * Check if gamepad input processing is enabled if the streaming client window loses focus.
+         */
         private final boolean backgroundGamepad;
+        /**
+         * Check if delay for frames that come too early is enabled.
+         */
         private final boolean framePacing;
+        /**
+         * Check if optimize game settings for streaming is enabled.
+         */
         private final boolean gameOptimizations;
-        private final boolean multiColor;
+        /**
+         * Multiple controllers support
+         */
+        private final boolean multiControl;
+        /**
+         * Check if audio mute is enabled if the streaming client window loses focus.
+         */
         private final boolean muteOnFocusLoss;
+        /**
+         * Video packet size. 0 means that video packet size will be resolved later by the client
+         * depending on NvComputer::isReachableOverVpn() output (Either 1024 or 1392).
+         */
         private final long packetSize;
+        /**
+         * Check if play audio on the host PC is enabled.
+         */
         private final boolean playAudioOnHost;
+        /**
+         * Is app or game needs to be closed if the streaming client is closed.
+         */
         private final boolean quitAppAfter;
+        /**
+         * Is invert scroll direction enabled.
+         */
         private final boolean reverseScrollDirection;
+        /**
+         * Is swap A/B and X/Y gamepad buttons enabled (Nintendo-style).
+         */
         private final boolean swapFaceButtons;
+        /**
+         * Check if swap left and right mouse buttons is enabled.
+         */
         private final boolean swapMouseButtons;
 
         public AdvanceDetails(boolean absoluteMouseMode, boolean absoluteTouchMode, boolean backgroundGamepad,
-                              boolean framePacing, boolean gameOptimizations, boolean multiColor, boolean muteOnFocusLoss,
+                              boolean framePacing, boolean gameOptimizations, boolean multiControl, boolean muteOnFocusLoss,
                               long packetSize, boolean playAudioOnHost, boolean quitAppAfter, boolean reverseScrollDirection,
                               boolean swapFaceButtons, boolean swapMouseButtons) {
             this.absoluteMouseMode = absoluteMouseMode;
@@ -39,7 +119,7 @@ public class ClientConfig {
             this.backgroundGamepad = backgroundGamepad;
             this.framePacing = framePacing;
             this.gameOptimizations = gameOptimizations;
-            this.multiColor = multiColor;
+            this.multiControl = multiControl;
             this.muteOnFocusLoss = muteOnFocusLoss;
             this.packetSize = packetSize;
             this.playAudioOnHost = playAudioOnHost;
@@ -69,8 +149,8 @@ public class ClientConfig {
             return gameOptimizations;
         }
 
-        public boolean isMultiColor() {
-            return multiColor;
+        public boolean isMultiControl() {
+            return multiControl;
         }
 
         public boolean isMuteOnFocusLoss() {
@@ -102,17 +182,17 @@ public class ClientConfig {
         }
     }
 
-    public ClientConfig(String audioType, long bitrateKbps, boolean captureSysKeys, int game_fps,
-                        boolean isVsyncEnabled, long maxBitrateKbps, int max_fps, String maxResolution,
+    public ClientConfig(String audioType, int bitrateKbps, boolean captureSysKeys, int gameFps,
+                        boolean isVsyncEnabled, int maxBitrateKbps, int maxFps, String maxResolution,
                         String resolution, String streamCodec, String videoDecoderSelection, String windowMode,
                         AdvanceDetails advanceDetails) {
         this.audioType = audioType;
         this.bitrateKbps = bitrateKbps;
         this.captureSysKeys = captureSysKeys;
-        this.game_fps = game_fps;
+        this.gameFps = gameFps;
         this.isVsyncEnabled = isVsyncEnabled;
         this.maxBitrateKbps = maxBitrateKbps;
-        this.max_fps = max_fps;
+        this.maxFps = maxFps;
         this.maxResolution = maxResolution;
         this.resolution = resolution;
         this.streamCodec = streamCodec;
@@ -125,7 +205,7 @@ public class ClientConfig {
         return audioType;
     }
 
-    public long getBitrateKbps() {
+    public int getBitrateKbps() {
         return bitrateKbps;
     }
 
@@ -133,20 +213,20 @@ public class ClientConfig {
         return captureSysKeys;
     }
 
-    public int getGame_fps() {
-        return game_fps;
+    public int getGameFps() {
+        return gameFps;
     }
 
     public boolean isVsyncEnabled() {
         return isVsyncEnabled;
     }
 
-    public long getMaxBitrateKbps() {
+    public int getMaxBitrateKbps() {
         return maxBitrateKbps;
     }
 
-    public int getMax_fps() {
-        return max_fps;
+    public int getMaxFps() {
+        return maxFps;
     }
 
     public String getMaxResolution() {
