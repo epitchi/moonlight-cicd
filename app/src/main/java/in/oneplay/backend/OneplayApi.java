@@ -59,7 +59,7 @@ public class OneplayApi {
     private String sessionKey;
     private String hostAddress;
     private ClientConfig clientConfig;
-    private int gameId;
+    private String gameId;
 
     public static OneplayApi getInstance(Context context) {
         OneplayApi localInstance = instance;
@@ -109,7 +109,7 @@ public class OneplayApi {
         return clientConfig;
     }
 
-    public int getGameId() {
+    public String getGameId() {
         return gameId;
     }
 
@@ -154,13 +154,13 @@ public class OneplayApi {
         String serverAddress = "";
         String hostSessionKey = "";
         ClientConfig clientConfig = null;
-        int gameId = -1;
+        String gameId = "";
         try {
             JSONObject serverData = new JSONObject(serverInfo).getJSONObject("data");
             serverAddress = serverData.getJSONObject("server_details").getString("server_ip");
             hostSessionKey = serverData.getString("host_session_key");
             clientConfig = getClientConfig(serverData);
-            gameId = serverData.getJSONObject("game_details").getInt("id");
+            gameId = serverData.getJSONObject("game_details").getString("id");
         } catch (JSONException e) {
             LimeLog.warning(e.getMessage());
         }
@@ -192,18 +192,18 @@ public class OneplayApi {
         );
 
         return new ClientConfig(
-                Utils.getString(advanceDetailsData, "audio_type"),
-                Utils.getInt(advanceDetailsData, "bitrate_kbps"),
-                Utils.getBoolean(advanceDetailsData, "capture_sys_keys"),
-                Utils.getInt(advanceDetailsData, "game_fps"),
-                Utils.getBoolean(advanceDetailsData, "is_vsync_enabled"),
-                Utils.getInt(advanceDetailsData, "max_bitrate_kbps"),
-                Utils.getInt(advanceDetailsData, "max_fps"),
-                Utils.getString(advanceDetailsData, "max_resolution"),
-                Utils.getString(advanceDetailsData, "resolution"),
-                Utils.getString(advanceDetailsData, "stream_codec"),
-                Utils.getString(advanceDetailsData, "video_decoder_selection"),
-                Utils.getString(advanceDetailsData, "window_mode"),
+                Utils.getString(otherDetailsData, "audio_type"),
+                Utils.getInt(otherDetailsData, "bitrate_kbps"),
+                Utils.getBoolean(otherDetailsData, "capture_sys_keys"),
+                Utils.getInt(otherDetailsData, "game_fps"),
+                Utils.getBoolean(otherDetailsData, "is_vsync_enabled"),
+                Utils.getInt(otherDetailsData, "max_bitrate_kbps"),
+                Utils.getInt(otherDetailsData, "max_fps"),
+                Utils.getString(otherDetailsData, "max_resolution"),
+                Utils.getString(otherDetailsData, "resolution"),
+                Utils.getString(otherDetailsData, "stream_codec"),
+                Utils.getString(otherDetailsData, "video_decoder_selection"),
+                Utils.getString(otherDetailsData, "window_mode"),
                 advanceDetails
         );
     }

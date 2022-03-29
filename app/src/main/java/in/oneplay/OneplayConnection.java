@@ -252,6 +252,10 @@ public class OneplayConnection extends Activity {
     }
 
     private void closeApps(ComputerDetails computer) {
+        if (computer == null) {
+            return;
+        }
+
         String rawAppList = computer.rawAppList;
 
         if (rawAppList == null) {
@@ -446,7 +450,7 @@ public class OneplayConnection extends Activity {
         }
 
         if (success) {
-            doStart(new NvApp("app", client.getGameId(), false), computer, managerBinder);
+            doStart(new NvApp("app", computer.runningGameId, false), computer, managerBinder);
         } else {
             processingError(message, true);
         }
