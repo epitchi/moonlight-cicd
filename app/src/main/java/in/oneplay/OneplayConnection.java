@@ -18,9 +18,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import in.oneplay.backend.OneplayApi;
+import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.crypto.AndroidCryptoProvider;
 import in.oneplay.computers.ComputerManagerService;
@@ -46,15 +46,11 @@ import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.security.cert.CertificateEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class OneplayConnection extends Activity {
-
-    private static final int ONEPLAY_GAME_REQUEST_CODE = 1;
-
     private WebView webView;
     private ProgressBar progress;
     private Intent currentIntent;
@@ -168,18 +164,17 @@ public class OneplayConnection extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (ONEPLAY_GAME_REQUEST_CODE == requestCode) {
-            if (RESULT_OK != resultCode) {
-                processingError("Game connection error: " + resultCode, true);
-            }
-
+        if (OneplayServerHelper.ONEPLAY_GAME_REQUEST_CODE == requestCode) {
+            // Send quit to Oneplay API
             new Thread(() -> {
                 try {
                     OneplayApi.getInstance(this).doQuit();
-                } catch (IOException ignore) {}
-                closeApps(computer);
+                } catch (IOException ignored) {}
             }).start();
-
+            // Send quit to NV API
+            closeApps(computer);
+            // Back to user account
+            processingError(null, true);
         }
     }
 
@@ -266,7 +261,7 @@ public class OneplayConnection extends Activity {
 
         List<NvApp> apps = getAppList(rawAppList);
         for (NvApp app : apps) {
-            ServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
+            OneplayServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
         }
     }
 
@@ -385,10 +380,7 @@ public class OneplayConnection extends Activity {
             return;
         }
 
-        processingError(null, false);
-
-        managerBinder.removeComputer(computer);
-        computer = null;
+        removeComputer();
     }
 
     private void doPair(final OneplayApi client, final ComputerDetails computer) {
@@ -501,7 +493,7 @@ public class OneplayConnection extends Activity {
                 stopComputerUpdates();
 
                 NvApp app = getAppList(details.rawAppList).get(0); // Always get first app (Desktop)
-                doStart(app, computer, managerBinder);
+                OneplayServerHelper.doStart(this, app, computer, managerBinder);
             }
         });
 
@@ -519,36 +511,6 @@ public class OneplayConnection extends Activity {
         if (managerBinder != null) {
             managerBinder.stopPolling();
         }
-    }
-
-    public void doStart(NvApp app, ComputerDetails computer,
-                               ComputerManagerService.ComputerManagerBinder managerBinder) {
-        if (computer.state == ComputerDetails.State.OFFLINE ||
-                ServerHelper.getCurrentAddressFromComputer(computer) == null) {
-            Toast.makeText(this, getString(R.string.pair_pc_offline), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        startActivityForResult(createStartIntent(app, computer, managerBinder), ONEPLAY_GAME_REQUEST_CODE);
-    }
-
-    public Intent createStartIntent(NvApp app, ComputerDetails computer,
-                                           ComputerManagerService.ComputerManagerBinder managerBinder) {
-        Intent intent = new Intent(this, OneplayGameWrapper.class);
-        intent.putExtra(Game.EXTRA_HOST, ServerHelper.getCurrentAddressFromComputer(computer));
-        intent.putExtra(Game.EXTRA_APP_NAME, app.getAppName());
-        intent.putExtra(Game.EXTRA_APP_ID, app.getAppId());
-        intent.putExtra(Game.EXTRA_APP_HDR, app.isHdrSupported());
-        intent.putExtra(Game.EXTRA_UNIQUEID, managerBinder.getUniqueId());
-        intent.putExtra(Game.EXTRA_PC_UUID, computer.uuid);
-        intent.putExtra(Game.EXTRA_PC_NAME, computer.name);
-        try {
-            if (computer.serverCert != null) {
-                intent.putExtra(Game.EXTRA_SERVER_CERT, computer.serverCert.getEncoded());
-            }
-        } catch (CertificateEncodingException e) {
-            e.printStackTrace();
-        }
-        return intent;
     }
 
     private void processingError(String message, boolean isRemoveComputer) {
