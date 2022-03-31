@@ -475,17 +475,15 @@ public class OneplayConnection extends Activity {
 
             if (details.state == ComputerDetails.State.OFFLINE) {
                 // The PC is unreachable now
-                LimeLog.severe(getString(R.string.lost_connection));
-                finish();
-
+                stopComputerUpdates();
+                processingError(getString(R.string.lost_connection), true);
                 return;
             }
 
             // Close immediately if the PC is no longer paired
             if (details.state == ComputerDetails.State.ONLINE && details.pairState != PairingManager.PairState.PAIRED) {
-                LimeLog.severe(getString(R.string.scut_not_paired));
-                finish();
-
+                stopComputerUpdates();
+                processingError(getString(R.string.scut_not_paired), true);
                 return;
             }
 
