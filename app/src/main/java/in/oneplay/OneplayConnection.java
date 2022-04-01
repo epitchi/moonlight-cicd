@@ -54,6 +54,7 @@ public class OneplayConnection extends Activity {
     private WebView webView;
     private ProgressBar progress;
     private Intent currentIntent;
+    private boolean isResumed = false;
     private boolean isFirstStart = true;
     private ComputerManagerService.ApplistPoller poller;
     private volatile ComputerDetails computer;
@@ -115,6 +116,12 @@ public class OneplayConnection extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        isResumed = true;
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
@@ -146,7 +153,7 @@ public class OneplayConnection extends Activity {
             }
 
             webView.setVisibility(View.VISIBLE);
-            if (welcomeLink != null) {
+            if (!isResumed && welcomeLink != null) {
                 webView.loadUrl(welcomeLink.toString());
             }
             progress.setVisibility(View.GONE);
