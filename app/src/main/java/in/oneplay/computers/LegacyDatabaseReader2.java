@@ -71,7 +71,7 @@ public class LegacyDatabaseReader2 {
         SQLiteDatabase computerDb = null;
         try {
             // Open the existing database
-            computerDb = SQLiteDatabase.openDatabase(c.getDatabasePath(COMPUTER_DB_NAME).getPath(), null, SQLiteDatabase.OPEN_READONLY);
+            computerDb = new DatabaseOpenHelper(c, c.getDatabasePath(COMPUTER_DB_NAME).getPath()).getReadableDatabase();
             return getAllComputers(computerDb);
         } catch (SQLiteException e) {
             return new LinkedList<ComputerDetails>();
