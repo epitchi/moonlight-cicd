@@ -373,8 +373,10 @@ public class OneplayConnection extends Activity {
             portTestResult = MoonBridge.ML_TEST_RESULT_INCONCLUSIVE;
         }
 
+        String message;
+
         if (wrongSiteLocal) {
-            LimeLog.warning(getResources().getString(R.string.conn_error_title) + ": " + getResources().getString(R.string.addpc_wrong_sitelocal));
+            message = getResources().getString(R.string.conn_error_title) + ": " + getResources().getString(R.string.addpc_wrong_sitelocal);
         } else if (!success) {
             String dialogText;
             if (portTestResult != MoonBridge.ML_TEST_RESULT_INCONCLUSIVE && portTestResult != 0) {
@@ -382,12 +384,12 @@ public class OneplayConnection extends Activity {
             } else {
                 dialogText = getResources().getString(R.string.addpc_fail);
             }
-            LimeLog.warning(getResources().getString(R.string.conn_error_title) + ": " + dialogText);
+            message = getResources().getString(R.string.conn_error_title) + ": " + dialogText;
         } else {
             return;
         }
 
-        removeComputer();
+        processingError(message, true);
     }
 
     private void doPair(final OneplayApi client, final ComputerDetails computer) {
