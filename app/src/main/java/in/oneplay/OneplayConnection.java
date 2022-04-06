@@ -100,6 +100,9 @@ public class OneplayConnection extends Activity {
 
         UiHelper.notifyNewRootView(this);
 
+        // Fix nav bar overlapping
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+
         // Set default preferences if we've never been run
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
