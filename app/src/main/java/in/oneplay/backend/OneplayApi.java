@@ -175,37 +175,47 @@ public class OneplayApi {
         JSONObject otherDetailsData = data.getJSONObject("other_details");
         JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
 
-        ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails(
-                Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"),
-                Utils.getBoolean(advanceDetailsData, "absolute_touch_mode"),
-                Utils.getBoolean(advanceDetailsData, "background_gamepad"),
-                Utils.getBoolean(advanceDetailsData, "frame_pacing"),
-                Utils.getBoolean(advanceDetailsData, "game_optimizations"),
-                Utils.getBoolean(advanceDetailsData, "multi_color"), //typo "multi_color" it means "multi controller"
-                Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"),
-                Utils.getInt(advanceDetailsData, "packet_size"),
-                Utils.getBoolean(advanceDetailsData, "play_audio_on_host"),
-                Utils.getBoolean(advanceDetailsData, "quit_app_after"),
-                Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"),
-                Utils.getBoolean(advanceDetailsData, "swap_face_buttons"),
-                Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons")
-        );
+        ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
+//        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
+        advanceDetails.setAbsoluteTouchMode(Utils.getBoolean(advanceDetailsData, "absolute_touch_mode")); //+
+//        advanceDetails.setBackgroundGamepad(Utils.getBoolean(advanceDetailsData, "background_gamepad"));
+//        advanceDetails.setFramePacing(Utils.getBoolean(advanceDetailsData, "frame_pacing"));
+        advanceDetails.setGameOptimizations(Utils.getBoolean(advanceDetailsData, "game_optimizations")); //+
+        advanceDetails.setMultiControl(Utils.getBoolean(advanceDetailsData, "multi_color")); //typo "multi_color" it means "multi controller" //+
+//        advanceDetails.setMuteOnFocusLoss(Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"));
+//        advanceDetails.setPacketSize(Utils.getInt(advanceDetailsData, "packet_size"));
+        advanceDetails.setPlayAudioOnHost(Utils.getBoolean(advanceDetailsData, "play_audio_on_host")); //+
+//        advanceDetails.setQuitAppAfter(Utils.getBoolean(advanceDetailsData, "quit_app_after"));
+        advanceDetails.setReverseScrollDirection(Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"));
+        advanceDetails.setSwapFaceButtons(Utils.getBoolean(advanceDetailsData, "swap_face_buttons")); //+
+//        advanceDetails.setSwapMouseButtons( Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons"));
 
-        return new ClientConfig(
-                Utils.getString(otherDetailsData, "audio_type"),
-                Utils.getInt(otherDetailsData, "bitrate_kbps"),
-                Utils.getBoolean(otherDetailsData, "capture_sys_keys"),
-                Utils.getInt(otherDetailsData, "game_fps"),
-                Utils.getBoolean(otherDetailsData, "is_vsync_enabled"),
-                Utils.getInt(otherDetailsData, "max_bitrate_kbps"),
-                Utils.getInt(otherDetailsData, "max_fps"),
-                Utils.getString(otherDetailsData, "max_resolution"),
-                Utils.getString(otherDetailsData, "resolution"),
-                Utils.getString(otherDetailsData, "stream_codec"),
-                Utils.getString(otherDetailsData, "video_decoder_selection"),
-                Utils.getString(otherDetailsData, "window_mode"),
-                advanceDetails
-        );
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.setAudioType(Utils.getString(otherDetailsData, "audio_type"));
+        clientConfig.setBitrateKbps(Utils.getInt(otherDetailsData, "bitrate_kbps"));
+//        clientConfig.setCaptureSysKeys(Utils.getBoolean(otherDetailsData, "capture_sys_keys"));
+        clientConfig.setControllerMouseEmulationEnabled(Utils.getBoolean(otherDetailsData, "controller_mouse_emulation"));
+        clientConfig.setControllerUsbDriverSupportEnabled(Utils.getBoolean(otherDetailsData, "controller_usb_driver_support"));
+        clientConfig.setFrameDropDisabled(Utils.getBoolean(otherDetailsData, "disable_frame_drop"));
+        clientConfig.setHdrEnabled(Utils.getBoolean(otherDetailsData, "enable_hdr"));
+        clientConfig.setPerfOverlayEnabled(Utils.getBoolean(otherDetailsData, "enable_perf_overlay"));
+        clientConfig.setPipEnabled(Utils.getBoolean(otherDetailsData, "enable_pip"));
+        clientConfig.setPostStreamToastEnabled(Utils.getBoolean(otherDetailsData, "enable_post_stream_toast"));
+        clientConfig.setGameFps(Utils.getInt(otherDetailsData, "game_fps"));
+//        clientConfig.setVsyncEnabled(Utils.getBoolean(otherDetailsData, "is_vsync_enabled"));
+//        clientConfig.setMaxBitrateKbps(Utils.getInt(otherDetailsData, "max_bitrate_kbps"));
+//        clientConfig.setMaxFps(Utils.getInt(otherDetailsData, "max_fps"));
+//        clientConfig.setMaxResolution(Utils.getString(otherDetailsData, "max_resolution"));
+        clientConfig.setMouseNavButtonsEnabled(Utils.getBoolean(otherDetailsData, "mouse_nav_buttons"));
+        clientConfig.setOnscreenControlsEnabled(Utils.getBoolean(otherDetailsData, "onscreen_controls"));
+        clientConfig.setResolution(Utils.getString(otherDetailsData, "resolution"));
+        clientConfig.setStreamCodec(Utils.getString(otherDetailsData, "stream_codec"));
+        clientConfig.setUnlockFpsEnabled(Utils.getBoolean(otherDetailsData, "unlock_fps"));
+        clientConfig.setVibrateOscEnabled(Utils.getBoolean(otherDetailsData, "vibrate_osc"));
+//        clientConfig.setVideoDecoderSelection(Utils.getString(otherDetailsData, "video_decoder_selection"));
+        clientConfig.setWindowMode(Utils.getString(otherDetailsData, "window_mode"));
+        clientConfig.setAdvanceDetails(advanceDetails);
+        return new ClientConfig();
     }
 
     private boolean unpairAll() throws IOException {

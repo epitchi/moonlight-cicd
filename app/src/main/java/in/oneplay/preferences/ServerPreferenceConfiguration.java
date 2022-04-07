@@ -58,9 +58,63 @@ public class ServerPreferenceConfiguration {
         }
     }
 
+    private static void setControllerMouseEmulation(Boolean isControllerMouseEmulationEnabled, SharedPreferences.Editor editor) {
+        if (isControllerMouseEmulationEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.MOUSE_EMULATION_STRING, isControllerMouseEmulationEnabled);
+        }
+    }
+
+    private static void setControllerUsbDriverSupport(Boolean isControllerUsbDriverSupportEnabled, SharedPreferences.Editor editor) {
+        if (isControllerUsbDriverSupportEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.USB_DRIVER_PREF_SRING, isControllerUsbDriverSupportEnabled);
+        }
+    }
+
+    private static void setDisableFrameDrop(Boolean isFrameDropDisabled, SharedPreferences.Editor editor) {
+        if (isFrameDropDisabled != null) {
+            editor.putBoolean(PreferenceConfiguration.LEGACY_DISABLE_FRAME_DROP_PREF_STRING, isFrameDropDisabled);
+        }
+    }
+
+    private static void setEnableHdr(Boolean isHdrEnabled, SharedPreferences.Editor editor) {
+        if (isHdrEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.ENABLE_HDR_PREF_STRING, isHdrEnabled);
+        }
+    }
+
+    private static void setEnablePerfOverlay(Boolean isPerfOverlayEnabled, SharedPreferences.Editor editor) {
+        if (isPerfOverlayEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.ENABLE_PERF_OVERLAY_STRING, isPerfOverlayEnabled);
+        }
+    }
+
+    private static void setEnablePip(Boolean isPipEnabled, SharedPreferences.Editor editor) {
+        if (isPipEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.ENABLE_PIP_PREF_STRING, isPipEnabled);
+        }
+    }
+
+    private static void setLatencyToast(Boolean isPostStreamToastEnabled, SharedPreferences.Editor editor) {
+        if (isPostStreamToastEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.LATENCY_TOAST_PREF_STRING, isPostStreamToastEnabled);
+        }
+    }
+
     private static void setFps(Integer fps, SharedPreferences.Editor editor) {
         if (fps != null) {
             editor.putString(PreferenceConfiguration.FPS_PREF_STRING, fps.toString());
+        }
+    }
+
+    private static void setMouseNavButtons(Boolean isMouseNavButtonsEnabled, SharedPreferences.Editor editor) {
+        if (isMouseNavButtonsEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.MOUSE_NAV_BUTTONS_STRING, isMouseNavButtonsEnabled);
+        }
+    }
+
+    private static void setOnscreenController(Boolean isOnscreenControlsEnabled, SharedPreferences.Editor editor) {
+        if (isOnscreenControlsEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.ONSCREEN_CONTROLLER_PREF_STRING, isOnscreenControlsEnabled);
         }
     }
 
@@ -84,6 +138,18 @@ public class ServerPreferenceConfiguration {
         }
     }
 
+    private static void setUnlockFps(Boolean isUnlockFpsEnabled, SharedPreferences.Editor editor) {
+        if (isUnlockFpsEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.UNLOCK_FPS_STRING, isUnlockFpsEnabled);
+        }
+    }
+
+    private static void setVibrateOsc(Boolean isVibrateOscEnabled, SharedPreferences.Editor editor) {
+        if (isVibrateOscEnabled != null) {
+            editor.putBoolean(PreferenceConfiguration.VIBRATE_OSC_PREF_STRING, isVibrateOscEnabled);
+        }
+    }
+
     private static void setWindowMode(Context context, String windowMode, SharedPreferences.Editor editor) {
         if (windowMode != null) {
             String[] modeNames = context.getResources().getStringArray(R.array.oneplay_video_format_names);
@@ -101,9 +167,20 @@ public class ServerPreferenceConfiguration {
         setSwapFaceButtons(config.getAdvanceDetails().isSwapFaceButtons(), editor);
         setAudioConfig(context, config.getAudioType(), editor);
         setBitrateKbps(config.getBitrateKbps(), editor);
+        setControllerMouseEmulation(config.isControllerMouseEmulationEnabled(), editor);
+        setControllerUsbDriverSupport(config.isControllerUsbDriverSupportEnabled(), editor);
+        setDisableFrameDrop(config.isFrameDropDisabled(), editor);
+        setEnableHdr(config.isHdrEnabled(), editor);
+        setEnablePerfOverlay(config.isPerfOverlayEnabled(), editor);
+        setEnablePip(config.isPipEnabled(), editor);
+        setLatencyToast(config.isPostStreamToastEnabled(), editor);
         setFps(config.getGameFps(), editor);
+        setMouseNavButtons(config.isMouseNavButtonsEnabled(), editor);
+        setOnscreenController(config.isOnscreenControlsEnabled(), editor);
         setScreenResolution(config.getResolution(), editor);
         setVideoCodecConfig(context, config.getStreamCodec(), editor);
+        setUnlockFps(config.isUnlockFpsEnabled(), editor);
+        setVibrateOsc(config.isVibrateOscEnabled(), editor);
         setWindowMode(context, config.getWindowMode(), editor);
 
         editor.apply();
