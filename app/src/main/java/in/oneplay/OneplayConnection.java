@@ -174,6 +174,7 @@ public class OneplayConnection extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        LimeLog.severe("Str. onActivityResult");
         if (OneplayServerHelper.ONEPLAY_GAME_REQUEST_CODE == requestCode) {
             // Send quit to Oneplay API
             new Thread(() -> {
@@ -294,8 +295,10 @@ public class OneplayConnection extends Activity {
 
         managerBinder.removeComputer(computer);
 
-        DiskAssetLoader diskAssetLoader = new DiskAssetLoader(OneplayConnection.this);
-        diskAssetLoader.deleteAssetsForComputer(computer.uuid);
+        if (computer.uuid != null) {
+            DiskAssetLoader diskAssetLoader = new DiskAssetLoader(OneplayConnection.this);
+            diskAssetLoader.deleteAssetsForComputer(computer.uuid);
+        }
 
         // Delete hidden games preference value
         getSharedPreferences(AppView.HIDDEN_APPS_PREF_FILENAME, MODE_PRIVATE)
@@ -422,37 +425,32 @@ public class OneplayConnection extends Activity {
                     managerBinder.getUniqueId(),
                     computer.serverCert,
                     PlatformBinding.getCryptoProvider(OneplayConnection.this));
-            if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
-                // Don't display any toast, but open the app list
+            final String pinStr = client.getSessionKey();
+            httpConn.addInterceptor(client.getInterceptor());
+            PairingManager pm = httpConn.getPairingManager();
+
+            PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
+            LimeLog.severe("Str. pairState: " + pairState);
+            if (pairState == PairingManager.PairState.PIN_WRONG) {
+                message = getResources().getString(R.string.pair_incorrect_pin);
+            } else if (pairState == PairingManager.PairState.FAILED) {
+                message = getResources().getString(R.string.pair_fail);
+            } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
+                message = getResources().getString(R.string.pair_already_in_progress);
+            } else if (pairState == PairingManager.PairState.PAIRED) {
+                // Just navigate to the app view without displaying a toast
                 message = null;
                 success = true;
+
+                // Pin this certificate for later HTTPS use
+                managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
+
+                // Invalidate reachability information after pairing to force
+                // a refresh before reading pair state again
+                managerBinder.invalidateStateForComputer(computer.uuid);
             } else {
-                final String pinStr = client.getSessionKey();
-                httpConn.addInterceptor(client.getInterceptor());
-                PairingManager pm = httpConn.getPairingManager();
-
-                PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
-                if (pairState == PairingManager.PairState.PIN_WRONG) {
-                    message = getResources().getString(R.string.pair_incorrect_pin);
-                } else if (pairState == PairingManager.PairState.FAILED) {
-                    message = getResources().getString(R.string.pair_fail);
-                } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
-                    message = getResources().getString(R.string.pair_already_in_progress);
-                } else if (pairState == PairingManager.PairState.PAIRED) {
-                    // Just navigate to the app view without displaying a toast
-                    message = null;
-                    success = true;
-
-                    // Pin this certificate for later HTTPS use
-                    managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
-
-                    // Invalidate reachability information after pairing to force
-                    // a refresh before reading pair state again
-                    managerBinder.invalidateStateForComputer(computer.uuid);
-                } else {
-                    // Should be no other values
-                    message = null;
-                }
+                // Should be no other values
+                message = null;
             }
         } catch (UnknownHostException e) {
             message = getResources().getString(R.string.error_unknown_host);
