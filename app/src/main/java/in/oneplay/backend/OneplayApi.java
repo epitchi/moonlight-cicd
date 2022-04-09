@@ -186,17 +186,17 @@ public class OneplayApi {
 
         ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
 //        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
-        advanceDetails.setAbsoluteTouchMode(Utils.getBoolean(advanceDetailsData, "absolute_touch_mode")); //+
+        advanceDetails.setAbsoluteTouchMode(Utils.getBoolean(advanceDetailsData, "absolute_touch_mode"));
 //        advanceDetails.setBackgroundGamepad(Utils.getBoolean(advanceDetailsData, "background_gamepad"));
 //        advanceDetails.setFramePacing(Utils.getBoolean(advanceDetailsData, "frame_pacing"));
-        advanceDetails.setGameOptimizations(Utils.getBoolean(advanceDetailsData, "game_optimizations")); //+
-        advanceDetails.setMultiControl(Utils.getBoolean(advanceDetailsData, "multi_color")); //typo "multi_color" it means "multi controller" //+
+        advanceDetails.setGameOptimizations(Utils.getBoolean(advanceDetailsData, "game_optimizations"));
+        advanceDetails.setMultiControl(Utils.getBoolean(advanceDetailsData, "multi_color")); //typo "multi_color" it means "multi controller"
 //        advanceDetails.setMuteOnFocusLoss(Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"));
 //        advanceDetails.setPacketSize(Utils.getInt(advanceDetailsData, "packet_size"));
-        advanceDetails.setPlayAudioOnHost(Utils.getBoolean(advanceDetailsData, "play_audio_on_host")); //+
+        advanceDetails.setPlayAudioOnHost(Utils.getBoolean(advanceDetailsData, "play_audio_on_host"));
 //        advanceDetails.setQuitAppAfter(Utils.getBoolean(advanceDetailsData, "quit_app_after"));
         advanceDetails.setReverseScrollDirection(Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"));
-        advanceDetails.setSwapFaceButtons(Utils.getBoolean(advanceDetailsData, "swap_face_buttons")); //+
+        advanceDetails.setSwapFaceButtons(Utils.getBoolean(advanceDetailsData, "swap_face_buttons"));
 //        advanceDetails.setSwapMouseButtons( Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons"));
 
         ClientConfig clientConfig = new ClientConfig();
@@ -224,7 +224,7 @@ public class OneplayApi {
 //        clientConfig.setVideoDecoderSelection(Utils.getString(otherDetailsData, "video_decoder_selection"));
         clientConfig.setWindowMode(Utils.getString(otherDetailsData, "window_mode"));
         clientConfig.setAdvanceDetails(advanceDetails);
-        return new ClientConfig();
+        return clientConfig;
     }
 
     private boolean unpairAll() throws IOException {
