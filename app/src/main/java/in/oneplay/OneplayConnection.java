@@ -430,7 +430,6 @@ public class OneplayConnection extends Activity {
             PairingManager pm = httpConn.getPairingManager();
 
             PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
-            LimeLog.severe("Str. pairState: " + pairState);
             if (pairState == PairingManager.PairState.PIN_WRONG) {
                 message = getResources().getString(R.string.pair_incorrect_pin);
             } else if (pairState == PairingManager.PairState.FAILED) {
