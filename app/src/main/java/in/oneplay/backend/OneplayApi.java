@@ -58,12 +58,15 @@ public class OneplayApi {
     private final OkHttpClient httpClient;
     private final String userAgent;
     private String baseServerInfoUrl;
+    private String baseEventsUrl;
     private String baseQuitUrl;
     private String basePinRequestUrl;
     private String sessionKey;
+    private String userId;
     private String hostAddress;
-    private ClientConfig clientConfig;
     private String gameId;
+
+    private ClientConfig clientConfig;
 
     public static OneplayApi getInstance() {
         OneplayApi localInstance = instance;
@@ -82,6 +85,7 @@ public class OneplayApi {
     private OneplayApi() {
         try {
             this.baseServerInfoUrl = new URI(BuildConfig.ONEPLAY_API_GET_SESSION_ENDPOINT).toString();
+            this.baseEventsUrl = new URI(BuildConfig.ONEPLAY_API_EVENTS_ENDPOINT).toString();
             this.baseQuitUrl = new URI(
                     SSL_CONNECTION_TYPE,
                     ONEPLAY_DOMAIN,
@@ -155,22 +159,25 @@ public class OneplayApi {
 
         String serverAddress = "";
         String hostSessionKey = "";
-        ClientConfig clientConfig = null;
+        String userId = "";
         String gameId = "";
+        ClientConfig clientConfig = null;
         try {
             JSONObject serverData = new JSONObject(serverInfo).getJSONObject("data");
             serverAddress = serverData.getJSONObject("server_details").getString("server_ip");
             hostSessionKey = serverData.getString("host_session_key");
-            clientConfig = getClientConfig(serverData);
+            userId = serverData.getJSONObject("user_details").getString("user_id");
             gameId = serverData.getJSONObject("game_details").getString("id");
+            clientConfig = getClientConfig(serverData);
         } catch (JSONException e) {
             LimeLog.warning(e.getMessage());
         }
 
         this.hostAddress = serverAddress;
         this.sessionKey = hostSessionKey;
-        this.clientConfig = clientConfig;
+        this.userId = userId;
         this.gameId = gameId;
+        this.clientConfig = clientConfig;
     }
 
     private ClientConfig getClientConfig(JSONObject data) throws JSONException {
@@ -235,6 +242,23 @@ public class OneplayApi {
         openHttpConnectionPostToString(baseQuitUrl + "?" +
                 "session_id=" + this.sessionKey + "&" +
                 "source=" + "android_app_" + BuildConfig.VERSION_NAME);
+    }
+
+    public void registerEvent(String text) {
+        new Thread(() -> {
+            try {
+                String body = new JSONObject()
+                        .put("error", text)
+                        .put("user_id", userId).toString();
+                openHttpConnectionPostToString(baseEventsUrl, body);
+
+            } catch (JSONException | IOException e) {
+                LimeLog.severe(e.getMessage());
+                if (verbose) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private boolean setHostSessionKey(String key) {
