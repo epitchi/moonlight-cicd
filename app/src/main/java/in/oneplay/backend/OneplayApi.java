@@ -170,7 +170,7 @@ public class OneplayApi {
             gameId = serverData.getJSONObject("game_details").getString("id");
             clientConfig = getClientConfig(serverData);
         } catch (JSONException e) {
-            LimeLog.warning(e.getMessage());
+            LimeLog.severe(e.getMessage());
         }
 
         this.hostAddress = serverAddress;
@@ -272,7 +272,10 @@ public class OneplayApi {
                 return true;
             }
         } catch (IOException | JSONException | InterruptedException e) {
-            e.printStackTrace();
+            LimeLog.severe(e.getMessage());
+            if (verbose) {
+                e.printStackTrace();
+            }
         }
 
         return false;
