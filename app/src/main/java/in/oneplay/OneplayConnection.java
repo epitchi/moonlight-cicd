@@ -146,9 +146,9 @@ public class OneplayConnection extends Activity {
             try {
                 welcomeLink = new URI(
                         OneplayApi.SSL_CONNECTION_TYPE,
-                        getString(R.string.oneplay_domain),
-                        getString(R.string.oneplay_app_welcome_link_path),
-                        getString(R.string.oneplay_app_welcome_link_query),
+                        OneplayApi.ONEPLAY_DOMAIN,
+                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_PATH,
+                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_QUERY,
                         null
                 );
             } catch (URISyntaxException e) {
@@ -179,7 +179,7 @@ public class OneplayConnection extends Activity {
             // Send quit to Oneplay API
             new Thread(() -> {
                 try {
-                    OneplayApi.getInstance(this).doQuit();
+                    OneplayApi.getInstance().doQuit();
                 } catch (IOException ignored) {}
             }).start();
             // Send quit to NV API
@@ -196,15 +196,15 @@ public class OneplayConnection extends Activity {
             webView.getSettings().setDomStorageEnabled(true);
         }
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
-        webView.getSettings().setUserAgentString(getString(R.string.oneplay_user_agent_base) + BuildConfig.VERSION_NAME);
+        webView.getSettings().setUserAgentString(OneplayApi.ONEPLAY_USER_AGENT_BASE + BuildConfig.VERSION_NAME);
         webView.setWebViewClient(new WebViewClient() {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                        uri.getHost().equals(getString(R.string.oneplay_domain)) &&
-                        uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
+                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
                     isFirstStart = true;
                     Intent newIntent = new Intent(
                             Intent.ACTION_VIEW,
@@ -224,8 +224,8 @@ public class OneplayConnection extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Uri uri = Uri.parse(url);
                 if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                        uri.getHost().equals(getString(R.string.oneplay_domain)) &&
-                        uri.getPath().equals(getString(R.string.oneplay_app_launch_link_path))) {
+                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
+                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
                     isFirstStart = true;
                     Intent newIntent = new Intent(
                             Intent.ACTION_VIEW,
@@ -246,7 +246,7 @@ public class OneplayConnection extends Activity {
         new Thread(() -> {
             Uri uri = currentIntent.getData();
             try {
-                OneplayApi client = OneplayApi.getInstance(this);
+                OneplayApi client = OneplayApi.getInstance();
                 client.connectTo(uri);
                 ServerPreferenceConfiguration.savePreferences(this, client.getClientConfig());
                 doAddPc(client.getHostAddress());

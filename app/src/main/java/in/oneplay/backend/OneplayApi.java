@@ -44,7 +44,11 @@ public class OneplayApi {
     public static final int READ_TIMEOUT = 15000;
 
     public static final String SSL_CONNECTION_TYPE = "https";
+    public static final String ONEPLAY_DOMAIN = "www.oneplay.in";
+    public static final String ONEPLAY_APP_LAUNCH_LINK_PATH = "/launch/app";
+    public static final String ONEPLAY_APP_QUIT_LINK_PATH = "/client/quit";
     public static final int ONEPLAY_PIN_REQUEST_PORT = 47990;
+    public static final String ONEPLAY_USER_AGENT_BASE = "OnePlayAndroid/V";
 
     private static volatile OneplayApi instance;
 
@@ -61,13 +65,13 @@ public class OneplayApi {
     private ClientConfig clientConfig;
     private String gameId;
 
-    public static OneplayApi getInstance(Context context) {
+    public static OneplayApi getInstance() {
         OneplayApi localInstance = instance;
         if (localInstance == null) {
             synchronized (OneplayApi.class) {
                 localInstance = instance;
                 if (localInstance == null) {
-                    instance = localInstance = new OneplayApi(context);
+                    instance = localInstance = new OneplayApi();
                 }
             }
         }
@@ -75,15 +79,13 @@ public class OneplayApi {
         return localInstance;
     }
 
-    private OneplayApi(Context context) {
+    private OneplayApi() {
         try {
-            this.baseServerInfoUrl = new URI(
-                    context.getString(R.string.oneplay_api_get_session_link)
-            ).toString();
+            this.baseServerInfoUrl = new URI(BuildConfig.ONEPLAY_API_GET_SESSION_ENDPOINT).toString();
             this.baseQuitUrl = new URI(
                     SSL_CONNECTION_TYPE,
-                    context.getString(R.string.oneplay_domain),
-                    context.getString(R.string.oneplay_app_quit_link_path),
+                    ONEPLAY_DOMAIN,
+                    ONEPLAY_APP_QUIT_LINK_PATH,
                     null
             ).toString();
         } catch (URISyntaxException ignored) {}
@@ -94,7 +96,7 @@ public class OneplayApi {
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build();
-        this.userAgent = context.getString(R.string.oneplay_user_agent_base) + BuildConfig.VERSION_NAME;
+        this.userAgent = ONEPLAY_USER_AGENT_BASE + BuildConfig.VERSION_NAME;
     }
 
     public String getSessionKey() {
