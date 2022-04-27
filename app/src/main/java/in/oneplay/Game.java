@@ -1203,6 +1203,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             if (KeyboardTranslator.needsShift(event.getKeyCode())) {
                 modifiers |= KeyboardPacket.MODIFIER_SHIFT;
             }
+
+            // Hack: gboard doesn't send shift key event for symbols or key up it before a key pressed
+            if ((modifiers & KeyboardPacket.MODIFIER_SHIFT) == KeyboardPacket.MODIFIER_SHIFT &&
+                    (getModifierState() & KeyboardPacket.MODIFIER_SHIFT) != KeyboardPacket.MODIFIER_SHIFT) {
+                conn.sendKeyboardInput(KeyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT), KeyboardPacket.KEY_DOWN, modifiers);
+            }
+
             conn.sendKeyboardInput(translated, KeyboardPacket.KEY_DOWN, modifiers);
         }
 
@@ -1268,6 +1275,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 modifiers |= KeyboardPacket.MODIFIER_SHIFT;
             }
             conn.sendKeyboardInput(translated, KeyboardPacket.KEY_UP, modifiers);
+
+            // Hack: gboard doesn't send shift key event for symbols or key up it before a key pressed
+            if ((modifiers & KeyboardPacket.MODIFIER_SHIFT) == KeyboardPacket.MODIFIER_SHIFT &&
+                    (getModifierState() & KeyboardPacket.MODIFIER_SHIFT) != KeyboardPacket.MODIFIER_SHIFT) {
+                conn.sendKeyboardInput(KeyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT), KeyboardPacket.KEY_UP, modifiers);
+            }
         }
 
         return true;
