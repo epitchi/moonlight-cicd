@@ -19,6 +19,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
@@ -54,6 +56,7 @@ public class OneplayConnection extends Activity {
     private WebView webView;
     private ProgressBar progress;
     private Intent currentIntent;
+    private FirebaseAnalytics mFirebaseAnalytics;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
     private ComputerManagerService.ApplistPoller poller;
@@ -108,6 +111,8 @@ public class OneplayConnection extends Activity {
 
         webView = findViewById(R.id.webview);
         progress = findViewById(R.id.progress);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         initializeWebView();
     }

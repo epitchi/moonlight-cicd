@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 
 android {
     ndkVersion "23.2.8568313"
@@ -6,7 +7,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        minSdk 16
+        minSdk 19
         targetSdk 33
 
         versionName "1.1"
@@ -143,4 +144,6 @@ dependencies {
     implementation 'com.github.cgutman:ShieldControllerExtensions:1.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.12.13'
     implementation 'org.jsoup:jsoup:1.14.3'
+    implementation platform('com.google.firebase:firebase-bom:29.3.1')
+    implementation 'com.google.firebase:firebase-analytics'
 }
