@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     ndkVersion "23.2.8568313"
@@ -124,6 +125,10 @@ android {
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
             buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"https://client-apis.oneplay.in/client/v1/get_session/\""
             buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"https://client-apis.oneplay.in/backend/events/register\""
+
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled true
+            }
         }
     }
 
@@ -146,4 +151,5 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.14.3'
     implementation platform('com.google.firebase:firebase-bom:29.3.1')
     implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-crashlytics-ndk'
 }
