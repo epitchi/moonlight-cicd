@@ -152,7 +152,7 @@ public class ServerPreferenceConfiguration {
 
     private static void setWindowMode(Context context, String windowMode, SharedPreferences.Editor editor) {
         if (windowMode != null) {
-            String[] modeNames = context.getResources().getStringArray(R.array.oneplay_video_format_names);
+            String[] modeNames = context.getResources().getStringArray(R.array.oneplay_window_mode_names);
             editor.putBoolean(PreferenceConfiguration.STRETCH_PREF_STRING, windowMode.equals(modeNames[0]));
         }
     }
