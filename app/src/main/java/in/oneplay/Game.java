@@ -76,6 +76,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -143,6 +145,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private TextView notificationOverlayView;
     private int requestedNotificationOverlayVisibility = View.GONE;
     private TextView performanceOverlayView;
+    private ImageButton settingsButton;
 
     private ShortcutHelper shortcutHelper;
 
@@ -242,6 +245,39 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         streamView.setOnGenericMotionListener(this);
         streamView.setOnTouchListener(this);
         streamView.setInputCallbacks(this);
+
+        settingsButton = findViewById(R.id.settingsButton);
+
+        settingsButton.setOnClickListener((view) -> {
+            PopupMenu settingsMenu = new PopupMenu(Game.this, settingsButton);
+            settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
+            settingsMenu.setOnMenuItemClickListener((menuItem) -> {
+                if (menuItem.getItemId() == R.id.show_keyboard) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else if (menuItem.getItemId() == R.id.show_hide_stats) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else if (menuItem.getItemId() == R.id.quit_stream) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else if (menuItem.getItemId() == R.id.change_resolution) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else if (menuItem.getItemId() == R.id.change_bitrate) {
+                    //TODO implement it
+                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                } else {
+                    return false;
+                }
+
+                return true;
+            });
+            settingsMenu.show();
+        });
 
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 

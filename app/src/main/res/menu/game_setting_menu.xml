@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/show_keyboard"
+        android:title="@string/menu_show_keyboard" />
+
+    <item
+        android:id="@+id/show_hide_stats"
+        android:title="@string/menu_show_hide_stats" />
+
+    <item
+        android:id="@+id/toggle_full_screen"
+        android:title="@string/menu_toggle_full_screen" />
+
+    <item
+        android:id="@+id/quit_stream"
+        android:title="@string/menu_quit_stream" />
+
+    <item
+        android:id="@+id/change_resolution"
+        android:title="@string/menu_change_resolution" />
+
+    <item
+        android:id="@+id/change_bitrate"
+        android:title="@string/menu_change_bitrate" />
+</menu>

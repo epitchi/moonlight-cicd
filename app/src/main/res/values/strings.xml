@@ -267,4 +267,12 @@
     <string name="pacing_balanced">Balanced</string>
     <string name="pacing_balanced_alt">Balanced with FPS limit</string>
     <string name="pacing_smoothness">Prefer smoothest video (may significantly increase latency)</string>
+
+    <!-- Game menu -->
+    <string name="menu_show_keyboard">Show keyboard</string>
+    <string name="menu_show_hide_stats">Show/hide stats</string>
+    <string name="menu_toggle_full_screen">Toggle full screen</string>
+    <string name="menu_quit_stream">Quit Stream</string>
+    <string name="menu_change_resolution">Change Resolution if possible</string>
+    <string name="menu_change_bitrate">Change Bitrate If Possible</string>
 </resources>
