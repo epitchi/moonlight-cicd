@@ -261,8 +261,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     //TODO implement it
                     Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
                 } else if (menuItem.getItemId() == R.id.quit_stream) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    finish();
                 } else if (menuItem.getItemId() == R.id.change_resolution) {
                     //TODO implement it
                     Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
