@@ -253,8 +253,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
             settingsMenu.setOnMenuItemClickListener((menuItem) -> {
                 if (menuItem.getItemId() == R.id.show_keyboard) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    showKeyboard();
                 } else if (menuItem.getItemId() == R.id.show_hide_stats) {
                     //TODO implement it
                     Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
