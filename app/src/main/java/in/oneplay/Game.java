@@ -255,8 +255,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 if (menuItem.getItemId() == R.id.show_keyboard) {
                     showKeyboard();
                 } else if (menuItem.getItemId() == R.id.show_hide_stats) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
+                    performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
+                    prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
                 } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
                     //TODO implement it
                     Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
