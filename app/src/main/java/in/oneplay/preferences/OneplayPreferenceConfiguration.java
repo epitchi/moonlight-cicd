@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 import in.oneplay.R;
 import in.oneplay.backend.ClientConfig;
 
-public class ServerPreferenceConfiguration {
+public class OneplayPreferenceConfiguration {
     private static void setAbsoluteTouchMode(Boolean isAbsoluteTouchModeEnabled, SharedPreferences.Editor editor) {
         if (isAbsoluteTouchModeEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.TOUCHSCREEN_TRACKPAD_PREF_STRING, isAbsoluteTouchModeEnabled);
@@ -155,6 +155,12 @@ public class ServerPreferenceConfiguration {
             String[] modeNames = context.getResources().getStringArray(R.array.oneplay_window_mode_names);
             editor.putBoolean(PreferenceConfiguration.STRETCH_PREF_STRING, windowMode.equals(modeNames[0]));
         }
+    }
+
+    public static void setWindowMode(Context context, boolean isWindowModeDisable) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.STRETCH_PREF_STRING, isWindowModeDisable);
+        editor.apply();
     }
 
     public static void savePreferences(Context context, ClientConfig config) {

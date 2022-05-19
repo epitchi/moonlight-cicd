@@ -24,6 +24,7 @@ import in.oneplay.utils.ServerHelper;
 
 public class OneplayServerHelper {
     public static final int ONEPLAY_GAME_REQUEST_CODE = 1;
+    public static final int ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY = 2;
 
     public static void doStart(Activity parent, NvApp app, ComputerDetails computer,
                         ComputerManagerService.ComputerManagerBinder managerBinder) {

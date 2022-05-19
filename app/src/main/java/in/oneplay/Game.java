@@ -1,8 +1,7 @@
 package in.oneplay;
 
 
-import in.oneplay.R;
-
+import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.audio.AndroidAudioRenderer;
 import in.oneplay.binding.input.ControllerHandler;
@@ -28,6 +27,7 @@ import in.oneplay.nvstream.input.KeyboardPacket;
 import in.oneplay.nvstream.input.MouseButtonPacket;
 import in.oneplay.nvstream.jni.MoonBridge;
 import in.oneplay.preferences.GlPreferences;
+import in.oneplay.preferences.OneplayPreferenceConfiguration;
 import in.oneplay.preferences.PreferenceConfiguration;
 import in.oneplay.ui.GameGestures;
 import in.oneplay.ui.StreamView;
@@ -41,6 +41,7 @@ import in.oneplay.utils.UiHelper;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PictureInPictureParams;
 import android.app.Service;
 import android.content.ComponentName;
@@ -259,8 +260,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
                     prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
                 } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
+                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                    finish();
                 } else if (menuItem.getItemId() == R.id.quit_stream) {
                     finish();
                 } else if (menuItem.getItemId() == R.id.change_resolution) {

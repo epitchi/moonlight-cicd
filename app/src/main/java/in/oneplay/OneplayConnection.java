@@ -32,7 +32,7 @@ import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
-import in.oneplay.preferences.ServerPreferenceConfiguration;
+import in.oneplay.preferences.OneplayPreferenceConfiguration;
 import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
@@ -179,8 +179,10 @@ public class OneplayConnection extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        LimeLog.severe("Str. onActivityResult");
-        if (OneplayServerHelper.ONEPLAY_GAME_REQUEST_CODE == requestCode) {
+        if (requestCode == OneplayServerHelper.ONEPLAY_GAME_REQUEST_CODE  &&
+                resultCode == OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
+            startComputerUpdates();
+        } else {
             // Send quit to Oneplay API
             new Thread(() -> {
                 try {
@@ -253,7 +255,7 @@ public class OneplayConnection extends Activity {
             try {
                 OneplayApi client = OneplayApi.getInstance();
                 client.connectTo(uri);
-                ServerPreferenceConfiguration.savePreferences(this, client.getClientConfig());
+                OneplayPreferenceConfiguration.savePreferences(this, client.getClientConfig());
                 doAddPc(client.getHostAddress());
                 if (computer != null) {
                     doPair(client, computer);
