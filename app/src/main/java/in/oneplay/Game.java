@@ -88,7 +88,10 @@ import java.lang.reflect.Method;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Game extends Activity implements SurfaceHolder.Callback,
@@ -266,8 +269,24 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 } else if (menuItem.getItemId() == R.id.quit_stream) {
                     finish();
                 } else if (menuItem.getItemId() == R.id.change_resolution) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
+                    List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
+                    int currentResolutionIndex = resolutions.indexOf(currentResolution);
+                    AtomicInteger selectedResolutionIndex = new AtomicInteger(-1);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                    builder.setTitle(R.string.menu_change_resolution)
+                            .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
+                                    (dialog, which) -> selectedResolutionIndex.set(which))
+                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                if (currentResolutionIndex != selectedResolutionIndex.get()) {
+                                    OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
+                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 } else if (menuItem.getItemId() == R.id.change_bitrate) {
                     //TODO implement it
                     Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();

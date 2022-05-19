@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/oneplay_seekbar_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/menu_change_bitrate"
+        android:layout_centerHorizontal="true" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/oneplay_seekbar_title">
+
+        <SeekBar
+            android:id="@+id/oneplay_seekbar"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/oneplay_seekbar_value"
+            android:layout_width="80dp"
+            android:layout_height="48dp"
+            android:autofillHints="bitrate"
+            android:inputType="number"
+            android:text="500" />
+
+        <TextView
+            android:labelFor="@id/oneplay_seekbar_value"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text="kbps" />
+    </LinearLayout>
+</RelativeLayout>

@@ -124,6 +124,14 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setScreenResolution(Context context, String screenResolution) {
+        if (screenResolution != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.RESOLUTION_PREF_STRING, screenResolution);
+            editor.apply();
+        }
+    }
+
     private static void setVideoCodecConfig(Context context, String streamCodec, SharedPreferences.Editor editor) {
         if (streamCodec != null) {
             String[] videoNames = context.getResources().getStringArray(R.array.oneplay_video_format_names);
@@ -190,5 +198,10 @@ public class OneplayPreferenceConfiguration {
         setWindowMode(context, config.getWindowMode(), editor);
 
         editor.apply();
+    }
+
+    public static String getResolution(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
     }
 }
