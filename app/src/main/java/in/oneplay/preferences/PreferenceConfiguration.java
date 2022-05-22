@@ -14,6 +14,7 @@ public class PreferenceConfiguration {
 
     static final String RESOLUTION_PREF_STRING = "list_resolution";
     static final String FPS_PREF_STRING = "list_fps";
+    static final String MAX_BITRATE_PREF_STRING = "seekbar_max_bitrate_kbps"; //TODO save with all other settings??? variable
     static final String BITRATE_PREF_STRING = "seekbar_bitrate_kbps";
     private static final String BITRATE_PREF_OLD_STRING = "seekbar_bitrate";
     static final String STRETCH_PREF_STRING = "checkbox_stretch_video";
@@ -97,6 +98,7 @@ public class PreferenceConfiguration {
 
     public int width, height, fps;
     public int bitrate;
+    public int maxBitrate;
     public int videoFormat;
     public int deadzonePercentage;
     public int oscOpacity;
@@ -430,6 +432,8 @@ public class PreferenceConfiguration {
         if (config.bitrate == 0) {
             config.bitrate = getDefaultBitrate(context);
         }
+
+        config.maxBitrate = prefs.getInt(MAX_BITRATE_PREF_STRING, 150000);
 
         String audioConfig = prefs.getString(AUDIO_CONFIG_PREF_STRING, DEFAULT_AUDIO_CONFIG);
         if (audioConfig.equals("71")) {

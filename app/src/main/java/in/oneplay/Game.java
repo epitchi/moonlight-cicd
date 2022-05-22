@@ -66,6 +66,7 @@ import android.util.Rational;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -79,6 +80,7 @@ import android.widget.FrameLayout;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -288,8 +290,59 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 } else if (menuItem.getItemId() == R.id.change_bitrate) {
-                    //TODO implement it
-                    Toast.makeText(Game.this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                    LayoutInflater inflater = Game.this.getLayoutInflater();
+
+                    View seekBarView = inflater.inflate(R.layout.oneplay_seekbar_dialog, findViewById(R.id.oneplay_seekbar_dialog));
+
+                    int currentBitrate = prefConfig.bitrate;
+                    final int[] selectedBitrate = {currentBitrate};
+
+                    ((TextView)seekBarView.findViewById(R.id.oneplay_seekbar_title)).setText(R.string.menu_change_bitrate);
+                    ((TextView)seekBarView.findViewById(R.id.oneplay_seekbar_value_label)).setText("kbps");
+
+                    TextView dialogSeekBarValue = seekBarView.findViewById(R.id.oneplay_seekbar_value);
+                    dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
+
+                    int minValue = 500;
+
+                    SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) { }
+
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) { }
+
+                        @Override
+                        public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
+                            progress = minValue + progress;
+                            progress = progress / 500;
+                            progress = progress * 500;
+                            dialogSeekBarValue.setText(String.valueOf(progress));
+                            selectedBitrate[0] = progress;
+                        }
+                    };
+
+                    SeekBar dialogSeekBar = seekBarView.findViewById(R.id.oneplay_seekbar);
+                    dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
+                    dialogSeekBar.incrementProgressBy(500);
+                    dialogSeekBar.setProgress(selectedBitrate[0]);
+                    dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
+
+                    builder.setView(seekBarView)
+                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                if (currentBitrate != selectedBitrate[0]) {
+                                    OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
+                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    finish();
+                                } else {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 } else {
                     return false;
                 }

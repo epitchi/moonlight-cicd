@@ -58,6 +58,14 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setBitrateKbps(Context context, Integer bitrateKbps) {
+        if (bitrateKbps != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putInt(PreferenceConfiguration.BITRATE_PREF_STRING, bitrateKbps);
+            editor.apply();
+        }
+    }
+
     private static void setControllerMouseEmulation(Boolean isControllerMouseEmulationEnabled, SharedPreferences.Editor editor) {
         if (isControllerMouseEmulationEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.MOUSE_EMULATION_STRING, isControllerMouseEmulationEnabled);
@@ -103,6 +111,12 @@ public class OneplayPreferenceConfiguration {
     private static void setFps(Integer fps, SharedPreferences.Editor editor) {
         if (fps != null) {
             editor.putString(PreferenceConfiguration.FPS_PREF_STRING, fps.toString());
+        }
+    }
+
+    private static void setMaxBitrateKbps(Integer maxBitrateKbps, SharedPreferences.Editor editor) {
+        if (maxBitrateKbps != null) {
+            editor.putInt(PreferenceConfiguration.MAX_BITRATE_PREF_STRING, maxBitrateKbps);
         }
     }
 
@@ -189,6 +203,7 @@ public class OneplayPreferenceConfiguration {
         setEnablePip(config.isPipEnabled(), editor);
         setLatencyToast(config.isPostStreamToastEnabled(), editor);
         setFps(config.getGameFps(), editor);
+        setMaxBitrateKbps(config.getMaxBitrateKbps(), editor);
         setMouseNavButtons(config.isMouseNavButtonsEnabled(), editor);
         setOnscreenController(config.isOnscreenControlsEnabled(), editor);
         setScreenResolution(config.getResolution(), editor);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/oneplay_seekbar_dialog"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="20dp">
@@ -8,7 +9,6 @@
         android:id="@+id/oneplay_seekbar_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/menu_change_bitrate"
         android:layout_centerHorizontal="true" />
 
     <LinearLayout
@@ -25,18 +25,16 @@
             android:layout_height="48dp"
             android:layout_weight="1" />
 
-        <EditText
+        <TextView
             android:id="@+id/oneplay_seekbar_value"
             android:layout_width="80dp"
-            android:layout_height="48dp"
-            android:autofillHints="bitrate"
-            android:inputType="number"
-            android:text="500" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical" />
 
         <TextView
-            android:labelFor="@id/oneplay_seekbar_value"
+            android:id="@+id/oneplay_seekbar_value_label"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
-            android:text="kbps" />
+            android:layout_gravity="center_vertical" />
     </LinearLayout>
 </RelativeLayout>
