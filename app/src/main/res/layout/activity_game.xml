@@ -41,13 +41,12 @@
     <ImageButton
         android:id="@+id/settingsButton"
         style="?android:attr/borderlessButtonStyle"
-        android:layout_width="70dp"
-        android:layout_height="65dp"
+        android:layout_width="50dp"
+        android:layout_height="46dp"
         android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:cropToPadding="false"
         android:scaleType="fitXY"
-        android:src="@drawable/ic_settings" />
+        android:src="@drawable/ic_game_settings" />
 
 </merge>
