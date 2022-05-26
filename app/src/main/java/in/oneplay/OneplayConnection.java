@@ -21,6 +21,19 @@ import android.widget.ProgressBar;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Collections;
+
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
@@ -36,22 +49,6 @@ import in.oneplay.preferences.OneplayPreferenceConfiguration;
 import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class OneplayConnection extends Activity {
     private WebView webView;
     private ProgressBar progress;
@@ -60,6 +57,8 @@ public class OneplayConnection extends Activity {
     private boolean isResumed = false;
     private boolean isFirstStart = true;
     private ComputerManagerService.ApplistPoller poller;
+    private NvHTTP connection;
+    private NvApp currentApp;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
@@ -183,14 +182,18 @@ public class OneplayConnection extends Activity {
                 resultCode == OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
             startComputerUpdates();
         } else {
-            // Send quit to Oneplay API
-            new Thread(() -> {
-                try {
-                    OneplayApi.getInstance().doQuit();
-                } catch (IOException ignored) {}
-            }).start();
-            // Send quit to NV API
-            closeApps(computer);
+            if (currentApp != null) {
+                // Send quit to NV API
+                OneplayServerHelper.doQuit(this, computer, currentApp, managerBinder, () -> {
+                    currentApp = null;
+                    try {
+                        // Send quit to Oneplay API
+                        OneplayApi.getInstance().doQuit();
+                    } catch (IOException e) {
+                        LimeLog.severe(e.getMessage());
+                    }
+                });
+            }
             // Back to user account
             processingError(null, true);
         }
@@ -264,35 +267,6 @@ public class OneplayConnection extends Activity {
                 processingError(e.getMessage(), false);
             }
         }).start();
-    }
-
-    private void closeApps(ComputerDetails computer) {
-        if (computer == null) {
-            return;
-        }
-
-        String rawAppList = computer.rawAppList;
-
-        if (rawAppList == null) {
-            return;
-        }
-
-        List<NvApp> apps = getAppList(rawAppList);
-        for (NvApp app : apps) {
-            OneplayServerHelper.doQuit(OneplayConnection.this, computer, app, managerBinder, () -> {});
-        }
-    }
-
-    private List<NvApp> getAppList(String rawAppList) {
-        List<NvApp> appList = new ArrayList<>();
-
-        if (rawAppList != null) {
-            try {
-                appList = NvHTTP.getAppListByReader(new StringReader(rawAppList));
-            } catch (XmlPullParserException | IOException ignored) { }
-        }
-
-        return appList;
     }
 
     private void removeComputer() {
@@ -424,19 +398,18 @@ public class OneplayConnection extends Activity {
             LimeLog.info(getResources().getString(R.string.pairing));
         }
 
-        NvHTTP httpConn;
         String message;
         boolean success = false;
         try {
-            httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
+            connection = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
                     managerBinder.getUniqueId(),
                     computer.serverCert,
                     PlatformBinding.getCryptoProvider(OneplayConnection.this));
             final String pinStr = client.getSessionKey();
-            httpConn.addInterceptor(client.getInterceptor());
-            PairingManager pm = httpConn.getPairingManager();
+            connection.addInterceptor(client.getInterceptor());
+            PairingManager pm = connection.getPairingManager();
 
-            PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
+            PairingManager.PairState pairState = pm.pair(connection.getServerInfo(), pinStr);
             if (pairState == PairingManager.PairState.PIN_WRONG) {
                 message = getResources().getString(R.string.pair_incorrect_pin);
             } else if (pairState == PairingManager.PairState.FAILED) {
@@ -503,11 +476,16 @@ public class OneplayConnection extends Activity {
                 return;
             }
 
-            if (details.rawAppList != null) {
-                stopComputerUpdates();
-
-                NvApp app = getAppList(details.rawAppList).get(0); // Always get first app (Desktop)
-                OneplayServerHelper.doStart(this, app, computer, managerBinder);
+            if (connection != null) {
+                try {
+                    currentApp = connection.getAppByName("Desktop"); // Always get first app (Desktop)
+                    if (currentApp != null) {
+                        stopComputerUpdates();
+                        OneplayServerHelper.doStart(this, currentApp, computer, managerBinder);
+                    }
+                } catch (XmlPullParserException | IOException e) {
+                    LimeLog.severe(e.getMessage());
+                }
             }
         });
 
