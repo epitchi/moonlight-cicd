@@ -285,7 +285,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
                     List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
                     int currentResolutionIndex = resolutions.indexOf(currentResolution);
-                    AtomicInteger selectedResolutionIndex = new AtomicInteger(-1);
+                    AtomicInteger selectedResolutionIndex = new AtomicInteger(currentResolutionIndex);
                     AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
                     builder.setTitle(R.string.menu_change_resolution)
                             .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
