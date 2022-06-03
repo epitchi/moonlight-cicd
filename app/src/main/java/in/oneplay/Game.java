@@ -1,6 +1,7 @@
 package in.oneplay;
 
 
+import in.oneplay.backend.OneplayApi;
 import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.audio.AndroidAudioRenderer;
@@ -22,6 +23,7 @@ import in.oneplay.nvstream.NvConnection;
 import in.oneplay.nvstream.NvConnectionListener;
 import in.oneplay.nvstream.StreamConfiguration;
 import in.oneplay.nvstream.http.ComputerDetails;
+import in.oneplay.nvstream.http.GfeHttpResponseException;
 import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.input.KeyboardPacket;
 import in.oneplay.nvstream.input.MouseButtonPacket;
@@ -84,9 +86,14 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -161,6 +168,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private WifiManager.WifiLock highPerfWifiLock;
     private WifiManager.WifiLock lowLatencyWifiLock;
 
+    private boolean isNeedRefresh = false;
+
     private boolean connectedToUsbDriverService = false;
     private ServiceConnection usbDriverServiceConnection = new ServiceConnection() {
         @Override
@@ -190,6 +199,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setResult(RESULT_OK);
 
         UiHelper.setLocale(this);
 
@@ -259,13 +269,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
             settingsMenu.setOnMenuItemClickListener((menuItem) -> {
                 if (menuItem.getItemId() == R.id.show_keyboard) {
-                    showKeyboard();
+                    toggleKeyboard();
                 } else if (menuItem.getItemId() == R.id.show_hide_stats) {
                     boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
                     performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
                     prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
                 } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
                     OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
+                    isNeedRefresh = true;
                     setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
                     finish();
                 } else if (menuItem.getItemId() == R.id.quit_stream) {
@@ -282,6 +293,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                             .setPositiveButton(android.R.string.ok, (dialog, id) -> {
                                 if (currentResolutionIndex != selectedResolutionIndex.get()) {
                                     OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
+                                    isNeedRefresh = true;
                                     setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
                                     finish();
                                 }
@@ -333,6 +345,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                             .setPositiveButton(android.R.string.ok, (dialog, id) -> {
                                 if (currentBitrate != selectedBitrate[0]) {
                                     OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
+                                    isNeedRefresh = true;
                                     setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
                                     finish();
                                 } else {
@@ -1144,7 +1157,47 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
-        finish();
+        // Quit app
+        new Thread(() -> {
+            if (!isNeedRefresh) {
+                String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
+                LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
+                String message = null;
+                try {
+                    if (conn.stopApp()) {
+                        LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
+                    } else {
+                        message = getString(R.string.applist_quit_fail) + " " + appName;
+                    }
+                } catch (GfeHttpResponseException e) {
+                    if (e.getErrorCode() == 599) {
+                        message = "This session wasn't started by this device," +
+                                " so it cannot be quit. End streaming on the original " +
+                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")";
+                    } else {
+                        message = e.getMessage();
+                    }
+                } catch (UnknownHostException e) {
+                    message = getString(R.string.error_unknown_host);
+                } catch (FileNotFoundException e) {
+                    message = getString(R.string.error_404);
+                } catch (IOException | XmlPullParserException e) {
+                    message = e.getMessage();
+                } finally {
+                    try {
+                        OneplayApi.getInstance().doQuit();
+                    } catch (IOException e) {
+                        LimeLog.severe(e.getMessage());
+                    }
+
+                    finish();
+                }
+
+                if (message != null) {
+                    LimeLog.severe(message);
+                }
+            }
+        }).start();
     }
 
     private final Runnable toggleGrab = new Runnable() {
@@ -1316,7 +1369,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // Hack: gboard doesn't send shift key event for symbols or key up it before a key pressed
             if ((modifiers & KeyboardPacket.MODIFIER_SHIFT) == KeyboardPacket.MODIFIER_SHIFT &&
                     (getModifierState() & KeyboardPacket.MODIFIER_SHIFT) != KeyboardPacket.MODIFIER_SHIFT) {
-                conn.sendKeyboardInput(KeyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT), KeyboardPacket.KEY_DOWN, modifiers);
+                conn.sendKeyboardInput(keyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT, event.getDeviceId()), KeyboardPacket.KEY_DOWN, modifiers);
             }
 
             conn.sendKeyboardInput(translated, KeyboardPacket.KEY_DOWN, modifiers);
@@ -1388,7 +1441,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // Hack: gboard doesn't send shift key event for symbols or key up it before a key pressed
             if ((modifiers & KeyboardPacket.MODIFIER_SHIFT) == KeyboardPacket.MODIFIER_SHIFT &&
                     (getModifierState() & KeyboardPacket.MODIFIER_SHIFT) != KeyboardPacket.MODIFIER_SHIFT) {
-                conn.sendKeyboardInput(KeyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT), KeyboardPacket.KEY_UP, modifiers);
+                conn.sendKeyboardInput(keyboardTranslator.translate(KeyEvent.KEYCODE_SHIFT_LEFT, event.getDeviceId()), KeyboardPacket.KEY_UP, modifiers);
             }
         }
 

@@ -56,8 +56,6 @@ public class OneplayConnection extends Activity {
     private FirebaseAnalytics mFirebaseAnalytics;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
-    private ComputerManagerService.ApplistPoller poller;
-    private NvHTTP connection;
     private NvApp currentApp;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
@@ -182,18 +180,7 @@ public class OneplayConnection extends Activity {
                 resultCode == OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
             startComputerUpdates();
         } else {
-            if (currentApp != null) {
-                // Send quit to NV API
-                OneplayServerHelper.doQuit(this, computer, currentApp, managerBinder, () -> {
-                    currentApp = null;
-                    try {
-                        // Send quit to Oneplay API
-                        OneplayApi.getInstance().doQuit();
-                    } catch (IOException e) {
-                        LimeLog.severe(e.getMessage());
-                    }
-                });
-            }
+            currentApp = null;
             // Back to user account
             processingError(null, true);
         }
@@ -260,9 +247,6 @@ public class OneplayConnection extends Activity {
                 client.connectTo(uri);
                 OneplayPreferenceConfiguration.savePreferences(this, client.getClientConfig());
                 doAddPc(client.getHostAddress());
-                if (computer != null) {
-                    doPair(client, computer);
-                }
             } catch (IOException e) {
                 processingError(e.getMessage(), false);
             }
@@ -338,10 +322,10 @@ public class OneplayConnection extends Activity {
         boolean success;
         int portTestResult;
 
-        computer = new ComputerDetails();
+        ComputerDetails fakeDetails = new ComputerDetails();
         try {
-            computer.manualAddress = host;
-            success = managerBinder.addComputerBlocking(computer);
+            fakeDetails.manualAddress = host;
+            success = managerBinder.addComputerBlocking(fakeDetails);
         } catch (IllegalArgumentException e) {
             // This can be thrown from OkHttp if the host fails to canonicalize to a valid name.
             // https://github.com/square/okhttp/blob/okhttp_27/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java#L705
@@ -373,13 +357,22 @@ public class OneplayConnection extends Activity {
             }
             message = getResources().getString(R.string.conn_error_title) + ": " + dialogText;
         } else {
+            managerBinder.startPolling(details -> {
+                if (details.state == ComputerDetails.State.ONLINE) {
+                    computer = details;
+                    doPair();
+                }
+                runningPolling = true;
+            });
             return;
         }
 
         processingError(message, true);
     }
 
-    private void doPair(final OneplayApi client, final ComputerDetails computer) {
+    private boolean runningPolling;
+
+    private void doPair() {
         if (computer.state == ComputerDetails.State.OFFLINE ||
                 ServerHelper.getCurrentAddressFromComputer(computer) == null) {
             processingError(getResources().getString(R.string.pair_pc_offline), true);
@@ -398,110 +391,96 @@ public class OneplayConnection extends Activity {
             LimeLog.info(getResources().getString(R.string.pairing));
         }
 
-        String message;
-        boolean success = false;
-        try {
-            connection = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
-                    managerBinder.getUniqueId(),
-                    computer.serverCert,
-                    PlatformBinding.getCryptoProvider(OneplayConnection.this));
-            final String pinStr = client.getSessionKey();
-            connection.addInterceptor(client.getInterceptor());
-            PairingManager pm = connection.getPairingManager();
+        new Thread(() -> {
+            NvHTTP httpConn;
+            String message;
+            try {
+                // Stop updates and wait while pairing
+                stopComputerUpdates();
 
-            PairingManager.PairState pairState = pm.pair(connection.getServerInfo(), pinStr);
-            if (pairState == PairingManager.PairState.PIN_WRONG) {
-                message = getResources().getString(R.string.pair_incorrect_pin);
-            } else if (pairState == PairingManager.PairState.FAILED) {
-                message = getResources().getString(R.string.pair_fail);
-            } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
-                message = getResources().getString(R.string.pair_already_in_progress);
-            } else if (pairState == PairingManager.PairState.PAIRED) {
-                // Just navigate to the app view without displaying a toast
-                message = null;
-                success = true;
+                httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
+                        managerBinder.getUniqueId(),
+                        computer.serverCert,
+                        PlatformBinding.getCryptoProvider(OneplayConnection.this));
+                OneplayApi client = OneplayApi.getInstance();
+                final String pinStr = client.getSessionKey();
+                httpConn.addInterceptor(client.getInterceptor());
+                PairingManager pm = httpConn.getPairingManager();
 
-                // Pin this certificate for later HTTPS use
-                managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
+                PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
+                if (pairState == PairingManager.PairState.PIN_WRONG) {
+                    message = getResources().getString(R.string.pair_incorrect_pin);
+                } else if (pairState == PairingManager.PairState.FAILED) {
+                    message = getResources().getString(R.string.pair_fail);
+                } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
+                    message = getResources().getString(R.string.pair_already_in_progress);
+                } else if (pairState == PairingManager.PairState.PAIRED) {
+                    // Pin this certificate for later HTTPS use
+                    managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
 
-                // Invalidate reachability information after pairing to force
-                // a refresh before reading pair state again
-                managerBinder.invalidateStateForComputer(computer.uuid);
-            } else {
-                // Should be no other values
-                message = null;
+                    // Invalidate reachability information after pairing to force
+                    // a refresh before reading pair state again
+                    managerBinder.invalidateStateForComputer(computer.uuid);
+
+                    runOnUiThread(this::startComputerUpdates);
+                    return;
+                } else {
+                    // Should be no other values
+                    message = null;
+                }
+            } catch (UnknownHostException e) {
+                message = getResources().getString(R.string.error_unknown_host);
+            } catch (FileNotFoundException e) {
+                message = getResources().getString(R.string.error_404);
+            } catch (XmlPullParserException | IOException e) {
+                e.printStackTrace();
+                message = e.getMessage();
             }
-        } catch (UnknownHostException e) {
-            message = getResources().getString(R.string.error_unknown_host);
-        } catch (FileNotFoundException e) {
-            message = getResources().getString(R.string.error_404);
-        } catch (XmlPullParserException | IOException e) {
-            e.printStackTrace();
-            message = e.getMessage();
-            if (message == null)
-                message = "Empty IOException";
-        }
 
-        if (success) {
-            startComputerUpdates();
-        } else {
-            processingError(message, true);
-        }
+            final String finalMessage = message;
+            runOnUiThread(() -> processingError(finalMessage, true));
+        }).start();
+
     }
 
     private void startComputerUpdates() {
-        // Don't start polling if we're not bound
-        if (managerBinder == null) {
-            return;
-        }
-
         managerBinder.startPolling(details -> {
+            if (details.pairState == PairingManager.PairState.PAIRED) {
+                new Thread(() -> {
+                    stopComputerUpdates();
+                    try {
+                        NvHTTP httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(details),
+                                managerBinder.getUniqueId(),
+                                details.serverCert,
+                                PlatformBinding.getCryptoProvider(OneplayConnection.this));
 
-            // Don't care about other computers
-            if (!details.uuid.equalsIgnoreCase(computer.uuid)) {
-                return;
-            }
+                        currentApp = httpConn.getAppByName("Desktop"); // Always get first app (Desktop)
 
-            if (details.state == ComputerDetails.State.OFFLINE) {
-                // The PC is unreachable now
-                stopComputerUpdates();
-                processingError(getString(R.string.lost_connection), true);
-                return;
-            }
-
-            // Close immediately if the PC is no longer paired
-            if (details.state == ComputerDetails.State.ONLINE && details.pairState != PairingManager.PairState.PAIRED) {
-                stopComputerUpdates();
-                processingError(getString(R.string.scut_not_paired), true);
-                return;
-            }
-
-            if (connection != null) {
-                try {
-                    currentApp = connection.getAppByName("Desktop"); // Always get first app (Desktop)
-                    if (currentApp != null) {
-                        stopComputerUpdates();
-                        OneplayServerHelper.doStart(this, currentApp, computer, managerBinder);
+                        if (currentApp != null) {
+                            runOnUiThread(() -> OneplayServerHelper.doStart(this, currentApp, details, managerBinder));
+                        } else {
+                            processingError(getString(R.string.applist_refresh_error_msg), true);
+                        }
+                    } catch (XmlPullParserException | IOException e) {
+                        processingError(getString(R.string.applist_refresh_error_msg) + ": " + e.getMessage(), true);
                     }
-                } catch (XmlPullParserException | IOException e) {
-                    LimeLog.severe(e.getMessage());
-                }
+                }).start();
             }
         });
-
-        if (poller == null) {
-            poller = managerBinder.createAppListPoller(computer);
-        }
-        poller.start();
+        runningPolling = true;
     }
 
     private void stopComputerUpdates() {
-        if (poller != null) {
-            poller.stop();
-        }
-
         if (managerBinder != null) {
+            if (!runningPolling) {
+                return;
+            }
+
             managerBinder.stopPolling();
+
+            managerBinder.waitForPollingStopped();
+
+            runningPolling = false;
         }
     }
 

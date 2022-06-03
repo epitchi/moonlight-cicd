@@ -192,6 +192,11 @@ public class NvConnection {
         }
     }
 
+    public boolean stopApp() throws XmlPullParserException, IOException {
+        NvHTTP h = new NvHTTP(context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
+        return h.quitApp();
+    }
+
     protected boolean quitAndLaunch(NvHTTP h, ConnectionContext context) throws IOException,
             XmlPullParserException {
         try {
