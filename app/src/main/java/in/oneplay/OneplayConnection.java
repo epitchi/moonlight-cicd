@@ -404,7 +404,9 @@ public class OneplayConnection extends Activity {
                         PlatformBinding.getCryptoProvider(OneplayConnection.this));
                 OneplayApi client = OneplayApi.getInstance();
                 final String pinStr = client.getSessionKey();
-                httpConn.addInterceptor(client.getInterceptor());
+                httpConn.addInterceptor(client.getInterceptor((result) -> {
+                    if (!result) runOnUiThread(() -> processingError("Session key not accepted", true));
+                }));
                 PairingManager pm = httpConn.getPairingManager();
 
                 PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);

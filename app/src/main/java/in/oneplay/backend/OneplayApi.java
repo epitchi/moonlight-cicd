@@ -1,12 +1,10 @@
 package in.oneplay.backend;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
-import in.oneplay.R;
 import in.oneplay.nvstream.http.GfeHttpResponseException;
 
 import org.json.JSONException;
@@ -67,6 +65,10 @@ public class OneplayApi {
     private String gameId;
 
     private ClientConfig clientConfig;
+
+    public interface PinAuthorizationCallback {
+        void onResult(boolean result);
+    }
 
     public static OneplayApi getInstance() {
         OneplayApi localInstance = instance;
@@ -139,14 +141,14 @@ public class OneplayApi {
         unpairAll();
     }
 
-    public Interceptor getInterceptor() {
+    public Interceptor getInterceptor(PinAuthorizationCallback c) {
         return (Interceptor.Chain chain) -> {
             Request request = chain.request();
             if ("GET".equals(request.method()) &&
                     hostAddress.equals(request.url().host()) &&
                     "/pair".equals(request.url().encodedPath())) {
 
-                new Thread(() -> setHostSessionKey(sessionKey)).start();
+                new Thread(() -> c.onResult(setHostSessionKey(sessionKey))).start();
             }
 
             return chain.proceed(request);
@@ -266,11 +268,10 @@ public class OneplayApi {
             // Give time to process request at the server
             Thread.sleep(500);
             String body = new JSONObject().put("pin", key).toString();
-            String response = openHttpConnectionPostToString(basePinRequestUrl + "/api/pin", body);
+            String requestUrl = basePinRequestUrl + "/api/pin";
+            String response = openHttpConnectionPostToString(requestUrl, body);
 
-            if (new JSONObject(response).getBoolean("status")) {
-                return true;
-            }
+            return (new JSONObject(response).getBoolean("status"));
         } catch (IOException | JSONException | InterruptedException e) {
             LimeLog.severe(e.getMessage());
             if (verbose) {
