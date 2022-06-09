@@ -169,6 +169,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private WifiManager.WifiLock lowLatencyWifiLock;
 
     private boolean isNeedRefresh = false;
+    private boolean isNeedRelaunch = false;
 
     private boolean connectedToUsbDriverService = false;
     private ServiceConnection usbDriverServiceConnection = new ServiceConnection() {
@@ -377,7 +378,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 } else if (menuItem.getItemId() == R.id.relaunch_game) {
-
+                    isNeedRefresh = true;
+                    isNeedRelaunch = true;
+                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                    finish();
                 } else if (menuItem.getItemId() == R.id.report_issue) {
 
                 } else {
@@ -1208,10 +1212,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 } catch (IOException | XmlPullParserException e) {
                     message = e.getMessage();
                 } finally {
-                    try {
-                        OneplayApi.getInstance().doQuit();
-                    } catch (IOException e) {
-                        LimeLog.severe(e.getMessage());
+                    if (!isNeedRelaunch) {
+                        try {
+                            OneplayApi.getInstance().doQuit();
+                        } catch (IOException e) {
+                            LimeLog.severe(e.getMessage());
+                        }
                     }
 
                     finish();
