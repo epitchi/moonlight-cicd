@@ -146,17 +146,17 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
-    private static void setVideoCodecConfig(Context context, String streamCodec, SharedPreferences.Editor editor) {
+    private static void setVideoCodecConfig(String streamCodec, SharedPreferences.Editor editor) {
         if (streamCodec != null) {
-            String[] videoNames = context.getResources().getStringArray(R.array.oneplay_video_format_names);
-            String[] videoValues = context.getResources().getStringArray(R.array.video_format_values);
+            editor.putString(PreferenceConfiguration.VIDEO_FORMAT_PREF_STRING, streamCodec).apply();
+        }
+    }
 
-            for (int i = 0; i < videoNames.length; i++) {
-                if (videoNames[i].equals(streamCodec)) {
-                    editor.putString(PreferenceConfiguration.VIDEO_FORMAT_PREF_STRING, videoValues[i]).apply();
-                    return;
-                }
-            }
+    public static void setVideoCodecConfig(Context context, String streamCodec) {
+        if (streamCodec != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.VIDEO_FORMAT_PREF_STRING, streamCodec);
+            editor.apply();
         }
     }
 
@@ -207,7 +207,7 @@ public class OneplayPreferenceConfiguration {
         setMouseNavButtons(config.isMouseNavButtonsEnabled(), editor);
         setOnscreenController(config.isOnscreenControlsEnabled(), editor);
         setScreenResolution(config.getResolution(), editor);
-        setVideoCodecConfig(context, config.getStreamCodec(), editor);
+        setVideoCodecConfig(config.getStreamCodec(), editor);
         setUnlockFps(config.isUnlockFpsEnabled(), editor);
         setVibrateOsc(config.isVibrateOscEnabled(), editor);
         setWindowMode(context, config.getWindowMode(), editor);
@@ -218,5 +218,10 @@ public class OneplayPreferenceConfiguration {
     public static String getResolution(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
+    }
+
+    public static String getVideoCodecConfig(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(PreferenceConfiguration.VIDEO_FORMAT_PREF_STRING, PreferenceConfiguration.DEFAULT_VIDEO_FORMAT);
     }
 }

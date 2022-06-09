@@ -97,11 +97,6 @@
         <item>@string/videoformat_hevcalways</item>
         <item>@string/videoformat_hevcnever</item>
     </string-array>
-    <string-array name="oneplay_video_format_names" translatable="false">
-        <item>auto</item>
-        <item>H.264</item>
-        <item>HEVC</item>
-    </string-array>
     <string-array name="video_format_values" translatable="false">
         <item>auto</item>
         <item>forceh265</item>

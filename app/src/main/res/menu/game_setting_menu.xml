@@ -23,4 +23,16 @@
     <item
         android:id="@+id/change_bitrate"
         android:title="@string/menu_change_bitrate" />
+
+    <item
+        android:id="@+id/change_decoder"
+        android:title="@string/menu_change_decoder" />
+
+    <item
+        android:id="@+id/relaunch_game"
+        android:title="@string/menu_relaunch_game" />
+
+    <item
+        android:id="@+id/report_issue"
+        android:title="@string/menu_report_issue" />
 </menu>

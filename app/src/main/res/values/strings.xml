@@ -274,5 +274,8 @@
     <string name="menu_toggle_full_screen">Toggle full screen</string>
     <string name="menu_quit_stream">Quit Stream</string>
     <string name="menu_change_resolution">Change Resolution if possible</string>
-    <string name="menu_change_bitrate">Change Bitrate If Possible</string>
+    <string name="menu_change_bitrate">Change Bitrate if Possible</string>
+    <string name="menu_change_decoder">Change Decoder if Possible</string>
+    <string name="menu_relaunch_game">Relaunch game</string>
+    <string name="menu_report_issue">Report issue</string>
 </resources>

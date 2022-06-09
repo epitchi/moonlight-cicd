@@ -356,6 +356,30 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                     AlertDialog dialog = builder.create();
                     dialog.show();
+                } else if (menuItem.getItemId() == R.id.change_decoder) {
+                    String currentDecoder = OneplayPreferenceConfiguration.getVideoCodecConfig(this);
+                    List<String> videoFormatValues = Arrays.asList(getResources().getStringArray(R.array.video_format_values));
+                    int currentDecoderIndex = videoFormatValues.indexOf(currentDecoder);
+                    AtomicInteger selectedDecoderIndex = new AtomicInteger(currentDecoderIndex);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                    builder.setTitle(R.string.menu_change_decoder)
+                            .setSingleChoiceItems(R.array.video_format_names, currentDecoderIndex,
+                                    (dialog, which) -> selectedDecoderIndex.set(which))
+                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                if (currentDecoderIndex != selectedDecoderIndex.get()) {
+                                    OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
+                                    isNeedRefresh = true;
+                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                } else if (menuItem.getItemId() == R.id.relaunch_game) {
+
+                } else if (menuItem.getItemId() == R.id.report_issue) {
+
                 } else {
                     return false;
                 }
