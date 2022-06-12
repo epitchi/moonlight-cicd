@@ -378,7 +378,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 } else if (menuItem.getItemId() == R.id.relaunch_game) {
-                    isNeedRefresh = true;
+                    isNeedRefresh = false;
                     isNeedRelaunch = true;
                     setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
                     finish();
