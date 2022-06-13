@@ -383,7 +383,26 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
                     finish();
                 } else if (menuItem.getItemId() == R.id.report_issue) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                    LayoutInflater inflater = Game.this.getLayoutInflater();
 
+                    View reportIssueView = inflater.inflate(R.layout.report_issue_view, findViewById(R.id.report_issue_view));
+
+                    TextView reportIssueText = reportIssueView.findViewById(R.id.report_issue_text);
+
+                    builder.setView(reportIssueView)
+                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                String message = reportIssueText.getText().toString();
+                                if (!message.isEmpty()) {
+                                    OneplayApi.getInstance().registerEvent(message);
+                                } else {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 } else {
                     return false;
                 }
