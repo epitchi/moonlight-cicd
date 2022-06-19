@@ -1,76 +1,67 @@
 package in.oneplay;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.UnknownHostException;
-
-import in.oneplay.R;
-
-import in.oneplay.binding.PlatformBinding;
-import in.oneplay.binding.crypto.AndroidCryptoProvider;
-import in.oneplay.computers.ComputerManagerListener;
-import in.oneplay.computers.ComputerManagerService;
-import in.oneplay.grid.PcGridAdapter;
-import in.oneplay.grid.assets.DiskAssetLoader;
-import in.oneplay.nvstream.http.ComputerDetails;
-import in.oneplay.nvstream.http.NvApp;
-import in.oneplay.nvstream.http.NvHTTP;
-import in.oneplay.nvstream.http.PairingManager;
-import in.oneplay.nvstream.http.PairingManager.PairState;
-import in.oneplay.nvstream.wol.WakeOnLanSender;
-import in.oneplay.preferences.AddComputerManually;
-import in.oneplay.preferences.GlPreferences;
-import in.oneplay.preferences.PreferenceConfiguration;
-import in.oneplay.preferences.StreamSettings;
-import in.oneplay.ui.AdapterFragment;
-import in.oneplay.ui.AdapterFragmentCallbacks;
-import in.oneplay.utils.Dialog;
-import in.oneplay.utils.HelpLauncher;
-import in.oneplay.utils.ServerHelper;
-import in.oneplay.utils.ShortcutHelper;
-import in.oneplay.utils.UiHelper;
-
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.res.Configuration;
-import android.opengl.GLSurfaceView;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.View.OnClickListener;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ImageButton;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
-import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Collections;
 
-public class PcView extends Activity implements AdapterFragmentCallbacks {
-    private RelativeLayout noPcFoundLayout;
-    private PcGridAdapter pcGridAdapter;
-    private ShortcutHelper shortcutHelper;
-    private ComputerManagerService.ComputerManagerBinder managerBinder;
-    private boolean freezeUpdates, runningPolling, inForeground, completeOnCreateCalled;
+import in.oneplay.backend.OneplayApi;
+import in.oneplay.binding.PlatformBinding;
+import in.oneplay.binding.crypto.AndroidCryptoProvider;
+import in.oneplay.computers.ComputerManagerService;
+import in.oneplay.nvstream.http.ComputerDetails;
+import in.oneplay.nvstream.http.NvApp;
+import in.oneplay.nvstream.http.NvHTTP;
+import in.oneplay.nvstream.http.PairingManager;
+import in.oneplay.nvstream.jni.MoonBridge;
+import in.oneplay.preferences.OneplayPreferenceConfiguration;
+import in.oneplay.utils.ServerHelper;
+import in.oneplay.utils.UiHelper;
+
+public class PcView extends Activity {
+    private WebView webView;
+    private ProgressBar progress;
+    private Intent currentIntent;
+    private FirebaseAnalytics mFirebaseAnalytics;
+    private boolean isResumed = false;
+    private boolean isFirstStart = true;
+    private NvApp currentApp;
+    private volatile ComputerDetails computer;
+    private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
+
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             final ComputerManagerService.ComputerManagerBinder localBinder =
-                    ((ComputerManagerService.ComputerManagerBinder)binder);
+                    ((ComputerManagerService.ComputerManagerBinder) binder);
 
             // Wait in a separate thread to avoid stalling the UI
             new Thread() {
@@ -82,11 +73,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                     // Now make the binder visible
                     managerBinder = localBinder;
 
-                    // Start updates
-                    startComputerUpdates();
-
                     // Force a keypair to be generated early to avoid discovery delays
                     new AndroidCryptoProvider(PcView.this).getClientCertificate();
+
+                    connectToComputer();
                 }
             }.start();
         }
@@ -97,31 +87,13 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
     };
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        // Only reinitialize views if completeOnCreate() was called
-        // before this callback. If it was not, completeOnCreate() will
-        // handle initializing views with the config change accounted for.
-        // This is not prone to races because both callbacks are invoked
-        // in the main thread.
-        if (completeOnCreateCalled) {
-            // Reinitialize views just in case orientation changed
-            initializeViews();
-        }
-    }
+        currentIntent = getIntent();
 
-    private final static int PAIR_ID = 2;
-    private final static int UNPAIR_ID = 3;
-    private final static int WOL_ID = 4;
-    private final static int DELETE_ID = 5;
-    private final static int RESUME_ID = 6;
-    private final static int QUIT_ID = 7;
-    private final static int VIEW_DETAILS_ID = 8;
-    private final static int FULL_APP_LIST_ID = 9;
-    private final static int TEST_NETWORK_ID = 10;
+        UiHelper.setLocale(this);
 
-    private void initializeViews() {
         setContentView(R.layout.activity_pc_view);
 
         UiHelper.notifyNewRootView(this);
@@ -131,647 +103,390 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
             setShouldDockBigOverlays(false);
         }
 
+        // Fix nav bar overlapping
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+
         // Set default preferences if we've never been run
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-        // Set the correct layout for the PC grid
-        pcGridAdapter.updateLayoutWithPreferences(this, PreferenceConfiguration.readPreferences(this));
+        webView = findViewById(R.id.webview);
+        progress = findViewById(R.id.progress);
 
-        // Setup the list view
-        ImageButton settingsButton = findViewById(R.id.settingsButton);
-        ImageButton addComputerButton = findViewById(R.id.manuallyAddPc);
-        ImageButton helpButton = findViewById(R.id.helpButton);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        settingsButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(PcView.this, StreamSettings.class));
-            }
-        });
-        addComputerButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(PcView.this, AddComputerManually.class);
-                startActivity(i);
-            }
-        });
-        helpButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                HelpLauncher.launchSetupGuide(PcView.this);
-            }
-        });
-
-        // Amazon review didn't like the help button because the wiki was not entirely
-        // navigable via the Fire TV remote (though the relevant parts were). Let's hide
-        // it on Fire TV.
-        if (getPackageManager().hasSystemFeature("amazon.hardware.fire_tv")) {
-            helpButton.setVisibility(View.GONE);
-        }
-
-        getFragmentManager().beginTransaction()
-            .replace(R.id.pcFragmentContainer, new AdapterFragment())
-            .commitAllowingStateLoss();
-
-        noPcFoundLayout = findViewById(R.id.no_pc_found_layout);
-        if (pcGridAdapter.getCount() == 0) {
-            noPcFoundLayout.setVisibility(View.VISIBLE);
-        }
-        else {
-            noPcFoundLayout.setVisibility(View.INVISIBLE);
-        }
-        pcGridAdapter.notifyDataSetChanged();
+        initializeWebView();
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // Assume we're in the foreground when created to avoid a race
-        // between binding to CMS and onResume()
-        inForeground = true;
-
-        // Create a GLSurfaceView to fetch GLRenderer unless we have
-        // a cached result already.
-        final GlPreferences glPrefs = GlPreferences.readPreferences(this);
-        if (!glPrefs.savedFingerprint.equals(Build.FINGERPRINT) || glPrefs.glRenderer.isEmpty()) {
-            GLSurfaceView surfaceView = new GLSurfaceView(this);
-            surfaceView.setRenderer(new GLSurfaceView.Renderer() {
-                @Override
-                public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-                    // Save the GLRenderer string so we don't need to do this next time
-                    glPrefs.glRenderer = gl10.glGetString(GL10.GL_RENDERER);
-                    glPrefs.savedFingerprint = Build.FINGERPRINT;
-                    glPrefs.writePreferences();
-
-                    LimeLog.info("Fetched GL Renderer: " + glPrefs.glRenderer);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            completeOnCreate();
-                        }
-                    });
-                }
-
-                @Override
-                public void onSurfaceChanged(GL10 gl10, int i, int i1) {
-                }
-
-                @Override
-                public void onDrawFrame(GL10 gl10) {
-                }
-            });
-            setContentView(surfaceView);
-        }
-        else {
-            LimeLog.info("Cached GL Renderer: " + glPrefs.glRenderer);
-            completeOnCreate();
-        }
-    }
-
-    private void completeOnCreate() {
-        completeOnCreateCalled = true;
-
-        shortcutHelper = new ShortcutHelper(this);
-
-        UiHelper.setLocale(this);
-
-        // Bind to the computer manager service
-        bindService(new Intent(PcView.this, ComputerManagerService.class), serviceConnection,
-                Service.BIND_AUTO_CREATE);
-
-        pcGridAdapter = new PcGridAdapter(this, PreferenceConfiguration.readPreferences(this));
-
-        initializeViews();
-    }
-
-    private void startComputerUpdates() {
-        // Only allow polling to start if we're bound to CMS, polling is not already running,
-        // and our activity is in the foreground.
-        if (managerBinder != null && !runningPolling && inForeground) {
-            freezeUpdates = false;
-            managerBinder.startPolling(new ComputerManagerListener() {
-                @Override
-                public void notifyComputerUpdated(final ComputerDetails details) {
-                    if (!freezeUpdates) {
-                        PcView.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateComputer(details);
-                            }
-                        });
-                    }
-                }
-            });
-            runningPolling = true;
-        }
-    }
-
-    private void stopComputerUpdates(boolean wait) {
-        if (managerBinder != null) {
-            if (!runningPolling) {
-                return;
-            }
-
-            freezeUpdates = true;
-
-            managerBinder.stopPolling();
-
-            if (wait) {
-                managerBinder.waitForPollingStopped();
-            }
-
-            runningPolling = false;
-        }
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        currentIntent = intent;
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (managerBinder != null) {
-            unbindService(serviceConnection);
-        }
+    protected void onPause() {
+        super.onPause();
+        isResumed = true;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        // Display a decoder crash notification if we've returned after a crash
-        UiHelper.showDecoderCrashDialog(this);
+        if (isFirstStart && Intent.ACTION_VIEW.equals(currentIntent.getAction()) && currentIntent.getData() != null) {
+            isFirstStart = false;
 
-        inForeground = true;
-        startComputerUpdates();
-    }
+            webView.setVisibility(View.GONE);
+            progress.setVisibility(View.VISIBLE);
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        inForeground = false;
-        stopComputerUpdates(false);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        Dialog.closeDialogs();
-    }
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        stopComputerUpdates(false);
-
-        // Call superclass
-        super.onCreateContextMenu(menu, v, menuInfo);
-                
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-        ComputerObject computer = (ComputerObject) pcGridAdapter.getItem(info.position);
-
-        // Add a header with PC status details
-        menu.clearHeader();
-        String headerTitle = computer.details.name + " - ";
-        switch (computer.details.state)
-        {
-            case ONLINE:
-                headerTitle += getResources().getString(R.string.pcview_menu_header_online);
-                break;
-            case OFFLINE:
-                menu.setHeaderIcon(R.drawable.ic_pc_offline);
-                headerTitle += getResources().getString(R.string.pcview_menu_header_offline);
-                break;
-            case UNKNOWN:
-                headerTitle += getResources().getString(R.string.pcview_menu_header_unknown);
-                break;
-        }
-
-        menu.setHeaderTitle(headerTitle);
-
-        // Inflate the context menu
-        if (computer.details.state == ComputerDetails.State.OFFLINE ||
-            computer.details.state == ComputerDetails.State.UNKNOWN) {
-            menu.add(Menu.NONE, WOL_ID, 1, getResources().getString(R.string.pcview_menu_send_wol));
-        }
-        else if (computer.details.pairState != PairState.PAIRED) {
-            menu.add(Menu.NONE, PAIR_ID, 1, getResources().getString(R.string.pcview_menu_pair_pc));
-        }
-        else {
-            if (computer.details.runningGameId != 0) {
-                menu.add(Menu.NONE, RESUME_ID, 1, getResources().getString(R.string.applist_menu_resume));
-                menu.add(Menu.NONE, QUIT_ID, 2, getResources().getString(R.string.applist_menu_quit));
+            if (managerBinder == null) {
+                // Bind to the ComputerManager service
+                bindService(new Intent(PcView.this,
+                        ComputerManagerService.class), serviceConnection, Service.BIND_AUTO_CREATE);
+            } else {
+                connectToComputer();
+            }
+        } else {
+            URI welcomeLink = null;
+            try {
+                welcomeLink = new URI(
+                        OneplayApi.SSL_CONNECTION_TYPE,
+                        OneplayApi.ONEPLAY_DOMAIN,
+                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_PATH,
+                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_QUERY,
+                        null
+                );
+            } catch (URISyntaxException e) {
+                LimeLog.severe(e.getMessage());
             }
 
-            menu.add(Menu.NONE, FULL_APP_LIST_ID, 4, getResources().getString(R.string.pcview_menu_app_list));
+            webView.setVisibility(View.VISIBLE);
+            if (!isResumed && welcomeLink != null) {
+                webView.loadUrl(welcomeLink.toString());
+            }
+            progress.setVisibility(View.GONE);
         }
-
-        menu.add(Menu.NONE, TEST_NETWORK_ID, 5, getResources().getString(R.string.pcview_menu_test_network));
-        menu.add(Menu.NONE, DELETE_ID, 6, getResources().getString(R.string.pcview_menu_delete_pc));
-        menu.add(Menu.NONE, VIEW_DETAILS_ID, 7,  getResources().getString(R.string.pcview_menu_details));
     }
 
     @Override
-    public void onContextMenuClosed(Menu menu) {
-        // For some reason, this gets called again _after_ onPause() is called on this activity.
-        // startComputerUpdates() manages this and won't actual start polling until the activity
-        // returns to the foreground.
-        startComputerUpdates();
+    public void onDestroy() {
+        super.onDestroy();
+        if (managerBinder != null) {
+            removeComputer();
+            unbindService(serviceConnection);
+        }
     }
 
-    private void doPair(final ComputerDetails computer) {
-        if (computer.state == ComputerDetails.State.OFFLINE || computer.activeAddress == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.pair_pc_offline), Toast.LENGTH_SHORT).show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ServerHelper.ONEPLAY_GAME_REQUEST_CODE  &&
+                resultCode == ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
+            startComputerUpdates();
+        } else {
+            currentApp = null;
+            // Back to user account
+            processingError(null, true);
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void initializeWebView() {
+        if (!BuildConfig.DEBUG) {
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.getSettings().setDomStorageEnabled(true);
+        }
+        webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+        webView.getSettings().setUserAgentString(OneplayApi.ONEPLAY_USER_AGENT_BASE + BuildConfig.VERSION_NAME);
+        webView.setWebViewClient(new WebViewClient() {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
+                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
+                    isFirstStart = true;
+                    Intent newIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            uri,
+                            PcView.this,
+                            PcView.class
+                    );
+                    startActivity(newIntent);
+
+                    return true;
+                }
+                return false;
+            }
+
+            // For old devices
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Uri uri = Uri.parse(url);
+                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
+                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
+                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
+                    isFirstStart = true;
+                    Intent newIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            uri,
+                            PcView.this,
+                            PcView.class
+                    );
+                    startActivity(newIntent);
+
+                    return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    private void connectToComputer() {
+        new Thread(() -> {
+            Uri uri = currentIntent.getData();
+            try {
+                OneplayApi client = OneplayApi.getInstance();
+                client.connectTo(uri);
+                OneplayPreferenceConfiguration.savePreferences(this, client.getClientConfig());
+                doAddPc(client.getHostAddress());
+            } catch (IOException e) {
+                processingError(e.getMessage(), false);
+            }
+        }).start();
+    }
+
+    private void removeComputer() {
+        if (computer == null) {
+            return;
+        }
+
+        managerBinder.removeComputer(computer);
+
+        computer = null;
+    }
+
+    private boolean isWrongSubnetSiteLocalAddress(String address) {
+        try {
+            InetAddress targetAddress = InetAddress.getByName(address);
+            if (!(targetAddress instanceof Inet4Address) || !targetAddress.isSiteLocalAddress()) {
+                return false;
+            }
+
+            // We have a site-local address. Look for a matching local interface.
+            for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                for (InterfaceAddress addr : iface.getInterfaceAddresses()) {
+                    if (!(addr.getAddress() instanceof Inet4Address) || !addr.getAddress().isSiteLocalAddress()) {
+                        // Skip non-site-local or non-IPv4 addresses
+                        continue;
+                    }
+
+                    byte[] targetAddrBytes = targetAddress.getAddress();
+                    byte[] ifaceAddrBytes = addr.getAddress().getAddress();
+
+                    // Compare prefix to ensure it's the same
+                    boolean addressMatches = true;
+                    for (int i = 0; i < addr.getNetworkPrefixLength(); i++) {
+                        if ((ifaceAddrBytes[i / 8] & (1 << (i % 8))) != (targetAddrBytes[i / 8] & (1 << (i % 8)))) {
+                            addressMatches = false;
+                            break;
+                        }
+                    }
+
+                    if (addressMatches) {
+                        return false;
+                    }
+                }
+            }
+
+            // Couldn't find a matching interface
+            return true;
+        } catch (Exception e) {
+            // Catch all exceptions because some broken Android devices
+            // will throw an NPE from inside getNetworkInterfaces().
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void doAddPc(String host) {
+        boolean wrongSiteLocal = false;
+        boolean success;
+        int portTestResult;
+
+        ComputerDetails fakeDetails = new ComputerDetails();
+        try {
+            fakeDetails.manualAddress = host;
+            success = managerBinder.addComputerBlocking(fakeDetails);
+        } catch (IllegalArgumentException | InterruptedException e) {
+            // This can be thrown from OkHttp if the host fails to canonicalize to a valid name.
+            // https://github.com/square/okhttp/blob/okhttp_27/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java#L705
+            e.printStackTrace();
+            success = false;
+        }
+        if (!success) {
+            wrongSiteLocal = isWrongSubnetSiteLocalAddress(host);
+        }
+        if (!success && !wrongSiteLocal) {
+            // Run the test before dismissing the spinner because it can take a few seconds.
+            portTestResult = MoonBridge.testClientConnectivity(ServerHelper.CONNECTION_TEST_SERVER, 443,
+                    MoonBridge.ML_PORT_FLAG_TCP_47984 | MoonBridge.ML_PORT_FLAG_TCP_47989);
+        } else {
+            // Don't bother with the test if we succeeded or the IP address was bogus
+            portTestResult = MoonBridge.ML_TEST_RESULT_INCONCLUSIVE;
+        }
+
+        String message;
+
+        if (wrongSiteLocal) {
+            message = getResources().getString(R.string.conn_error_title) + ": " + getResources().getString(R.string.addpc_wrong_sitelocal);
+        } else if (!success) {
+            String dialogText;
+            if (portTestResult != MoonBridge.ML_TEST_RESULT_INCONCLUSIVE && portTestResult != 0) {
+                dialogText = getResources().getString(R.string.nettest_text_blocked);
+            } else {
+                dialogText = getResources().getString(R.string.addpc_fail);
+            }
+            message = getResources().getString(R.string.conn_error_title) + ": " + dialogText;
+        } else {
+            managerBinder.startPolling(details -> {
+                if (details.state == ComputerDetails.State.ONLINE) {
+                    computer = details;
+                    doPair();
+                }
+                runningPolling = true;
+            });
+            return;
+        }
+
+        processingError(message, true);
+    }
+
+    private boolean runningPolling;
+
+    private void doPair() {
+        if (computer.state == ComputerDetails.State.OFFLINE ||
+                ServerHelper.getCurrentAddressFromComputer(computer) == null) {
+            processingError(getResources().getString(R.string.pair_pc_offline), true);
             return;
         }
         if (computer.runningGameId != 0) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.pair_pc_ingame), Toast.LENGTH_LONG).show();
+            processingError(getResources().getString(R.string.pair_pc_ingame), true);
             return;
         }
         if (managerBinder == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
+            processingError(getResources().getString(R.string.error_manager_not_running), true);
             return;
         }
 
-        Toast.makeText(PcView.this, getResources().getString(R.string.pairing), Toast.LENGTH_SHORT).show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                NvHTTP httpConn;
-                String message;
-                boolean success = false;
-                try {
-                    // Stop updates and wait while pairing
-                    stopComputerUpdates(true);
-
-                    httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
-                            managerBinder.getUniqueId(),
-                            computer.serverCert,
-                            PlatformBinding.getCryptoProvider(PcView.this));
-                    if (httpConn.getPairState() == PairState.PAIRED) {
-                        // Don't display any toast, but open the app list
-                        message = null;
-                        success = true;
-                    }
-                    else {
-                        final String pinStr = PairingManager.generatePinString();
-
-                        // Spin the dialog off in a thread because it blocks
-                        Dialog.displayDialog(PcView.this, getResources().getString(R.string.pair_pairing_title),
-                                getResources().getString(R.string.pair_pairing_msg)+" "+pinStr, false);
-
-                        PairingManager pm = httpConn.getPairingManager();
-
-                        PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
-                        if (pairState == PairState.PIN_WRONG) {
-                            message = getResources().getString(R.string.pair_incorrect_pin);
-                        }
-                        else if (pairState == PairState.FAILED) {
-                            message = getResources().getString(R.string.pair_fail);
-                        }
-                        else if (pairState == PairState.ALREADY_IN_PROGRESS) {
-                            message = getResources().getString(R.string.pair_already_in_progress);
-                        }
-                        else if (pairState == PairState.PAIRED) {
-                            // Just navigate to the app view without displaying a toast
-                            message = null;
-                            success = true;
-
-                            // Pin this certificate for later HTTPS use
-                            managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
-
-                            // Invalidate reachability information after pairing to force
-                            // a refresh before reading pair state again
-                            managerBinder.invalidateStateForComputer(computer.uuid);
-                        }
-                        else {
-                            // Should be no other values
-                            message = null;
-                        }
-                    }
-                } catch (UnknownHostException e) {
-                    message = getResources().getString(R.string.error_unknown_host);
-                } catch (FileNotFoundException e) {
-                    message = getResources().getString(R.string.error_404);
-                } catch (XmlPullParserException | IOException e) {
-                    e.printStackTrace();
-                    message = e.getMessage();
-                }
-
-                Dialog.closeDialogs();
-
-                final String toastMessage = message;
-                final boolean toastSuccess = success;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (toastMessage != null) {
-                            Toast.makeText(PcView.this, toastMessage, Toast.LENGTH_LONG).show();
-                        }
-
-                        if (toastSuccess) {
-                            // Open the app list after a successful pairing attempt
-                            doAppList(computer, true, false);
-                        }
-                        else {
-                            // Start polling again if we're still in the foreground
-                            startComputerUpdates();
-                        }
-                    }
-                });
-            }
-        }).start();
-    }
-
-    private void doWakeOnLan(final ComputerDetails computer) {
-        if (computer.state == ComputerDetails.State.ONLINE) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.wol_pc_online), Toast.LENGTH_SHORT).show();
-            return;
+        if (BuildConfig.DEBUG) {
+            LimeLog.info(getResources().getString(R.string.pairing));
         }
 
-        if (computer.macAddress == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.wol_no_mac), Toast.LENGTH_SHORT).show();
-            return;
-        }
+        new Thread(() -> {
+            NvHTTP httpConn;
+            String message;
+            try {
+                // Stop updates and wait while pairing
+                stopComputerUpdates();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String message;
-                try {
-                    WakeOnLanSender.sendWolPacket(computer);
-                    message = getResources().getString(R.string.wol_waking_msg);
-                } catch (IOException e) {
-                    message = getResources().getString(R.string.wol_fail);
-                }
+                httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
+                        managerBinder.getUniqueId(),
+                        computer.serverCert,
+                        PlatformBinding.getCryptoProvider(PcView.this));
+                OneplayApi client = OneplayApi.getInstance();
+                final String pinStr = client.getSessionKey();
+                httpConn.addInterceptor(client.getInterceptor((result) -> {
+                    if (!result) runOnUiThread(() -> processingError("Session key not accepted", true));
+                }));
+                PairingManager pm = httpConn.getPairingManager();
 
-                final String toastMessage = message;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(PcView.this, toastMessage, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        }).start();
-    }
+                PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
+                if (pairState == PairingManager.PairState.PIN_WRONG) {
+                    message = getResources().getString(R.string.pair_incorrect_pin);
+                } else if (pairState == PairingManager.PairState.FAILED) {
+                    message = getResources().getString(R.string.pair_fail);
+                } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
+                    message = getResources().getString(R.string.pair_already_in_progress);
+                } else if (pairState == PairingManager.PairState.PAIRED) {
+                    // Pin this certificate for later HTTPS use
+                    managerBinder.getComputer(computer.uuid).serverCert = pm.getPairedCert();
 
-    private void doUnpair(final ComputerDetails computer) {
-        if (computer.state == ComputerDetails.State.OFFLINE || computer.activeAddress == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.error_pc_offline), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (managerBinder == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-            return;
-        }
+                    // Invalidate reachability information after pairing to force
+                    // a refresh before reading pair state again
+                    managerBinder.invalidateStateForComputer(computer.uuid);
 
-        Toast.makeText(PcView.this, getResources().getString(R.string.unpairing), Toast.LENGTH_SHORT).show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                NvHTTP httpConn;
-                String message;
-                try {
-                    httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
-                            managerBinder.getUniqueId(),
-                            computer.serverCert,
-                            PlatformBinding.getCryptoProvider(PcView.this));
-                    if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
-                        httpConn.unpair();
-                        if (httpConn.getPairState() == PairingManager.PairState.NOT_PAIRED) {
-                            message = getResources().getString(R.string.unpair_success);
-                        }
-                        else {
-                            message = getResources().getString(R.string.unpair_fail);
-                        }
-                    }
-                    else {
-                        message = getResources().getString(R.string.unpair_error);
-                    }
-                } catch (UnknownHostException e) {
-                    message = getResources().getString(R.string.error_unknown_host);
-                } catch (FileNotFoundException e) {
-                    message = getResources().getString(R.string.error_404);
-                } catch (XmlPullParserException | IOException e) {
-                    message = e.getMessage();
-                    e.printStackTrace();
-                }
-
-                final String toastMessage = message;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(PcView.this, toastMessage, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        }).start();
-    }
-
-    private void doAppList(ComputerDetails computer, boolean newlyPaired, boolean showHiddenGames) {
-        if (computer.state == ComputerDetails.State.OFFLINE) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.error_pc_offline), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (managerBinder == null) {
-            Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Intent i = new Intent(this, AppView.class);
-        i.putExtra(AppView.NAME_EXTRA, computer.name);
-        i.putExtra(AppView.UUID_EXTRA, computer.uuid);
-        i.putExtra(AppView.NEW_PAIR_EXTRA, newlyPaired);
-        i.putExtra(AppView.SHOW_HIDDEN_APPS_EXTRA, showHiddenGames);
-        startActivity(i);
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-        final ComputerObject computer = (ComputerObject) pcGridAdapter.getItem(info.position);
-        switch (item.getItemId()) {
-            case PAIR_ID:
-                doPair(computer.details);
-                return true;
-
-            case UNPAIR_ID:
-                doUnpair(computer.details);
-                return true;
-
-            case WOL_ID:
-                doWakeOnLan(computer.details);
-                return true;
-
-            case DELETE_ID:
-                if (ActivityManager.isUserAMonkey()) {
-                    LimeLog.info("Ignoring delete PC request from monkey");
-                    return true;
-                }
-                UiHelper.displayDeletePcConfirmationDialog(this, computer.details, new Runnable() {
-                    @Override
-                    public void run() {
-                        if (managerBinder == null) {
-                            Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        removeComputer(computer.details);
-                    }
-                }, null);
-                return true;
-
-            case FULL_APP_LIST_ID:
-                doAppList(computer.details, false, true);
-                return true;
-
-            case RESUME_ID:
-                if (managerBinder == null) {
-                    Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-                    return true;
-                }
-
-                ServerHelper.doStart(this, new NvApp("app", computer.details.runningGameId, false), computer.details, managerBinder);
-                return true;
-
-            case QUIT_ID:
-                if (managerBinder == null) {
-                    Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
-                    return true;
-                }
-
-                // Display a confirmation dialog first
-                UiHelper.displayQuitConfirmationDialog(this, new Runnable() {
-                    @Override
-                    public void run() {
-                        ServerHelper.doQuit(PcView.this, computer.details,
-                                new NvApp("app", 0, false), managerBinder, null);
-                    }
-                }, null);
-                return true;
-
-            case VIEW_DETAILS_ID:
-                Dialog.displayDialog(PcView.this, getResources().getString(R.string.title_details), computer.details.toString(), false);
-                return true;
-
-            case TEST_NETWORK_ID:
-                ServerHelper.doNetworkTest(PcView.this);
-                return true;
-
-            default:
-                return super.onContextItemSelected(item);
-        }
-    }
-    
-    private void removeComputer(ComputerDetails details) {
-        managerBinder.removeComputer(details);
-
-        new DiskAssetLoader(this).deleteAssetsForComputer(details.uuid);
-
-        // Delete hidden games preference value
-        getSharedPreferences(AppView.HIDDEN_APPS_PREF_FILENAME, MODE_PRIVATE)
-                .edit()
-                .remove(details.uuid)
-                .apply();
-
-        for (int i = 0; i < pcGridAdapter.getCount(); i++) {
-            ComputerObject computer = (ComputerObject) pcGridAdapter.getItem(i);
-
-            if (details.equals(computer.details)) {
-                // Disable or delete shortcuts referencing this PC
-                shortcutHelper.disableComputerShortcut(details,
-                        getResources().getString(R.string.scut_deleted_pc));
-
-                pcGridAdapter.removeComputer(computer);
-                pcGridAdapter.notifyDataSetChanged();
-
-                if (pcGridAdapter.getCount() == 0) {
-                    // Show the "Discovery in progress" view
-                    noPcFoundLayout.setVisibility(View.VISIBLE);
-                }
-
-                break;
-            }
-        }
-    }
-    
-    private void updateComputer(ComputerDetails details) {
-        ComputerObject existingEntry = null;
-
-        for (int i = 0; i < pcGridAdapter.getCount(); i++) {
-            ComputerObject computer = (ComputerObject) pcGridAdapter.getItem(i);
-
-            // Check if this is the same computer
-            if (details.uuid.equals(computer.details.uuid)) {
-                existingEntry = computer;
-                break;
-            }
-        }
-
-        // Add a launcher shortcut for this PC
-        if (details.pairState == PairState.PAIRED) {
-            shortcutHelper.createAppViewShortcutForOnlineHost(details);
-        }
-
-        if (existingEntry != null) {
-            // Replace the information in the existing entry
-            existingEntry.details = details;
-        }
-        else {
-            // Add a new entry
-            pcGridAdapter.addComputer(new ComputerObject(details));
-
-            // Remove the "Discovery in progress" view
-            noPcFoundLayout.setVisibility(View.INVISIBLE);
-        }
-
-        // Notify the view that the data has changed
-        pcGridAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public int getAdapterFragmentLayoutId() {
-        return R.layout.pc_grid_view;
-    }
-
-    @Override
-    public void receiveAbsListView(AbsListView listView) {
-        listView.setAdapter(pcGridAdapter);
-        listView.setOnItemClickListener(new OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
-                                    long id) {
-                ComputerObject computer = (ComputerObject) pcGridAdapter.getItem(pos);
-                if (computer.details.state == ComputerDetails.State.UNKNOWN ||
-                    computer.details.state == ComputerDetails.State.OFFLINE) {
-                    // Open the context menu if a PC is offline or refreshing
-                    openContextMenu(arg1);
-                } else if (computer.details.pairState != PairState.PAIRED) {
-                    // Pair an unpaired machine by default
-                    doPair(computer.details);
+                    runOnUiThread(this::startComputerUpdates);
+                    return;
                 } else {
-                    doAppList(computer.details, false, false);
+                    // Should be no other values
+                    message = null;
                 }
+            } catch (UnknownHostException e) {
+                message = getResources().getString(R.string.error_unknown_host);
+            } catch (FileNotFoundException e) {
+                message = getResources().getString(R.string.error_404);
+            } catch (XmlPullParserException | IOException e) {
+                e.printStackTrace();
+                message = e.getMessage();
+            }
+
+            final String finalMessage = message;
+            runOnUiThread(() -> processingError(finalMessage, true));
+        }).start();
+
+    }
+
+    private void startComputerUpdates() {
+        managerBinder.startPolling(details -> {
+            if (details.pairState == PairingManager.PairState.PAIRED) {
+                new Thread(() -> {
+                    stopComputerUpdates();
+                    try {
+                        NvHTTP httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(details),
+                                managerBinder.getUniqueId(),
+                                details.serverCert,
+                                PlatformBinding.getCryptoProvider(PcView.this));
+
+                        currentApp = httpConn.getAppByName("Desktop"); // Always get first app (Desktop)
+
+                        if (currentApp != null) {
+                            runOnUiThread(() -> ServerHelper.doStart(this, currentApp, details, managerBinder));
+                        } else {
+                            processingError(getString(R.string.applist_refresh_error_msg), true);
+                        }
+                    } catch (XmlPullParserException | IOException e) {
+                        processingError(getString(R.string.applist_refresh_error_msg) + ": " + e.getMessage(), true);
+                    }
+                }).start();
             }
         });
-        UiHelper.applyStatusBarPadding(listView);
-        registerForContextMenu(listView);
+        runningPolling = true;
     }
 
-    public static class ComputerObject {
-        public ComputerDetails details;
-
-        public ComputerObject(ComputerDetails details) {
-            if (details == null) {
-                throw new IllegalArgumentException("details must not be null");
+    private void stopComputerUpdates() {
+        if (managerBinder != null) {
+            if (!runningPolling) {
+                return;
             }
-            this.details = details;
+
+            managerBinder.stopPolling();
+
+            managerBinder.waitForPollingStopped();
+
+            runningPolling = false;
+        }
+    }
+
+    private void processingError(String message, boolean isRemoveComputer) {
+        if (message != null) {
+            LimeLog.severe(message);
         }
 
-        @Override
-        public String toString() {
-            return details.name;
+        if (isRemoveComputer) {
+            removeComputer();
         }
+
+        startActivity(new Intent(Intent.ACTION_MAIN, null, PcView.this, PcView.class));
     }
 }

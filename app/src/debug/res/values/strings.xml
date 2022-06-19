@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_label" translatable="false">Oneplay (Debug)</string>
-    <string name="app_label_root" translatable="false">Oneplay (Root Debug)</string>
-
-</resources>

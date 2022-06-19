@@ -36,7 +36,6 @@ import in.oneplay.ui.StreamView;
 import in.oneplay.utils.Dialog;
 import in.oneplay.utils.NetHelper;
 import in.oneplay.utils.ServerHelper;
-import in.oneplay.utils.ShortcutHelper;
 import in.oneplay.utils.SpinnerDialog;
 import in.oneplay.utils.UiHelper;
 
@@ -159,8 +158,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private int requestedNotificationOverlayVisibility = View.GONE;
     private TextView performanceOverlayView;
     private ImageButton settingsButton;
-
-    private ShortcutHelper shortcutHelper;
 
     private MediaCodecDecoderRenderer decoderRenderer;
     private boolean reportedCrash;
@@ -477,17 +474,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         if (appId == StreamConfiguration.INVALID_APP_ID) {
             finish();
             return;
-        }
-
-        // Report this shortcut being used
-        ComputerDetails computer = new ComputerDetails();
-        computer.name = pcName;
-        computer.uuid = uuid;
-        shortcutHelper = new ShortcutHelper(this);
-        shortcutHelper.reportComputerShortcutUsed(computer);
-        if (appName != null) {
-            // This may be null if launched from the "Resume Session" PC context menu item
-            shortcutHelper.reportGameLaunched(computer, new NvApp(appName, appId, appSupportsHdr));
         }
 
         // Initialize the MediaCodec helper before creating the decoder
