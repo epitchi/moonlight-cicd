@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -19,6 +20,13 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.appupdate.AppUpdateOptions;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -48,6 +56,8 @@ import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
 public class PcView extends Activity {
+    private static final int UPDATES_REQUEST_CODE = 1;
+
     private WebView webView;
     private ProgressBar progress;
     private Intent currentIntent;
@@ -133,6 +143,27 @@ public class PcView extends Activity {
     protected void onResume() {
         super.onResume();
 
+        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
+        appUpdateManager
+                .getAppUpdateInfo()
+                .addOnSuccessListener(
+                        appUpdateInfo -> {
+                            if (appUpdateInfo.updateAvailability()
+                                    == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                                // If an in-app update is already running, resume the update.
+                                try {
+                                    appUpdateManager.startUpdateFlowForResult(
+                                            appUpdateInfo,
+                                            AppUpdateType.IMMEDIATE,
+                                            this,
+                                            UPDATES_REQUEST_CODE);
+                                } catch (IntentSender.SendIntentException e) {
+                                    LimeLog.severe("An error occurred during the update: " + e.getMessage());
+                                }
+                            }
+                        });
+
+
         if (isFirstStart && Intent.ACTION_VIEW.equals(currentIntent.getAction()) && currentIntent.getData() != null) {
             isFirstStart = false;
 
@@ -182,6 +213,11 @@ public class PcView extends Activity {
         if (requestCode == ServerHelper.ONEPLAY_GAME_REQUEST_CODE  &&
                 resultCode == ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
             startComputerUpdates();
+        } else if (requestCode == UPDATES_REQUEST_CODE) {
+            if (resultCode != RESULT_OK) {
+                LimeLog.severe("Update flow failed! Result code: " + resultCode);
+                checkUpdates();
+            }
         } else {
             currentApp = null;
             // Back to user account
@@ -241,6 +277,36 @@ public class PcView extends Activity {
             }
         });
     }
+
+    private void checkUpdates() {
+        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
+
+        // Returns an intent object that you use to check for an update.
+        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+        // Checks that the platform will allow the specified type of update.
+        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                // Request the update.
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                            // Pass the intent that is returned by 'getAppUpdateInfo()'.
+                            appUpdateInfo,
+                            // The current activity making the update request.
+                            this,
+                            AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE)
+                                    .setAllowAssetPackDeletion(true)
+                                    .build(),
+                            // Include a request code to later monitor this update request.
+                            UPDATES_REQUEST_CODE);
+                } catch (IntentSender.SendIntentException e) {
+                    LimeLog.severe("An error occurred during the update: " + e.getMessage());
+                }
+            }
+        });
+    }
+
 
     private void connectToComputer() {
         new Thread(() -> {

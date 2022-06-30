@@ -152,4 +152,5 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:29.3.1')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-crashlytics-ndk'
+    implementation 'com.google.android.play:app-update:2.0.0'
 }
