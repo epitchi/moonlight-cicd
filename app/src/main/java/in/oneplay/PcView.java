@@ -449,7 +449,7 @@ public class PcView extends Activity {
             LimeLog.info(getResources().getString(R.string.pairing));
         }
 
-        new Thread(() -> {
+        Thread pairingThread = new Thread(() -> {
             NvHTTP httpConn;
             String message;
             try {
@@ -465,6 +465,11 @@ public class PcView extends Activity {
                 httpConn.addInterceptor(client.getInterceptor((result) -> {
                     if (!result) runOnUiThread(() -> processingError("Session key not accepted", true));
                 }));
+
+                if (computer == null) {
+                    return;
+                }
+                
                 PairingManager pm = httpConn.getPairingManager();
 
                 PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
@@ -499,8 +504,8 @@ public class PcView extends Activity {
 
             final String finalMessage = message;
             runOnUiThread(() -> processingError(finalMessage, true));
-        }).start();
-
+        });
+        pairingThread.start();
     }
 
     private void startComputerUpdates() {
