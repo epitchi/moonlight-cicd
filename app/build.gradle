@@ -80,8 +80,8 @@ android {
 
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/launch/play\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"id=5bfe0e968f8a399e1dfa001b02b66d6755c16bed22f2f4b0d0359309ddd03fec\""
-            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"https://svrdev.oneplay.in/application_services/client/get_session/\""
-            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"https://client-apis.oneplay.in/backend/events/register\""
+            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"https://svrdev.oneplay.in/v0/client/get_session/\""
+            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"\""
         }
         release {
             applicationIdSuffix ""
