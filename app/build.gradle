@@ -78,9 +78,12 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/launch/play\""
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"id=5bfe0e968f8a399e1dfa001b02b66d6755c16bed22f2f4b0d0359309ddd03fec\""
-            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"https://svrdev.oneplay.in/v0/client/get_session/\""
+            def apiAddress = "https://svrdev.oneplay.in"
+            def apiVersion =  "v0"
+
+            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"\""
+            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
+            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/${apiVersion}/client/get_session/\""
             buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"\""
         }
         release {
@@ -91,10 +94,13 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
+            def apiAddress = "https://client-apis.oneplay.in"
+            def apiVersion = "v1"
+
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/dashboard\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
-            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"https://client-apis.oneplay.in/client/v1/get_session/\""
-            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"https://client-apis.oneplay.in/backend/events/register\""
+            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/client/${apiVersion}/get_session/\""
+            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"${apiAddress}/backend/events/register\""
 
             firebaseCrashlytics {
                 nativeSymbolUploadEnabled true
