@@ -303,15 +303,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
                     LayoutInflater inflater = Game.this.getLayoutInflater();
 
-                    View seekBarView = inflater.inflate(R.layout.oneplay_seekbar_dialog, findViewById(R.id.oneplay_seekbar_dialog));
+                    View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
 
                     int currentBitrate = prefConfig.bitrate;
                     final int[] selectedBitrate = {currentBitrate};
 
-                    ((TextView)seekBarView.findViewById(R.id.oneplay_seekbar_title)).setText(R.string.menu_change_bitrate);
-                    ((TextView)seekBarView.findViewById(R.id.oneplay_seekbar_value_label)).setText("kbps");
+                    ((TextView)seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(R.string.menu_change_bitrate);
+                    ((TextView)seekBarView.findViewById(R.id.seekbar_value_label)).setText("kbps");
 
-                    TextView dialogSeekBarValue = seekBarView.findViewById(R.id.oneplay_seekbar_value);
+                    TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
                     dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
 
                     int minValue = 500;
@@ -333,7 +333,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         }
                     };
 
-                    SeekBar dialogSeekBar = seekBarView.findViewById(R.id.oneplay_seekbar);
+                    SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
                     dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
                     dialogSeekBar.incrementProgressBy(500);
                     dialogSeekBar.setProgress(selectedBitrate[0]);
@@ -383,9 +383,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
                     LayoutInflater inflater = Game.this.getLayoutInflater();
 
-                    View reportIssueView = inflater.inflate(R.layout.report_issue_view, findViewById(R.id.report_issue_view));
+                    View reportIssueView = inflater.inflate(R.layout.dialog_report_issue, findViewById(R.id.dialog_issue_view));
 
-                    TextView reportIssueText = reportIssueView.findViewById(R.id.report_issue_text);
+                    TextView reportIssueText = reportIssueView.findViewById(R.id.dialog_report_issue_text);
 
                     builder.setView(reportIssueView)
                             .setPositiveButton(android.R.string.ok, (dialog, id) -> {

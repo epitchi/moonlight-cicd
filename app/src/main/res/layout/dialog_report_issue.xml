@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/report_issue_view"
+    android:id="@+id/dialog_issue_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="20dp">
 
     <TextView
-        android:id="@+id/report_issue_title"
+        android:id="@+id/dialog_report_issue_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:text="@string/menu_report_issue"/>
 
     <EditText
-        android:id="@+id/report_issue_text"
+        android:id="@+id/dialog_report_issue_text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:ems="10"
@@ -21,6 +21,6 @@
         android:inputType="textMultiLine"
         android:layout_marginTop="20dp"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/report_issue_title"
+        android:layout_below="@id/dialog_report_issue_title"
         android:autofillHints="" />
 </RelativeLayout>
