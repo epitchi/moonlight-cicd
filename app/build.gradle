@@ -2,6 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
 
+ext {
+    buildNumber = (Long) (System.currentTimeMillis() / 1000L)
+    defaultVersionName = '1.1.0'
+}
+
 android {
     ndkVersion "23.2.8568313"
 
@@ -11,8 +16,8 @@ android {
         minSdk 19
         targetSdk 33
 
-        versionName "1.1"
-        versionCode = 1
+        versionCode defaultVersionName.replace('.','').toInteger()
+        versionName "$defaultVersionName build: $buildNumber"
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -34,6 +39,7 @@ android {
 
             applicationId "in.oneplay.root"
             dimension "root"
+            archivesBaseName = "$applicationId.$project.name-$defaultVersionName"
             buildConfigField "boolean", "ROOT_BUILD", "true"
         }
 
@@ -46,6 +52,7 @@ android {
 
             applicationId "in.oneplay"
             dimension "root"
+            archivesBaseName = "$applicationId.$project.name-$defaultVersionName"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
     }
