@@ -3,6 +3,7 @@ package in.oneplay;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -13,12 +14,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.text.InputType;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
@@ -41,6 +48,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.binding.PlatformBinding;
@@ -196,6 +205,41 @@ public class PcView extends Activity {
                 webView.loadUrl(welcomeLink.toString());
             }
             progress.setVisibility(View.GONE);
+
+            if (BuildConfig.DEBUG) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                LayoutInflater inflater = this.getLayoutInflater();
+
+                View editTextView = inflater.inflate(R.layout.dialog_edit_text, findViewById(R.id.dialog_edit_text));
+
+                String defaultServerIPAddress = BuildConfig.ONEPLAY_SERVER_DEFAULT_IP_ADDRESS;
+
+                ((TextView)editTextView.findViewById(R.id.dialog_edit_text_title)).setText("Enter the server IP:");
+
+                EditText dialogEditText = editTextView.findViewById(R.id.edit_text);
+                dialogEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                dialogEditText.setText(defaultServerIPAddress);
+
+                builder.setView(editTextView)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .setNeutralButton("Default", null);
+                AlertDialog dialog = builder.create();
+                dialog.setOnShowListener(di -> {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                        Pattern pattern = Pattern.compile("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$");
+                        Matcher matcher = pattern.matcher(dialogEditText.getText());
+                        if (matcher.matches()) {
+                            //TODO Implement it
+                            dialog.dismiss();
+                        } else {
+                            Toast.makeText(PcView.this, "Wrong IP. Try again.", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> dialogEditText.setText(defaultServerIPAddress));
+                });
+
+                dialog.show();
+            }
         }
     }
 

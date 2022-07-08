@@ -88,6 +88,7 @@ android {
             def apiAddress = "https://svrdev.oneplay.in"
             def apiVersion =  "v0"
 
+            buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"43.239.110.82\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
             buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/${apiVersion}/client/get_session/\""
@@ -104,6 +105,7 @@ android {
             def apiAddress = "https://client-apis.oneplay.in"
             def apiVersion = "v1"
 
+            buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/dashboard\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
             buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/client/${apiVersion}/get_session/\""
