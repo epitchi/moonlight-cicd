@@ -55,6 +55,7 @@ public class OneplayApi {
 
     private final OkHttpClient httpClient;
     private final String userAgent;
+    private String baseStartVmUrl;
     private String baseServerInfoUrl;
     private String baseEventsUrl;
     private String baseQuitUrl;
@@ -86,6 +87,7 @@ public class OneplayApi {
 
     private OneplayApi() {
         try {
+            this.baseStartVmUrl = new URI(BuildConfig.ONEPLAY_API_START_VM_ENDPOINT).toString();
             this.baseServerInfoUrl = new URI(BuildConfig.ONEPLAY_API_GET_SESSION_ENDPOINT).toString();
             this.baseEventsUrl = new URI(BuildConfig.ONEPLAY_API_EVENTS_ENDPOINT).toString();
             this.baseQuitUrl = new URI(
@@ -139,6 +141,22 @@ public class OneplayApi {
         }
 
         unpairAll();
+    }
+
+    public String startVm(String serverAddress) throws IOException {
+        String response = openHttpConnectionPostToString(
+                baseStartVmUrl + serverAddress);
+
+        String sessionSignature = "";
+        try {
+            JSONObject responseData = new JSONObject(response).getJSONObject("data");
+            sessionSignature = responseData.getString("session_signature");
+
+        } catch (JSONException e) {
+            LimeLog.severe(e.getMessage());
+        }
+
+        return sessionSignature;
     }
 
     public Interceptor getInterceptor(PinAuthorizationCallback c) {

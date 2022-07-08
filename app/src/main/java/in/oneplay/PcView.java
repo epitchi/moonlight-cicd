@@ -229,8 +229,42 @@ public class PcView extends Activity {
                         Pattern pattern = Pattern.compile("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$");
                         Matcher matcher = pattern.matcher(dialogEditText.getText());
                         if (matcher.matches()) {
-                            //TODO Implement it
-                            dialog.dismiss();
+                            new Thread(() -> {
+                                try {
+                                    runOnUiThread(() -> {
+                                        dialog.dismiss();
+                                        progress.setVisibility(View.VISIBLE);
+                                    });
+
+                                    OneplayApi connection = OneplayApi.getInstance();
+                                    String sessionSignature = connection.startVm(dialogEditText.getText().toString());
+                                    if (!sessionSignature.isEmpty()) {
+                                        runOnUiThread(() -> {
+                                            isFirstStart = true;
+                                            Uri uri = new Uri.Builder()
+                                                    .scheme(OneplayApi.SSL_CONNECTION_TYPE)
+                                                    .authority(OneplayApi.ONEPLAY_DOMAIN)
+                                                    .path(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)
+                                                    .encodedQuery("payload=" + sessionSignature)
+                                                    .build();
+                                            Intent intent = new Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    uri,
+                                                    PcView.this,
+                                                    PcView.class);
+                                            startActivity(intent);
+                                        });
+                                    } else {
+                                        runOnUiThread(() -> {
+                                            progress.setVisibility(View.GONE);
+                                            dialog.show();
+                                            Toast.makeText(PcView.this, "Can't get session signature. Try again.", Toast.LENGTH_LONG).show();
+                                        });
+                                    }
+                                } catch (IOException e) {
+                                    LimeLog.severe(e.getMessage());
+                                }
+                            }).start();
                         } else {
                             Toast.makeText(PcView.this, "Wrong IP. Try again.", Toast.LENGTH_LONG).show();
                         }

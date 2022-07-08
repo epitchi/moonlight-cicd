@@ -91,6 +91,7 @@ android {
             buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"43.239.110.82\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
+            buildConfigField "String", "ONEPLAY_API_START_VM_ENDPOINT", "\"${apiAddress}/${apiVersion}/frontend/start_game?vm_ip=\""
             buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/${apiVersion}/client/get_session/\""
             buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"\""
         }
@@ -108,6 +109,7 @@ android {
             buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/dashboard\""
             buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
+            buildConfigField "String", "ONEPLAY_API_START_VM_ENDPOINT", "\"\""
             buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/client/${apiVersion}/get_session/\""
             buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"${apiAddress}/backend/events/register\""
 
