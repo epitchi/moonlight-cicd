@@ -14,8 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -41,7 +39,7 @@ public class OneplayApi {
     public static final int CONNECTION_TIMEOUT = 3000;
     public static final int READ_TIMEOUT = 5000;
 
-    public static final int PIN_REQUEST_PORT = 47990;
+    public static final int REQUEST_PORT = 47990;
 
     private static volatile OneplayApi instance;
 
@@ -49,13 +47,33 @@ public class OneplayApi {
     private static final boolean verbose = BuildConfig.DEBUG;
 
     private static final String userAgent = BuildConfig.USER_AGENT;
+    private static final String startVmUrl = new Uri.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .authority(BuildConfig.API_DOMAIN)
+            .encodedPath(BuildConfig.API_START_VM_ENDPOINT)
+            .encodedQuery("vm_ip=")
+            .build()
+            .toString();
+    private static final String serverInfoUrl = new Uri.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .authority(BuildConfig.API_DOMAIN)
+            .encodedPath(BuildConfig.API_GET_SESSION_ENDPOINT)
+            .build()
+            .toString();
+    private static final String quitUrl = new Uri.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .authority(BuildConfig.DOMAIN)
+            .encodedPath(BuildConfig.APP_QUIT_LINK_PATH)
+            .build()
+            .toString();
+    private static final String eventsUrl = new Uri.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .authority(BuildConfig.API_DOMAIN)
+            .encodedPath(BuildConfig.API_EVENTS_ENDPOINT)
+            .build()
+            .toString();
 
     private final OkHttpClient httpClient;
-    private String baseStartVmUrl;
-    private String baseServerInfoUrl;
-    private String baseEventsUrl;
-    private String baseQuitUrl;
-    private String basePinRequestUrl;
     private String sessionKey;
     private String userId;
     private String hostAddress;
@@ -82,35 +100,6 @@ public class OneplayApi {
     }
 
     private OneplayApi() {
-        try {
-            this.baseStartVmUrl = new URI(
-                    BuildConfig.CONNECTION_SCHEME,
-                    BuildConfig.API_DOMAIN,
-                    BuildConfig.API_START_VM_ENDPOINT,
-                    "vm_ip=",
-                    null
-            ).toString();
-            this.baseServerInfoUrl = new URI(
-                    BuildConfig.CONNECTION_SCHEME,
-                    BuildConfig.API_DOMAIN,
-                    BuildConfig.API_GET_SESSION_ENDPOINT,
-                    null
-            ).toString();
-            this.baseEventsUrl = new URI(
-                    BuildConfig.CONNECTION_SCHEME,
-                    BuildConfig.API_DOMAIN,
-                    BuildConfig.API_EVENTS_ENDPOINT,
-                    null
-            ).toString();
-            this.baseQuitUrl = new URI(
-                    BuildConfig.CONNECTION_SCHEME,
-                    BuildConfig.DOMAIN,
-                    BuildConfig.APP_QUIT_LINK_PATH,
-                    null
-            ).toString();
-        } catch (URISyntaxException ignored) {}
-
-
         this.httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
@@ -137,26 +126,13 @@ public class OneplayApi {
     public void connectTo(Uri uri) throws IOException {
         loadServerInfo(uri.getQueryParameter("payload"));
 
-        try {
-            this.basePinRequestUrl = new URI(
-                    BuildConfig.CONNECTION_SCHEME,
-                    null,
-                    this.hostAddress,
-                    PIN_REQUEST_PORT,
-                    "/api/clients/unpair",
-                    null,
-                    null
-            ).toString();
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
+        if (!unpairAll()) {
+            throw new IOException("Unable to unpair clients.");
         }
-
-        unpairAll();
     }
 
     public String startVm(String serverAddress) throws IOException {
-        String response = openHttpConnectionPostToString(
-                baseStartVmUrl + serverAddress);
+        String response = openHttpConnectionPostToString(startVmUrl + serverAddress);
 
         String sessionSignature = "";
         try {
@@ -185,8 +161,7 @@ public class OneplayApi {
     }
 
     private void loadServerInfo(String sessionKey) throws IOException {
-        String serverInfo = openHttpConnectionPostToString(
-                baseServerInfoUrl + sessionKey);
+        String serverInfo = openHttpConnectionPostToString(serverInfoUrl + sessionKey);
 
         String serverAddress = "";
         String hostSessionKey = "";
@@ -259,7 +234,14 @@ public class OneplayApi {
     }
 
     private boolean unpairAll() throws IOException {
-        String response = openHttpConnectionPostToString(basePinRequestUrl);
+        String unpairUrl = new Uri.Builder()
+                .scheme(BuildConfig.CONNECTION_SCHEME)
+                .encodedAuthority(this.hostAddress + ":" + REQUEST_PORT)
+                .encodedPath("/api/clients/unpair")
+                .build()
+                .toString();
+
+        String response = openHttpConnectionPostToString(unpairUrl);
         try {
             if (new JSONObject(response).getBoolean("status")) {
                 return true;
@@ -270,7 +252,7 @@ public class OneplayApi {
     }
 
     public void doQuit() throws IOException {
-        openHttpConnectionPostToString(baseQuitUrl + "?" +
+        openHttpConnectionPostToString(quitUrl + "?" +
                 "session_id=" + this.sessionKey + "&" +
                 "source=" + "android_app_" + BuildConfig.SHORT_VERSION_NAME);
     }
@@ -281,7 +263,7 @@ public class OneplayApi {
                 String body = new JSONObject()
                         .put("error", text)
                         .put("user_id", userId).toString();
-                openHttpConnectionPostToString(baseEventsUrl, body);
+                openHttpConnectionPostToString(eventsUrl, body);
 
             } catch (JSONException | IOException e) {
                 LimeLog.severe(e.getMessage());
@@ -294,11 +276,17 @@ public class OneplayApi {
 
     private boolean setHostSessionKey(String key) {
         try {
+            String pinRequestUrl = new Uri.Builder()
+                    .scheme(BuildConfig.CONNECTION_SCHEME)
+                    .encodedAuthority(this.hostAddress + ":" + REQUEST_PORT)
+                    .encodedPath("/api/pin")
+                    .build()
+                    .toString();
+
             // Give time to process request at the server
             Thread.sleep(500);
             String body = new JSONObject().put("pin", key).toString();
-            String requestUrl = basePinRequestUrl + "/api/pin";
-            String response = openHttpConnectionPostToString(requestUrl, body);
+            String response = openHttpConnectionPostToString(pinRequestUrl, body);
 
             return (new JSONObject(response).getBoolean("status"));
         } catch (IOException | JSONException | InterruptedException e) {

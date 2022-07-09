@@ -23,6 +23,15 @@ android {
         ndk.debugSymbolLevel = 'FULL'
     }
 
+    signingConfigs {
+        test_release {
+            storeFile file('../keystore.jks')
+            storePassword '123456'
+            keyAlias 'test_release'
+            keyPassword '123456'
+        }
+    }
+
     flavorDimensions.add("root")
 
     productFlavors {
@@ -99,7 +108,7 @@ android {
             buildConfigField "String", "API_DOMAIN", "\"svrdev.oneplay.in\""
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
             buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session/\""
-            buildConfigField "String", "API_EVENTS_ENDPOINT", "\"\""
+            buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
         }
         release {
             applicationIdSuffix ""
@@ -128,6 +137,8 @@ android {
             firebaseCrashlytics {
                 nativeSymbolUploadEnabled true
             }
+
+            signingConfig signingConfigs.test_release
         }
     }
 
