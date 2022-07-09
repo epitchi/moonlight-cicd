@@ -190,10 +190,10 @@ public class PcView extends Activity {
             URI welcomeLink = null;
             try {
                 welcomeLink = new URI(
-                        OneplayApi.SSL_CONNECTION_TYPE,
-                        OneplayApi.ONEPLAY_DOMAIN,
-                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_PATH,
-                        BuildConfig.ONEPLAY_APP_WELCOME_LINK_QUERY,
+                        BuildConfig.CONNECTION_SCHEME,
+                        BuildConfig.DOMAIN,
+                        BuildConfig.APP_WELCOME_LINK_PATH,
+                        BuildConfig.APP_WELCOME_LINK_QUERY,
                         null
                 );
             } catch (URISyntaxException e) {
@@ -212,7 +212,7 @@ public class PcView extends Activity {
 
                 View editTextView = inflater.inflate(R.layout.dialog_edit_text, findViewById(R.id.dialog_edit_text));
 
-                String defaultServerIPAddress = BuildConfig.ONEPLAY_SERVER_DEFAULT_IP_ADDRESS;
+                String defaultServerIPAddress = BuildConfig.SERVER_DEFAULT_IP_ADDRESS;
 
                 ((TextView)editTextView.findViewById(R.id.dialog_edit_text_title)).setText("Enter the server IP:");
 
@@ -242,9 +242,9 @@ public class PcView extends Activity {
                                         runOnUiThread(() -> {
                                             isFirstStart = true;
                                             Uri uri = new Uri.Builder()
-                                                    .scheme(OneplayApi.SSL_CONNECTION_TYPE)
-                                                    .authority(OneplayApi.ONEPLAY_DOMAIN)
-                                                    .path(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)
+                                                    .scheme(BuildConfig.CONNECTION_SCHEME)
+                                                    .authority(BuildConfig.DOMAIN)
+                                                    .path(BuildConfig.APP_LAUNCH_LINK_PATH)
                                                     .encodedQuery("payload=" + sessionSignature)
                                                     .build();
                                             Intent intent = new Intent(
@@ -310,15 +310,15 @@ public class PcView extends Activity {
             webView.getSettings().setDomStorageEnabled(true);
         }
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
-        webView.getSettings().setUserAgentString(OneplayApi.ONEPLAY_USER_AGENT_BASE + BuildConfig.VERSION_NAME);
+        webView.getSettings().setUserAgentString(BuildConfig.USER_AGENT);
         webView.setWebViewClient(new WebViewClient() {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
-                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
+                if (uri.getScheme().equals(BuildConfig.CONNECTION_SCHEME) &&
+                        uri.getHost().equals(BuildConfig.DOMAIN) &&
+                        uri.getPath().equals(BuildConfig.APP_LAUNCH_LINK_PATH)) {
                     isFirstStart = true;
                     Intent newIntent = new Intent(
                             Intent.ACTION_VIEW,
@@ -337,9 +337,9 @@ public class PcView extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Uri uri = Uri.parse(url);
-                if (uri.getScheme().equals(OneplayApi.SSL_CONNECTION_TYPE) &&
-                        uri.getHost().equals(OneplayApi.ONEPLAY_DOMAIN) &&
-                        uri.getPath().equals(OneplayApi.ONEPLAY_APP_LAUNCH_LINK_PATH)) {
+                if (uri.getScheme().equals(BuildConfig.CONNECTION_SCHEME) &&
+                        uri.getHost().equals(BuildConfig.DOMAIN) &&
+                        uri.getPath().equals(BuildConfig.APP_LAUNCH_LINK_PATH)) {
                     isFirstStart = true;
                     Intent newIntent = new Intent(
                             Intent.ACTION_VIEW,
@@ -384,7 +384,6 @@ public class PcView extends Activity {
             }
         });
     }
-
 
     private void connectToComputer() {
         new Thread(() -> {

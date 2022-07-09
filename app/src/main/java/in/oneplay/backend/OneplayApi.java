@@ -41,20 +41,16 @@ public class OneplayApi {
     public static final int CONNECTION_TIMEOUT = 10000;
     public static final int READ_TIMEOUT = 15000;
 
-    public static final String SSL_CONNECTION_TYPE = "https";
-    public static final String ONEPLAY_DOMAIN = "www.oneplay.in";
-    public static final String ONEPLAY_APP_LAUNCH_LINK_PATH = "/launch/app";
-    public static final String ONEPLAY_APP_QUIT_LINK_PATH = "/client/quit";
-    public static final int ONEPLAY_PIN_REQUEST_PORT = 47990;
-    public static final String ONEPLAY_USER_AGENT_BASE = "OnePlayAndroid/V";
+    public static final int PIN_REQUEST_PORT = 47990;
 
     private static volatile OneplayApi instance;
 
     // Print URL and content to logcat on debug builds
     private static final boolean verbose = BuildConfig.DEBUG;
 
+    private static final String userAgent = BuildConfig.USER_AGENT;
+
     private final OkHttpClient httpClient;
-    private final String userAgent;
     private String baseStartVmUrl;
     private String baseServerInfoUrl;
     private String baseEventsUrl;
@@ -87,13 +83,29 @@ public class OneplayApi {
 
     private OneplayApi() {
         try {
-            this.baseStartVmUrl = new URI(BuildConfig.ONEPLAY_API_START_VM_ENDPOINT).toString();
-            this.baseServerInfoUrl = new URI(BuildConfig.ONEPLAY_API_GET_SESSION_ENDPOINT).toString();
-            this.baseEventsUrl = new URI(BuildConfig.ONEPLAY_API_EVENTS_ENDPOINT).toString();
+            this.baseStartVmUrl = new URI(
+                    BuildConfig.CONNECTION_SCHEME,
+                    BuildConfig.API_DOMAIN,
+                    BuildConfig.API_START_VM_ENDPOINT,
+                    "vm_ip=",
+                    null
+            ).toString();
+            this.baseServerInfoUrl = new URI(
+                    BuildConfig.CONNECTION_SCHEME,
+                    BuildConfig.API_DOMAIN,
+                    BuildConfig.API_GET_SESSION_ENDPOINT,
+                    null
+            ).toString();
+            this.baseEventsUrl = new URI(
+                    BuildConfig.CONNECTION_SCHEME,
+                    BuildConfig.API_DOMAIN,
+                    BuildConfig.API_EVENTS_ENDPOINT,
+                    null
+            ).toString();
             this.baseQuitUrl = new URI(
-                    SSL_CONNECTION_TYPE,
-                    ONEPLAY_DOMAIN,
-                    ONEPLAY_APP_QUIT_LINK_PATH,
+                    BuildConfig.CONNECTION_SCHEME,
+                    BuildConfig.DOMAIN,
+                    BuildConfig.APP_QUIT_LINK_PATH,
                     null
             ).toString();
         } catch (URISyntaxException ignored) {}
@@ -104,7 +116,6 @@ public class OneplayApi {
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build();
-        this.userAgent = ONEPLAY_USER_AGENT_BASE + BuildConfig.VERSION_NAME;
     }
 
     public String getSessionKey() {
@@ -128,11 +139,11 @@ public class OneplayApi {
 
         try {
             this.basePinRequestUrl = new URI(
-                    SSL_CONNECTION_TYPE,
+                    BuildConfig.CONNECTION_SCHEME,
                     null,
                     this.hostAddress,
-                    ONEPLAY_PIN_REQUEST_PORT,
-                    null,
+                    PIN_REQUEST_PORT,
+                    "/api/clients/unpair",
                     null,
                     null
             ).toString();
@@ -248,7 +259,7 @@ public class OneplayApi {
     }
 
     private boolean unpairAll() throws IOException {
-        String response = openHttpConnectionPostToString(basePinRequestUrl + "/api/clients/unpair");
+        String response = openHttpConnectionPostToString(basePinRequestUrl);
         try {
             if (new JSONObject(response).getBoolean("status")) {
                 return true;
@@ -261,7 +272,7 @@ public class OneplayApi {
     public void doQuit() throws IOException {
         openHttpConnectionPostToString(baseQuitUrl + "?" +
                 "session_id=" + this.sessionKey + "&" +
-                "source=" + "android_app_" + BuildConfig.VERSION_NAME);
+                "source=" + "android_app_" + BuildConfig.SHORT_VERSION_NAME);
     }
 
     public void registerEvent(String text) {

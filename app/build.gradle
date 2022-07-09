@@ -85,15 +85,21 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            def apiAddress = "https://svrdev.oneplay.in"
             def apiVersion =  "v0"
 
-            buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"43.239.110.82\""
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"\""
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
-            buildConfigField "String", "ONEPLAY_API_START_VM_ENDPOINT", "\"${apiAddress}/${apiVersion}/frontend/start_game?vm_ip=\""
-            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/${apiVersion}/client/get_session/\""
-            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"\""
+            buildConfigField "String", "DOMAIN", "\"www.oneplay.in\""
+            buildConfigField "String", "CONNECTION_SCHEME", "\"https\""
+            buildConfigField "String", "SHORT_VERSION_NAME", "\"${defaultVersionName}\""
+            buildConfigField "String", "USER_AGENT", "\"OnePlayAndroid/V${defaultVersionName}\""
+            buildConfigField "String", "SERVER_DEFAULT_IP_ADDRESS", "\"43.239.110.82\""
+            buildConfigField "String", "APP_WELCOME_LINK_PATH", "\"\""
+            buildConfigField "String", "APP_WELCOME_LINK_QUERY", "\"\""
+            buildConfigField "String", "APP_LAUNCH_LINK_PATH", "\"/launch/app\""
+            buildConfigField "String", "APP_QUIT_LINK_PATH", "\"/client/quit\""
+            buildConfigField "String", "API_DOMAIN", "\"svrdev.oneplay.in\""
+            buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session/\""
+            buildConfigField "String", "API_EVENTS_ENDPOINT", "\"\""
         }
         release {
             applicationIdSuffix ""
@@ -103,15 +109,21 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            def apiAddress = "https://client-apis.oneplay.in"
             def apiVersion = "v1"
 
-            buildConfigField "String", "ONEPLAY_SERVER_DEFAULT_IP_ADDRESS", "\"\""
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_PATH", "\"/dashboard\""
-            buildConfigField "String", "ONEPLAY_APP_WELCOME_LINK_QUERY", "\"\""
-            buildConfigField "String", "ONEPLAY_API_START_VM_ENDPOINT", "\"\""
-            buildConfigField "String", "ONEPLAY_API_GET_SESSION_ENDPOINT", "\"${apiAddress}/client/${apiVersion}/get_session/\""
-            buildConfigField "String", "ONEPLAY_API_EVENTS_ENDPOINT", "\"${apiAddress}/backend/events/register\""
+            buildConfigField "String", "DOMAIN", "\"www.oneplay.in\""
+            buildConfigField "String", "CONNECTION_SCHEME", "\"https\""
+            buildConfigField "String", "SHORT_VERSION_NAME", "\"${defaultVersionName}\""
+            buildConfigField "String", "USER_AGENT", "\"OnePlayAndroid/V${defaultVersionName}\""
+            buildConfigField "String", "SERVER_DEFAULT_IP_ADDRESS", "\"\""
+            buildConfigField "String", "APP_WELCOME_LINK_PATH", "\"/dashboard\""
+            buildConfigField "String", "APP_WELCOME_LINK_QUERY", "\"\""
+            buildConfigField "String", "APP_LAUNCH_LINK_PATH", "\"/launch/app\""
+            buildConfigField "String", "APP_QUIT_LINK_PATH", "\"/client/quit\""
+            buildConfigField "String", "API_DOMAIN", "\"client-apis.oneplay.in\""
+            buildConfigField "String", "API_START_VM_ENDPOINT", "\"\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session/\""
+            buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
 
             firebaseCrashlytics {
                 nativeSymbolUploadEnabled true
