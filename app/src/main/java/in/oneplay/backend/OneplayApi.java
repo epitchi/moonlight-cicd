@@ -261,8 +261,18 @@ public class OneplayApi {
         new Thread(() -> {
             try {
                 String body = new JSONObject()
+                        .put("user_id", userId != null ? userId : "")
                         .put("error", text)
-                        .put("user_id", userId).toString();
+                        .put("token", sessionKey != null ? sessionKey : "")
+                        .put("device", ("android " +
+                                Build.VERSION.RELEASE + " " +
+                                Build.MANUFACTURER + " " +
+                                Build.MODEL).replace(' ', '_'))
+                        .put("version", BuildConfig.SHORT_VERSION_NAME)
+                        .put("game_id", gameId != null ? gameId : "")
+                        .put("vm_ip", hostAddress != null ? hostAddress : "")
+                        .toString();
+
                 openHttpConnectionPostToString(eventsUrl, body);
 
             } catch (JSONException | IOException e) {
