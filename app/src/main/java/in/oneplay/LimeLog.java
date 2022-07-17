@@ -1,6 +1,8 @@
 package in.oneplay;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -20,12 +22,23 @@ public class LimeLog {
             LOGGER.warning(msg);
         }
     }
+
+    public static void severe(Throwable throwable) {
+        severe("", throwable);
+    }
+
+    public static void severe(String msg, Throwable throwable) {
+        StringWriter errors = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(errors));
+
+        msg = msg + "\n" + errors;
+
+        severe(msg);
+    }
     
     public static void severe(String msg) {
-        msg = msg + traceToString(new Throwable().getStackTrace());
-
         if (BuildConfig.DEBUG) {
-        LOGGER.severe(msg);
+            LOGGER.severe(msg);
         } else {
             OneplayApi.getInstance().registerEvent(msg);
         }
@@ -33,17 +46,5 @@ public class LimeLog {
     
     public static void setFileHandler(String fileName) throws IOException {
         LOGGER.addHandler(new FileHandler(fileName));
-    }
-
-    private static String traceToString(StackTraceElement[] trace) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < trace.length; i++) {
-            if (i != 0) {
-                sb.append("\n\tat ");
-                sb.append(trace[i]);
-            }
-        }
-
-        return sb.toString();
     }
 }

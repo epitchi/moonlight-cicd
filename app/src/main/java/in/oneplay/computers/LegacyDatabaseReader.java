@@ -38,7 +38,7 @@ public class LegacyDatabaseReader {
             if (stringData.startsWith(ADDRESS_PREFIX)) {
                 details.localAddress = c.getString(2).substring(ADDRESS_PREFIX.length());
             } else {
-                LimeLog.severe("DB: Corrupted local address for " + details.name);
+                LimeLog.severe(new Exception("DB: Corrupted local address for " + details.name));
             }
         }
 
@@ -51,7 +51,7 @@ public class LegacyDatabaseReader {
             if (stringData.startsWith(ADDRESS_PREFIX)) {
                 details.remoteAddress = c.getString(3).substring(ADDRESS_PREFIX.length());
             } else {
-                LimeLog.severe("DB: Corrupted remote address for " + details.name);
+                LimeLog.severe(new Exception("DB: Corrupted remote address for " + details.name));
             }
         }
 

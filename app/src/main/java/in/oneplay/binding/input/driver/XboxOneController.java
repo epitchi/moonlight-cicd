@@ -104,7 +104,7 @@ public class XboxOneController extends AbstractXboxController {
         {
             case 0x20:
                 if (buffer.remaining() < 17) {
-                    LimeLog.severe("XBone button/axis read too small: "+buffer.remaining());
+                    LimeLog.severe(new Exception("XBone button/axis read too small: "+buffer.remaining()));
                     return false;
                 }
 
@@ -114,7 +114,7 @@ public class XboxOneController extends AbstractXboxController {
 
             case 0x07:
                 if (buffer.remaining() < 4) {
-                    LimeLog.severe("XBone mode read too small: "+buffer.remaining());
+                    LimeLog.severe(new Exception("XBone mode read too small: "+buffer.remaining()));
                     return false;
                 }
 

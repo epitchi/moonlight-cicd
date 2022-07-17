@@ -431,8 +431,7 @@ public class ComputerManagerService extends Service {
 
             @Override
             public void notifyDiscoveryFailure(Exception e) {
-                LimeLog.severe("mDNS discovery failed");
-                e.printStackTrace();
+                LimeLog.severe("mDNS discovery failed", e);
             }
         };
     }
@@ -552,7 +551,7 @@ public class ComputerManagerService extends Service {
 
             // Check if this is the PC we expected
             if (newDetails.uuid == null) {
-                LimeLog.severe("Polling returned no UUID!");
+                LimeLog.severe(new Exception("Polling returned no UUID!"));
                 return null;
             }
             // details.uuid can be null on initial PC add

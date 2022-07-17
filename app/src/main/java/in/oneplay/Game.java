@@ -1221,7 +1221,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         try {
                             OneplayApi.getInstance().doQuit();
                         } catch (IOException e) {
-                            LimeLog.severe(e.getMessage());
+                            LimeLog.severe(e);
                         }
                     }
 
@@ -1229,7 +1229,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
 
                 if (message != null) {
-                    LimeLog.severe(message);
+                    LimeLog.severe(new Exception(message));
                 }
             }
         }).start();
@@ -1922,7 +1922,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 if (!displayedFailureDialog) {
                     displayedFailureDialog = true;
-                    LimeLog.severe(stage + " failed: " + errorCode);
+                    LimeLog.severe(new Exception(stage + " failed: " + errorCode));
 
                     // If video initialization failed and the surface is still valid, display extra information for the user
                     if (stage.contains("video") && streamView.getHolder().getSurface().isValid()) {
@@ -1967,7 +1967,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 if (!displayedFailureDialog) {
                     displayedFailureDialog = true;
-                    LimeLog.severe("Connection terminated: " + errorCode);
+                    LimeLog.severe(new Exception("Connection terminated: " + errorCode));
                     stopConnection();
 
                     // Display the error dialog if it was an unexpected termination.

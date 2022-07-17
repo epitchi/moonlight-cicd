@@ -402,12 +402,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             selectedDecoderInfo = avcDecoder;
 
             if (avcDecoder == null) {
-                LimeLog.severe("No available AVC decoder!");
+                LimeLog.severe(new Exception("No available AVC decoder!"));
                 return -1;
             }
 
             if (width > 4096 || height > 4096) {
-                LimeLog.severe("> 4K streaming only supported on HEVC");
+                LimeLog.severe(new Exception("> 4K streaming only supported on HEVC"));
                 return -1;
             }
 
@@ -436,7 +436,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             selectedDecoderInfo = hevcDecoder;
 
             if (hevcDecoder == null) {
-                LimeLog.severe("No available HEVC decoder!");
+                LimeLog.severe(new Exception("No available HEVC decoder!"));
                 return -2;
             }
 
@@ -444,7 +444,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         }
         else {
             // Unknown format
-            LimeLog.severe("Unknown format");
+            LimeLog.severe(new Exception("Unknown format"));
             return -3;
         }
 
@@ -484,7 +484,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                     return;
                 }
 
-                LimeLog.severe(codecExc.getDiagnosticInfo());
+                LimeLog.severe(codecExc.getDiagnosticInfo(), codecExc);
             }
         }
 

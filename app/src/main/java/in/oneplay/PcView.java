@@ -167,7 +167,7 @@ public class PcView extends Activity {
                                             this,
                                             UPDATES_REQUEST_CODE);
                                 } catch (IntentSender.SendIntentException e) {
-                                    LimeLog.severe("An error occurred during the update: " + e.getMessage());
+                                    LimeLog.severe("An error occurred during the update", e);
                                 }
                             }
                         });
@@ -197,7 +197,7 @@ public class PcView extends Activity {
                         null
                 );
             } catch (URISyntaxException e) {
-                LimeLog.severe(e.getMessage());
+                LimeLog.severe(e);
             }
 
             webView.setVisibility(View.VISIBLE);
@@ -262,7 +262,7 @@ public class PcView extends Activity {
                                         });
                                     }
                                 } catch (IOException e) {
-                                    LimeLog.severe(e.getMessage());
+                                    LimeLog.severe(e);
                                 }
                             }).start();
                         } else {
@@ -293,13 +293,13 @@ public class PcView extends Activity {
             startComputerUpdates();
         } else if (requestCode == UPDATES_REQUEST_CODE) {
             if (resultCode != RESULT_OK) {
-                LimeLog.severe("Update flow failed! Result code: " + resultCode);
+                LimeLog.severe("Update flow failed! Result code: " + resultCode, new Throwable());
                 checkUpdates();
             }
         } else {
             currentApp = null;
             // Back to user account
-            processingError(null, true);
+            processingError(new Exception(), true);
         }
     }
 
@@ -394,7 +394,7 @@ public class PcView extends Activity {
                             // Include a request code to later monitor this update request.
                             UPDATES_REQUEST_CODE);
                 } catch (IntentSender.SendIntentException e) {
-                    LimeLog.severe("An error occurred during the update: " + e.getMessage());
+                    LimeLog.severe("An error occurred during the update", e);
                 }
             }
         });
@@ -409,7 +409,7 @@ public class PcView extends Activity {
                 OneplayPreferenceConfiguration.savePreferences(this, client.getClientConfig());
                 doAddPc(client.getHostAddress());
             } catch (IOException e) {
-                processingError(e.getMessage(), false);
+                processingError(e, false);
             }
         }).start();
     }
@@ -517,7 +517,7 @@ public class PcView extends Activity {
             return;
         }
 
-        processingError(message, true);
+        processingError(new Exception(message), true);
     }
 
     private boolean runningPolling;
@@ -525,15 +525,15 @@ public class PcView extends Activity {
     private void doPair() {
         if (computer.state == ComputerDetails.State.OFFLINE ||
                 ServerHelper.getCurrentAddressFromComputer(computer) == null) {
-            processingError(getResources().getString(R.string.pair_pc_offline), true);
+            processingError(new Exception(getResources().getString(R.string.pair_pc_offline)), true);
             return;
         }
         if (computer.runningGameId != 0) {
-            processingError(getResources().getString(R.string.pair_pc_ingame), true);
+            processingError(new Exception(getResources().getString(R.string.pair_pc_ingame)), true);
             return;
         }
         if (managerBinder == null) {
-            processingError(getResources().getString(R.string.error_manager_not_running), true);
+            processingError(new Exception(getResources().getString(R.string.error_manager_not_running)), true);
             return;
         }
 
@@ -555,7 +555,7 @@ public class PcView extends Activity {
                 OneplayApi client = OneplayApi.getInstance();
                 final String pinStr = client.getSessionKey();
                 httpConn.addInterceptor(client.getInterceptor((result) -> {
-                    if (!result) runOnUiThread(() -> processingError("Session key not accepted", true));
+                    if (!result) runOnUiThread(() -> processingError(new Exception("Session key not accepted"), true));
                 }));
 
                 if (computer == null) {
@@ -595,7 +595,7 @@ public class PcView extends Activity {
             }
 
             final String finalMessage = message;
-            runOnUiThread(() -> processingError(finalMessage, true));
+            runOnUiThread(() -> processingError(new Exception(finalMessage), true));
         });
         pairingThread.start();
     }
@@ -616,10 +616,10 @@ public class PcView extends Activity {
                         if (currentApp != null) {
                             runOnUiThread(() -> ServerHelper.doStart(this, currentApp, details, managerBinder));
                         } else {
-                            processingError(getString(R.string.applist_refresh_error_msg), true);
+                            processingError(new Exception(getString(R.string.applist_refresh_error_msg)), true);
                         }
                     } catch (XmlPullParserException | IOException e) {
-                        processingError(getString(R.string.applist_refresh_error_msg) + ": " + e.getMessage(), true);
+                        processingError(e, true);
                     }
                 }).start();
             }
@@ -641,10 +641,8 @@ public class PcView extends Activity {
         }
     }
 
-    private void processingError(String message, boolean isRemoveComputer) {
-        if (message != null) {
-            LimeLog.severe(message);
-        }
+    private void processingError(Throwable error, boolean isRemoveComputer) {
+        LimeLog.severe(error);
 
         if (isRemoveComputer) {
             removeComputer();

@@ -71,7 +71,7 @@ public class Xbox360Controller extends AbstractXboxController {
     @Override
     protected boolean handleRead(ByteBuffer buffer) {
         if (buffer.remaining() < 14) {
-            LimeLog.severe("Read too small: "+buffer.remaining());
+            LimeLog.severe(new Exception("Read too small: "+buffer.remaining()));
             return false;
         }
 

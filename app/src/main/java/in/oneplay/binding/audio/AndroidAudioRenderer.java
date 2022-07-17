@@ -107,7 +107,7 @@ public class AndroidAudioRenderer implements AudioRenderer {
                 }
                 break;
             default:
-                LimeLog.severe("Decoder returned unhandled channel count");
+                LimeLog.severe(new Exception("Decoder returned unhandled channel count"));
                 return -1;
         }
 

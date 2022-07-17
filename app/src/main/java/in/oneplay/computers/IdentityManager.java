@@ -39,7 +39,7 @@ public class IdentityManager {
             reader = new InputStreamReader(c.openFileInput(UNIQUE_ID_FILE_NAME));
             if (reader.read(uid) != UID_SIZE_IN_BYTES * 2)
             {
-                LimeLog.severe("UID file data is truncated");
+                LimeLog.severe(new Exception("UID file data is truncated"));
                 return null;
             }
             return new String(uid);
@@ -47,7 +47,7 @@ public class IdentityManager {
             LimeLog.info("No UID file found");
             return null;
         } catch (IOException e) {
-            LimeLog.severe("Error while reading UID file");
+            LimeLog.severe(new Exception("Error while reading UID file"));
             e.printStackTrace();
             return null;
         } finally {
@@ -70,8 +70,7 @@ public class IdentityManager {
             writer.write(uidStr);
             LimeLog.info("UID written to disk");
         } catch (IOException e) {
-            LimeLog.severe("Error while writing UID file");
-            e.printStackTrace();
+            LimeLog.severe("Error while writing UID file", e);
         } finally {
             if (writer != null) {
                 try {

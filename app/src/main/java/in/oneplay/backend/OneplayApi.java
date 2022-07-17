@@ -140,7 +140,7 @@ public class OneplayApi {
             sessionSignature = responseData.getString("session_signature");
 
         } catch (JSONException e) {
-            LimeLog.severe(e.getMessage());
+            LimeLog.severe(e);
         }
 
         return sessionSignature;
@@ -176,7 +176,7 @@ public class OneplayApi {
             gameId = serverData.getJSONObject("game_details").getString("id");
             clientConfig = getClientConfig(serverData);
         } catch (JSONException e) {
-            LimeLog.severe(e.getMessage());
+            LimeLog.severe(e);
         }
 
         this.hostAddress = serverAddress;
@@ -276,7 +276,7 @@ public class OneplayApi {
                 openHttpConnectionPostToString(eventsUrl, body);
 
             } catch (JSONException | IOException e) {
-                LimeLog.severe(e.getMessage());
+                LimeLog.severe(e);
                 if (verbose) {
                     e.printStackTrace();
                 }
@@ -300,7 +300,7 @@ public class OneplayApi {
 
             return (new JSONObject(response).getBoolean("status"));
         } catch (IOException | JSONException | InterruptedException e) {
-            LimeLog.severe(e.getMessage());
+            LimeLog.severe(e);
             if (verbose) {
                 e.printStackTrace();
             }
