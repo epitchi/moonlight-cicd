@@ -554,9 +554,19 @@ public class PcView extends Activity {
                         PlatformBinding.getCryptoProvider(PcView.this));
                 OneplayApi client = OneplayApi.getInstance();
                 final String pinStr = client.getSessionKey();
-                httpConn.addInterceptor(client.getInterceptor((result) -> {
-                    if (!result) runOnUiThread(() -> processingError(new Exception("Session key not accepted"), true));
-                }));
+
+                httpConn.addInterceptor(client.getInterceptor());
+
+                OneplayApi.PinState pinState = OneplayApi.getInstance().getPinState();
+
+                switch (pinState) {
+                    case UNIDENTIFIED:
+                        runOnUiThread(() -> processingError(new Exception("The server did not respond in time"), true));
+                        return;
+                    case NOT_ACCEPTED:
+                        runOnUiThread(() -> processingError(new Exception("Session key not accepted"), true));
+                        return;
+                }
 
                 if (computer == null) {
                     return;

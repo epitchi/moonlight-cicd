@@ -85,6 +85,14 @@ public class OneplayApi {
         void onResult(boolean result);
     }
 
+    public enum PinState {
+        UNIDENTIFIED,
+        ACCEPTED,
+        NOT_ACCEPTED
+    }
+
+    private volatile PinState pinState = PinState.UNIDENTIFIED;
+
     public static OneplayApi getInstance() {
         OneplayApi localInstance = instance;
         if (localInstance == null) {
@@ -123,6 +131,21 @@ public class OneplayApi {
         return gameId;
     }
 
+    private synchronized void setPinState(PinState newState) {
+        this.pinState = newState;
+        notifyAll();
+    }
+
+    public synchronized PinState getPinState() {
+        while (pinState == null) {
+            try {
+                wait(CONNECTION_TIMEOUT);
+            } catch (InterruptedException ignored) {}
+        }
+
+        return pinState;
+    }
+
     public void connectTo(Uri uri) throws IOException {
         loadServerInfo(uri.getQueryParameter("payload"));
 
@@ -146,14 +169,20 @@ public class OneplayApi {
         return sessionSignature;
     }
 
-    public Interceptor getInterceptor(PinAuthorizationCallback c) {
+    public Interceptor getInterceptor() {
         return (Interceptor.Chain chain) -> {
             Request request = chain.request();
             if ("GET".equals(request.method()) &&
                     hostAddress.equals(request.url().host()) &&
                     "/pair".equals(request.url().encodedPath())) {
 
-                new Thread(() -> c.onResult(setHostSessionKey(sessionKey))).start();
+                new Thread(() -> {
+                    if (setHostSessionKey(sessionKey)) {
+                        setPinState(PinState.ACCEPTED);
+                    } else {
+                        setPinState(PinState.NOT_ACCEPTED);
+                    }
+                }).start();
             }
 
             return chain.proceed(request);
