@@ -262,7 +262,7 @@ public class PcView extends Activity {
                                         });
                                     }
                                 } catch (IOException e) {
-                                    LimeLog.severe(e);
+                                    runOnUiThread(() -> processingError(e, true));
                                 }
                             }).start();
                         } else {
@@ -541,7 +541,7 @@ public class PcView extends Activity {
             LimeLog.info(getResources().getString(R.string.pairing));
         }
 
-        Thread pairingThread = new Thread(() -> {
+        new Thread(() -> {
             NvHTTP httpConn;
             String message;
             try {
@@ -555,24 +555,33 @@ public class PcView extends Activity {
                 OneplayApi client = OneplayApi.getInstance();
                 final String pinStr = client.getSessionKey();
 
-                httpConn.addInterceptor(client.getInterceptor());
+                Thread thread = Thread.currentThread();
 
-                OneplayApi.PinState pinState = OneplayApi.getInstance().getPinState();
+                PairingManager pm = httpConn.getPairingManager();
 
-                switch (pinState) {
-                    case UNIDENTIFIED:
-                        runOnUiThread(() -> processingError(new Exception("The server did not respond in time"), true));
-                        return;
-                    case NOT_ACCEPTED:
-                        runOnUiThread(() -> processingError(new Exception("Session key not accepted"), true));
-                        return;
-                }
+                httpConn.addInterceptor(client.getInterceptor((result -> {
+                    if (!result) {
+                        runOnUiThread(() -> processingError(
+                                new Exception("Session key not accepted or the server did not respond in time"),
+                                true)
+                        );
+                        // Cancel pairing process
+                        try {
+                            pm.unpair();
+                        } catch (IOException e) {
+                            LimeLog.severe("Unable to abort pairing process", e);
+                        }
+
+                        // Interrupt pairing thread
+                        if (!thread.isInterrupted()) {
+                            thread.interrupt();
+                        }
+                    }
+                })));
 
                 if (computer == null) {
                     return;
                 }
-                
-                PairingManager pm = httpConn.getPairingManager();
 
                 PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
                 if (pairState == PairingManager.PairState.PIN_WRONG) {
@@ -606,8 +615,7 @@ public class PcView extends Activity {
 
             final String finalMessage = message;
             runOnUiThread(() -> processingError(new Exception(finalMessage), true));
-        });
-        pairingThread.start();
+        }).start();
     }
 
     private void startComputerUpdates() {
