@@ -258,4 +258,8 @@ public class UiHelper {
                 .setNegativeButton(parent.getResources().getString(R.string.no), dialogClickListener)
                 .show();
     }
+
+    public static int dp(Context context, int size) {
+        return (int) (size * context.getResources().getDisplayMetrics().density);
+    }
 }

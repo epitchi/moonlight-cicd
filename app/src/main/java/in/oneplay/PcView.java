@@ -1,5 +1,7 @@
 package in.oneplay;
 
+import static in.oneplay.utils.UiHelper.dp;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -18,12 +20,14 @@ import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -207,27 +211,92 @@ public class PcView extends Activity {
             progress.setVisibility(View.GONE);
 
             if (BuildConfig.DEBUG) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                LayoutInflater inflater = this.getLayoutInflater();
-
-                View editTextView = inflater.inflate(R.layout.dialog_edit_text, findViewById(R.id.dialog_edit_text));
-
                 String defaultServerIPAddress = BuildConfig.SERVER_DEFAULT_IP_ADDRESS;
+                String defaultConnectionTimeout = String.valueOf(BuildConfig.SERVER_DEFAULT_CONNECTION_TIMEOUT);
+                String defaultReadTimeout = String.valueOf(BuildConfig.SERVER_DEFAULT_READ_TIMEOUT);
 
-                ((TextView)editTextView.findViewById(R.id.dialog_edit_text_title)).setText("Enter the server IP:");
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-                EditText dialogEditText = editTextView.findViewById(R.id.edit_text);
-                dialogEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                dialogEditText.setText(defaultServerIPAddress);
+                // Layout
+                RelativeLayout dialogLayout = new RelativeLayout(this);
+                int padding = dp(this, 20);
+                dialogLayout.setPadding(padding, padding, padding, padding);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                dialogLayout.setLayoutParams(params);
 
-                builder.setView(editTextView)
+                // IP label
+                TextView dialogIpLabel = new TextView(this);
+                dialogIpLabel.setId(View.generateViewId());
+                dialogIpLabel.setText("Enter the server IP:");
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                dialogIpLabel.setLayoutParams(params);
+                dialogLayout.addView(dialogIpLabel);
+
+                // IP field
+                EditText dialogIpField = new EditText(this);
+                dialogIpField.setId(View.generateViewId());
+                dialogIpField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                dialogIpField.setText(defaultServerIPAddress);
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
+                params.addRule(RelativeLayout.BELOW, dialogIpLabel.getId());
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
+                dialogIpField.setLayoutParams(params);
+                dialogLayout.addView(dialogIpField);
+
+                // Connection timeout label
+                TextView dialogConnTimeoutLabel = new TextView(this);
+                dialogConnTimeoutLabel.setId(View.generateViewId());
+                dialogConnTimeoutLabel.setText("Enter the connection timeout, ms:");
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.BELOW, dialogIpField.getId());
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                dialogConnTimeoutLabel.setLayoutParams(params);
+                dialogLayout.addView(dialogConnTimeoutLabel);
+
+                // Connection timeout field
+                EditText dialogConnTimeoutField = new EditText(this);
+                dialogConnTimeoutField.setId(View.generateViewId());
+                dialogConnTimeoutField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                dialogConnTimeoutField.setText(defaultConnectionTimeout);
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
+                params.addRule(RelativeLayout.BELOW, dialogConnTimeoutLabel.getId());
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
+                dialogConnTimeoutField.setLayoutParams(params);
+                dialogLayout.addView(dialogConnTimeoutField);
+
+                // Read timeout label
+                TextView dialogReadTimeoutLabel = new TextView(this);
+                dialogReadTimeoutLabel.setId(View.generateViewId());
+                dialogReadTimeoutLabel.setText("Enter the read timeout, ms:");
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.BELOW, dialogConnTimeoutField.getId());
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                dialogReadTimeoutLabel.setLayoutParams(params);
+                dialogLayout.addView(dialogReadTimeoutLabel);
+
+                // Read timeout field
+                EditText dialogReadTimeoutField = new EditText(this);
+                dialogReadTimeoutField.setId(View.generateViewId());
+                dialogReadTimeoutField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                dialogReadTimeoutField.setText(defaultReadTimeout);
+                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
+                params.addRule(RelativeLayout.BELOW, dialogReadTimeoutLabel.getId());
+                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
+                dialogReadTimeoutField.setLayoutParams(params);
+                dialogLayout.addView(dialogReadTimeoutField);
+
+                builder.setView(dialogLayout)
                         .setPositiveButton(android.R.string.ok, null)
                         .setNeutralButton("Default", null);
                 AlertDialog dialog = builder.create();
                 dialog.setOnShowListener(di -> {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                         Pattern pattern = Pattern.compile("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$");
-                        Matcher matcher = pattern.matcher(dialogEditText.getText());
+                        Matcher matcher = pattern.matcher(dialogIpField.getText());
                         if (matcher.matches()) {
                             new Thread(() -> {
                                 try {
@@ -236,8 +305,16 @@ public class PcView extends Activity {
                                         progress.setVisibility(View.VISIBLE);
                                     });
 
+                                    int connectionTimeout = Integer.parseInt(dialogConnTimeoutField.getText().toString());
+                                    int readTimeout = Integer.parseInt(dialogReadTimeoutField.getText().toString());
+
+                                    OneplayApi.CONNECTION_TIMEOUT = connectionTimeout;
+                                    OneplayApi.READ_TIMEOUT = readTimeout;
+                                    NvHTTP.CONNECTION_TIMEOUT = connectionTimeout;
+                                    NvHTTP.READ_TIMEOUT = readTimeout;
+
                                     OneplayApi connection = OneplayApi.getInstance();
-                                    String sessionSignature = connection.startVm(dialogEditText.getText().toString());
+                                    String sessionSignature = connection.startVm(dialogIpField.getText().toString());
                                     if (!sessionSignature.isEmpty()) {
                                         runOnUiThread(() -> {
                                             isFirstStart = true;
@@ -269,7 +346,11 @@ public class PcView extends Activity {
                             Toast.makeText(PcView.this, "Wrong IP. Try again.", Toast.LENGTH_LONG).show();
                         }
                     });
-                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> dialogEditText.setText(defaultServerIPAddress));
+                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                        dialogIpField.setText(defaultServerIPAddress);
+                        dialogConnTimeoutField.setText(defaultConnectionTimeout);
+                        dialogReadTimeoutField.setText(defaultReadTimeout);
+                    });
                 });
 
                 dialog.show();

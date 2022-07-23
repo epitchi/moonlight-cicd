@@ -36,8 +36,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class OneplayApi {
-    public static final int CONNECTION_TIMEOUT = 3000;
-    public static final int READ_TIMEOUT = 5000;
+    public static int CONNECTION_TIMEOUT = 3000;
+    public static int READ_TIMEOUT = 5000;
 
     public static final int REQUEST_PORT = 47990;
 
