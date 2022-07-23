@@ -5,6 +5,7 @@ import android.content.Intent;
 
 import java.security.cert.CertificateEncodingException;
 
+import in.oneplay.BuildConfig;
 import in.oneplay.Game;
 import in.oneplay.LimeLog;
 import in.oneplay.R;
@@ -13,7 +14,7 @@ import in.oneplay.nvstream.http.ComputerDetails;
 import in.oneplay.nvstream.http.NvApp;
 
 public class ServerHelper {
-    public static final String CONNECTION_TEST_SERVER = "android.conntest.moonlight-stream.org";
+    public static final String CONNECTION_TEST_SERVER = BuildConfig.APP_CONNECTIVITY_TEST_CHECK_DOMAIN;
 
     public static final int ONEPLAY_GAME_REQUEST_CODE = 1;
     public static final int ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY = 2;
