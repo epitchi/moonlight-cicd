@@ -15,6 +15,7 @@ public class ServerHelper {
 
     public static final int ONEPLAY_GAME_REQUEST_CODE = 1;
     public static final int ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY = 2;
+    public static final int UPDATES_REQUEST_CODE = 3;
 
     public static String getCurrentAddressFromComputer(ComputerDetails computer) {
         return computer.activeAddress;

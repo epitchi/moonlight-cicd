@@ -74,8 +74,6 @@ import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
 public class PcView extends Activity {
-    private static final int UPDATES_REQUEST_CODE = 1;
-
     private WebView webView;
     private ProgressBar progress;
     private Intent currentIntent;
@@ -173,7 +171,7 @@ public class PcView extends Activity {
                                             appUpdateInfo,
                                             AppUpdateType.IMMEDIATE,
                                             this,
-                                            UPDATES_REQUEST_CODE);
+                                            ServerHelper.UPDATES_REQUEST_CODE);
                                 } catch (IntentSender.SendIntentException e) {
                                     LimeLog.severe("An error occurred during the update", e);
                                 }
@@ -389,7 +387,7 @@ public class PcView extends Activity {
                     LimeLog.severe("Unable to restart the game activity.", e);
                 }
             }).start();
-        } else if (requestCode == UPDATES_REQUEST_CODE && resultCode != RESULT_OK) {
+        } else if (requestCode == ServerHelper.UPDATES_REQUEST_CODE && resultCode != RESULT_OK) {
             LimeLog.severe("Update flow failed! Result code: " + resultCode, new Throwable());
             checkUpdates();
         } else {
@@ -488,7 +486,7 @@ public class PcView extends Activity {
                                     .setAllowAssetPackDeletion(true)
                                     .build(),
                             // Include a request code to later monitor this update request.
-                            UPDATES_REQUEST_CODE);
+                            ServerHelper.UPDATES_REQUEST_CODE);
                 } catch (IntentSender.SendIntentException e) {
                     LimeLog.severe("An error occurred during the update", e);
                 }
