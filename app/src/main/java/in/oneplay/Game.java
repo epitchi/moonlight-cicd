@@ -2,7 +2,6 @@ package in.oneplay;
 
 
 import in.oneplay.backend.OneplayApi;
-import in.oneplay.backend.OneplayServerHelper;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.audio.AndroidAudioRenderer;
 import in.oneplay.binding.input.ControllerHandler;
@@ -22,7 +21,6 @@ import in.oneplay.binding.video.PerfOverlayListener;
 import in.oneplay.nvstream.NvConnection;
 import in.oneplay.nvstream.NvConnectionListener;
 import in.oneplay.nvstream.StreamConfiguration;
-import in.oneplay.nvstream.http.ComputerDetails;
 import in.oneplay.nvstream.http.GfeHttpResponseException;
 import in.oneplay.nvstream.http.NvApp;
 import in.oneplay.nvstream.input.KeyboardPacket;
@@ -275,7 +273,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
                     OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
                     isNeedRefresh = true;
-                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
                     finish();
                 } else if (menuItem.getItemId() == R.id.quit_stream) {
                     finish();
@@ -292,7 +290,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 if (currentResolutionIndex != selectedResolutionIndex.get()) {
                                     OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
                                     isNeedRefresh = true;
-                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
                                     finish();
                                 }
                             })
@@ -344,7 +342,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 if (currentBitrate != selectedBitrate[0]) {
                                     OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
                                     isNeedRefresh = true;
-                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
                                     finish();
                                 } else {
                                     dialog.dismiss();
@@ -367,7 +365,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 if (currentDecoderIndex != selectedDecoderIndex.get()) {
                                     OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
                                     isNeedRefresh = true;
-                                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
                                     finish();
                                 }
                             })
@@ -377,7 +375,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 } else if (menuItem.getItemId() == R.id.relaunch_game) {
                     isNeedRefresh = false;
                     isNeedRelaunch = true;
-                    setResult(OneplayServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY);
+                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
                     finish();
                 } else if (menuItem.getItemId() == R.id.report_issue) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
@@ -459,13 +457,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         String uniqueId = Game.this.getIntent().getStringExtra(EXTRA_UNIQUEID);
         String uuid = Game.this.getIntent().getStringExtra(EXTRA_PC_UUID);
         boolean appSupportsHdr = Game.this.getIntent().getBooleanExtra(EXTRA_APP_HDR, false);
-        byte[] derCertData = Game.this.getIntent().getByteArrayExtra(EXTRA_SERVER_CERT);
+        X509Certificate derCert = (X509Certificate) Game.this.getIntent().getSerializableExtra(EXTRA_SERVER_CERT);
 
         X509Certificate serverCert = null;
         try {
-            if (derCertData != null) {
+            if (derCert != null) {
                 serverCert = (X509Certificate) CertificateFactory.getInstance("X.509")
-                        .generateCertificate(new ByteArrayInputStream(derCertData));
+                        .generateCertificate(new ByteArrayInputStream(derCert.getEncoded()));
             }
         } catch (CertificateException e) {
             e.printStackTrace();
@@ -1224,14 +1222,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                             LimeLog.severe(e);
                         }
                     }
-
-                    finish();
                 }
 
                 if (message != null) {
                     LimeLog.severe(new Exception(message));
                 }
             }
+            finish();
         }).start();
     }
 

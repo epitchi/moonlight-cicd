@@ -1,5 +1,10 @@
 package in.oneplay;
 
+import static in.oneplay.Game.EXTRA_HOST;
+import static in.oneplay.Game.EXTRA_PC_NAME;
+import static in.oneplay.Game.EXTRA_PC_UUID;
+import static in.oneplay.Game.EXTRA_SERVER_CERT;
+import static in.oneplay.Game.EXTRA_UNIQUEID;
 import static in.oneplay.utils.UiHelper.dp;
 
 import android.annotation.SuppressLint;
@@ -18,7 +23,6 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
@@ -51,6 +55,7 @@ import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,7 +82,6 @@ public class PcView extends Activity {
     private FirebaseAnalytics mFirebaseAnalytics;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
-    private NvApp currentApp;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
@@ -370,17 +374,28 @@ public class PcView extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == ServerHelper.ONEPLAY_GAME_REQUEST_CODE  &&
-                resultCode == ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY) {
-            startComputerUpdates();
-        } else if (requestCode == UPDATES_REQUEST_CODE) {
-            if (resultCode != RESULT_OK) {
-                LimeLog.severe("Update flow failed! Result code: " + resultCode, new Throwable());
-                checkUpdates();
-            }
+                resultCode == ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY &&
+                data != null) {
+            new Thread(() -> {
+                try {
+                    startGame(
+                            data.getStringExtra(EXTRA_HOST),
+                            data.getStringExtra(EXTRA_UNIQUEID),
+                            data.getStringExtra(EXTRA_PC_UUID),
+                            data.getStringExtra(EXTRA_PC_NAME),
+                            (X509Certificate) data.getSerializableExtra(EXTRA_SERVER_CERT)
+                    );
+                } catch (XmlPullParserException | IOException e) {
+                    LimeLog.severe("Unable to restart the game activity.", e);
+                }
+            }).start();
+        } else if (requestCode == UPDATES_REQUEST_CODE && resultCode != RESULT_OK) {
+            LimeLog.severe("Update flow failed! Result code: " + resultCode, new Throwable());
+            checkUpdates();
         } else {
-            currentApp = null;
             // Back to user account
-            processingError(new Exception(), true);
+            removeComputer();
+            startActivity(new Intent(Intent.ACTION_MAIN, null, PcView.this, PcView.class));
         }
     }
 
@@ -705,18 +720,13 @@ public class PcView extends Activity {
                 new Thread(() -> {
                     stopComputerUpdates();
                     try {
-                        NvHTTP httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(details),
+                        startGame(
+                                ServerHelper.getCurrentAddressFromComputer(computer),
                                 managerBinder.getUniqueId(),
-                                details.serverCert,
-                                PlatformBinding.getCryptoProvider(PcView.this));
-
-                        currentApp = httpConn.getAppByName("Desktop"); // Always get first app (Desktop)
-
-                        if (currentApp != null) {
-                            runOnUiThread(() -> ServerHelper.doStart(this, currentApp, details, managerBinder));
-                        } else {
-                            processingError(new Exception(getString(R.string.applist_refresh_error_msg)), true);
-                        }
+                                computer.uuid,
+                                computer.name,
+                                computer.serverCert
+                        );
                     } catch (XmlPullParserException | IOException e) {
                         processingError(e, true);
                     }
@@ -748,5 +758,23 @@ public class PcView extends Activity {
         }
 
         startActivity(new Intent(Intent.ACTION_MAIN, null, PcView.this, PcView.class));
+    }
+
+    private void startGame(String host, String uniqueId, String uuid, String pcName,
+                           X509Certificate serverCert) throws XmlPullParserException, IOException {
+        NvHTTP httpConn = new NvHTTP(host,
+                uniqueId,
+                serverCert,
+                PlatformBinding.getCryptoProvider(PcView.this));
+
+        NvApp currentApp = httpConn.getAppByName("Desktop"); // Always get first app (Desktop)
+
+        if (currentApp != null) {
+            Intent intent = ServerHelper.createStartIntent(this, host, currentApp, uniqueId,
+                    uuid, pcName, serverCert);
+            runOnUiThread(() -> ServerHelper.doStart(this, intent));
+        } else {
+            processingError(new Exception(getString(R.string.applist_refresh_error_msg)), true);
+        }
     }
 }
