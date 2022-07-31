@@ -416,6 +416,7 @@ public class PcView extends Activity {
     private void initializeWebView() {
         if (!BuildConfig.DEBUG) {
             webView.getSettings().setJavaScriptEnabled(true);
+            webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
             webView.getSettings().setDomStorageEnabled(true);
         }
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
