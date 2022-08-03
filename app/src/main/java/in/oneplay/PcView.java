@@ -662,7 +662,7 @@ public class PcView extends Activity {
                         );
                         // Cancel pairing process
                         try {
-                            pm.unpair();
+                            httpConn.unpair();
                         } catch (IOException e) {
                             LimeLog.severe("Unable to abort pairing process", e);
                         }

@@ -2,12 +2,5 @@
 <resources>
     <string name="help_loading_title">Vizualizador da Ajuda</string>
     <string name="help_loading_msg">Carregando a página de ajuda…</string>
-    <string name="pcview_menu_header_online">Online</string>
-    <string name="pcview_menu_header_offline">Offline</string>
-    <string name="pcview_menu_app_list">Veja todos aplicativos</string>
-    <string name="pcview_menu_pair_pc">Sincronize com o PC</string>
-    <string name="pcview_menu_details">Ver Detalhes</string>
-    <string name="pair_pairing_title">Pareando</string>
     <string name="pair_fail">Falha no pareamento</string>
-    <string name="nettest_title_waiting">Testar Conexão com a Internet</string>
 </resources>
