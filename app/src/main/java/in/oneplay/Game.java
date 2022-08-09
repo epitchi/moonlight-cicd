@@ -61,6 +61,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.ResultReceiver;
 import android.util.Rational;
 import android.view.Display;
 import android.view.InputDevice;
@@ -261,150 +262,170 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         settingsButton = findViewById(R.id.settingsButton);
 
         settingsButton.setOnClickListener((view) -> {
-            PopupMenu settingsMenu = new PopupMenu(Game.this, settingsButton);
-            settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
-            settingsMenu.setOnMenuItemClickListener((menuItem) -> {
-                if (menuItem.getItemId() == R.id.show_keyboard) {
-                    toggleKeyboard();
-                } else if (menuItem.getItemId() == R.id.show_hide_stats) {
-                    boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
-                    performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
-                    prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
-                } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
-                    OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
-                    isNeedRefresh = true;
-                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                    finish();
-                } else if (menuItem.getItemId() == R.id.quit_stream) {
-                    finish();
-                } else if (menuItem.getItemId() == R.id.change_resolution) {
-                    String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
-                    List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
-                    int currentResolutionIndex = resolutions.indexOf(currentResolution);
-                    AtomicInteger selectedResolutionIndex = new AtomicInteger(currentResolutionIndex);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                    builder.setTitle(R.string.menu_change_resolution)
-                            .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
-                                    (dialog, which) -> selectedResolutionIndex.set(which))
-                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                if (currentResolutionIndex != selectedResolutionIndex.get()) {
-                                    OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
-                                    isNeedRefresh = true;
-                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                    finish();
+            Handler handler = new Handler();
+            handler.postDelayed(() -> {
+                PopupMenu settingsMenu = new PopupMenu(Game.this, settingsButton);
+                settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
+                settingsMenu.setOnMenuItemClickListener((menuItem) -> {
+                    if (menuItem.getItemId() == R.id.show_keyboard) {
+                        settingsMenu.setOnDismissListener(menu -> {
+                            Runnable showKeyboardRunnable = this::toggleKeyboard;
+                            streamView.postDelayed(showKeyboardRunnable, 500);
+                            streamView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                                @Override
+                                public void onViewAttachedToWindow(View v) {}
+
+                                @Override
+                                public void onViewDetachedFromWindow(View v) {
+                                    streamView.removeOnAttachStateChangeListener(this);
+                                    view.removeCallbacks(showKeyboardRunnable);
                                 }
-                            })
-                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                } else if (menuItem.getItemId() == R.id.change_bitrate) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                    LayoutInflater inflater = Game.this.getLayoutInflater();
+                            });
+                        });
+                    } else if (menuItem.getItemId() == R.id.show_hide_stats) {
+                        boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
+                        performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
+                        prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
+                    } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
+                        OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
+                        isNeedRefresh = true;
+                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                        finish();
+                    } else if (menuItem.getItemId() == R.id.quit_stream) {
+                        finish();
+                    } else if (menuItem.getItemId() == R.id.change_resolution) {
+                        String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
+                        List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
+                        int currentResolutionIndex = resolutions.indexOf(currentResolution);
+                        AtomicInteger selectedResolutionIndex = new AtomicInteger(currentResolutionIndex);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                        builder.setTitle(R.string.menu_change_resolution)
+                                .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
+                                        (dialog, which) -> selectedResolutionIndex.set(which))
+                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                    if (currentResolutionIndex != selectedResolutionIndex.get()) {
+                                        OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
+                                        isNeedRefresh = true;
+                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                                        finish();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    } else if (menuItem.getItemId() == R.id.change_bitrate) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                        LayoutInflater inflater = Game.this.getLayoutInflater();
 
-                    View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
+                        View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
 
-                    int currentBitrate = prefConfig.bitrate;
-                    final int[] selectedBitrate = {currentBitrate};
+                        int currentBitrate = prefConfig.bitrate;
+                        final int[] selectedBitrate = {currentBitrate};
 
-                    ((TextView)seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(R.string.menu_change_bitrate);
-                    ((TextView)seekBarView.findViewById(R.id.seekbar_value_label)).setText("kbps");
+                        ((TextView)seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(R.string.menu_change_bitrate);
+                        ((TextView)seekBarView.findViewById(R.id.seekbar_value_label)).setText("kbps");
 
-                    TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
-                    dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
+                        TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
+                        dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
 
-                    int minValue = 500;
+                        int minValue = 500;
 
-                    SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) { }
+                        SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+                            @Override
+                            public void onStopTrackingTouch(SeekBar seekBar) { }
 
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) { }
+                            @Override
+                            public void onStartTrackingTouch(SeekBar seekBar) { }
 
-                        @Override
-                        public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
-                            progress = minValue + progress;
-                            progress = progress / 500;
-                            progress = progress * 500;
-                            dialogSeekBarValue.setText(String.valueOf(progress));
-                            selectedBitrate[0] = progress;
-                        }
-                    };
+                            @Override
+                            public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
+                                progress = minValue + progress;
+                                progress = progress / 500;
+                                progress = progress * 500;
+                                dialogSeekBarValue.setText(String.valueOf(progress));
+                                selectedBitrate[0] = progress;
+                            }
+                        };
 
-                    SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
-                    dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
-                    dialogSeekBar.incrementProgressBy(500);
-                    dialogSeekBar.setProgress(selectedBitrate[0]);
-                    dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
+                        SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
+                        dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
+                        dialogSeekBar.incrementProgressBy(500);
+                        dialogSeekBar.setProgress(selectedBitrate[0]);
+                        dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
 
-                    builder.setView(seekBarView)
-                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                if (currentBitrate != selectedBitrate[0]) {
-                                    OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
-                                    isNeedRefresh = true;
-                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                    finish();
-                                } else {
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                        builder.setView(seekBarView)
+                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                    if (currentBitrate != selectedBitrate[0]) {
+                                        OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
+                                        isNeedRefresh = true;
+                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                                        finish();
+                                    } else {
+                                        dialog.dismiss();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                } else if (menuItem.getItemId() == R.id.change_decoder) {
-                    String currentDecoder = OneplayPreferenceConfiguration.getVideoCodecConfig(this);
-                    List<String> videoFormatValues = Arrays.asList(getResources().getStringArray(R.array.video_format_values));
-                    int currentDecoderIndex = videoFormatValues.indexOf(currentDecoder);
-                    AtomicInteger selectedDecoderIndex = new AtomicInteger(currentDecoderIndex);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                    builder.setTitle(R.string.menu_change_decoder)
-                            .setSingleChoiceItems(R.array.video_format_names, currentDecoderIndex,
-                                    (dialog, which) -> selectedDecoderIndex.set(which))
-                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                if (currentDecoderIndex != selectedDecoderIndex.get()) {
-                                    OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
-                                    isNeedRefresh = true;
-                                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                    finish();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                } else if (menuItem.getItemId() == R.id.relaunch_game) {
-                    isNeedRefresh = false;
-                    isNeedRelaunch = true;
-                    setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                    finish();
-                } else if (menuItem.getItemId() == R.id.report_issue) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                    LayoutInflater inflater = Game.this.getLayoutInflater();
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    } else if (menuItem.getItemId() == R.id.change_decoder) {
+                        String currentDecoder = OneplayPreferenceConfiguration.getVideoCodecConfig(this);
+                        List<String> videoFormatValues = Arrays.asList(getResources().getStringArray(R.array.video_format_values));
+                        int currentDecoderIndex = videoFormatValues.indexOf(currentDecoder);
+                        AtomicInteger selectedDecoderIndex = new AtomicInteger(currentDecoderIndex);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                        builder.setTitle(R.string.menu_change_decoder)
+                                .setSingleChoiceItems(R.array.video_format_names, currentDecoderIndex,
+                                        (dialog, which) -> selectedDecoderIndex.set(which))
+                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                    if (currentDecoderIndex != selectedDecoderIndex.get()) {
+                                        OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
+                                        isNeedRefresh = true;
+                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                                        finish();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    } else if (menuItem.getItemId() == R.id.relaunch_game) {
+                        isNeedRefresh = false;
+                        isNeedRelaunch = true;
+                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                        finish();
+                    } else if (menuItem.getItemId() == R.id.report_issue) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
+                        LayoutInflater inflater = Game.this.getLayoutInflater();
 
-                    View reportIssueView = inflater.inflate(R.layout.dialog_report_issue, findViewById(R.id.dialog_issue_view));
+                        View reportIssueView = inflater.inflate(R.layout.dialog_report_issue, findViewById(R.id.dialog_issue_view));
 
-                    TextView reportIssueText = reportIssueView.findViewById(R.id.dialog_report_issue_text);
+                        TextView reportIssueText = reportIssueView.findViewById(R.id.dialog_report_issue_text);
 
-                    builder.setView(reportIssueView)
-                            .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                String message = reportIssueText.getText().toString();
-                                if (!message.isEmpty()) {
-                                    OneplayApi.getInstance().registerEvent(message);
-                                } else {
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+                        builder.setView(reportIssueView)
+                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                                    String message = reportIssueText.getText().toString();
+                                    if (!message.isEmpty()) {
+                                        OneplayApi.getInstance().registerEvent(message);
+                                    } else {
+                                        dialog.dismiss();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                } else {
-                    return false;
-                }
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    } else {
+                        return false;
+                    }
 
-                return true;
-            });
-            settingsMenu.show();
+                    return true;
+                });
+
+                settingsMenu.show();
+            }, 200);
+
+            ResultReceiver callback = new ResultReceiver(handler);
+            hideKeyboard(streamView, callback);
         });
 
         notificationOverlayView = findViewById(R.id.notificationOverlay);
@@ -1497,6 +1518,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         inputManager.toggleSoftInput(0, 0);
     }
 
+    @Override
+    public void hideKeyboard(View view, ResultReceiver receiver) {
+        if (view != null) {
+            InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputManager.hideSoftInputFromWindow(view.getWindowToken(), 0, receiver);
+        }
+    }
+
     // Returns true if the event was consumed
     // NB: View is only present if called from a view callback
     private boolean handleMotionEvent(View view, MotionEvent event) {
@@ -1964,7 +1993,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 if (!displayedFailureDialog) {
                     displayedFailureDialog = true;
-                    LimeLog.severe(new Exception("Connection terminated: " + errorCode));
                     stopConnection();
 
                     // Display the error dialog if it was an unexpected termination.
@@ -2004,6 +2032,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                         Dialog.displayDialog(Game.this, getResources().getString(R.string.conn_terminated_title),
                                 message, true);
+                        LimeLog.severe(new Exception("Connection terminated: " + errorCode + ". " + message));
                     }
                     else {
                         finish();
