@@ -48,7 +48,7 @@ android {
 
             applicationId "in.oneplay.root"
             dimension "root"
-            archivesBaseName = "$applicationId.$project.name-$defaultVersionName"
+            archivesBaseName = "$applicationId.$project.name-$defaultVersionName-$buildNumber"
             buildConfigField "boolean", "ROOT_BUILD", "true"
         }
 
@@ -61,7 +61,7 @@ android {
 
             applicationId "in.oneplay"
             dimension "root"
-            archivesBaseName = "$applicationId.$project.name-$defaultVersionName"
+            archivesBaseName = "$applicationId.$project.name-$defaultVersionName-$buildNumber"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
     }
