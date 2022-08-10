@@ -34,4 +34,11 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
+    <style name="PcViewBaseTheme" parent="AppBaseTheme">
+        <item name="android:windowBackground">@color/connection_background_color</item>
+        <item name="android:colorBackground">@color/connection_background_color</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
 </resources>
