@@ -16,13 +16,13 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
@@ -34,6 +34,8 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
@@ -78,6 +80,8 @@ public class PcView extends Activity {
     private ProgressBar progress;
     private Intent currentIntent;
     private FirebaseAnalytics mFirebaseAnalytics;
+    private boolean backCallbackRegistered;
+    private OnBackInvokedCallback onBackInvokedCallback;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
     private volatile ComputerDetails computer;
@@ -114,6 +118,16 @@ public class PcView extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedCallback = () -> {
+                // We should always be able to go back because we unregister our callback
+                // when we can't go back. Nonetheless, we will still check anyway.
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                }
+            };
+        }
 
         currentIntent = getIntent();
 
@@ -398,18 +412,16 @@ public class PcView extends Activity {
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (keyCode == KeyEvent.KEYCODE_BACK) {
-                if (webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    finish();
-                }
-                return true;
-            }
+    // NOTE: This will NOT be called on Android 13+ with android:enableOnBackInvokedCallback="true"
+    public void onBackPressed() {
+        // Back goes back through the WebView history
+        // until no more history remains
+        if (webView.canGoBack()) {
+            webView.goBack();
         }
-        return super.onKeyDown(keyCode, event);
+        else {
+            super.onBackPressed();
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -422,6 +434,16 @@ public class PcView extends Activity {
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         webView.getSettings().setUserAgentString(BuildConfig.USER_AGENT);
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                refreshBackDispatchState();
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                refreshBackDispatchState();
+            }
+
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -464,6 +486,20 @@ public class PcView extends Activity {
                 return false;
             }
         });
+    }
+
+    private void refreshBackDispatchState() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (webView.canGoBack() && !backCallbackRegistered) {
+                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                        OnBackInvokedDispatcher.PRIORITY_DEFAULT, onBackInvokedCallback);
+                backCallbackRegistered = true;
+            }
+            else if (!webView.canGoBack() && backCallbackRegistered) {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(onBackInvokedCallback);
+                backCallbackRegistered = false;
+            }
+        }
     }
 
     private void checkUpdates() {
