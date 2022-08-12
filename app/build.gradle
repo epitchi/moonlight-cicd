@@ -24,10 +24,10 @@ android {
     }
 
     signingConfigs {
-        test_release {
-            storeFile file('../keystore.jks')
+        test {
+            storeFile file('../test-keystore.jks')
             storePassword '123456'
-            keyAlias 'test_release'
+            keyAlias 'test'
             keyPassword '123456'
         }
     }
@@ -112,6 +112,8 @@ android {
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
             buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session/\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
+
+            signingConfig signingConfigs.test
         }
         release {
             applicationIdSuffix ""
@@ -144,7 +146,7 @@ android {
                 nativeSymbolUploadEnabled true
             }
 
-            signingConfig signingConfigs.test_release
+            signingConfig signingConfigs.test
         }
     }
 
