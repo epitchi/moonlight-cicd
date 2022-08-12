@@ -593,7 +593,7 @@ public class PcView extends Activity {
         } catch (Exception e) {
             // Catch all exceptions because some broken Android devices
             // will throw an NPE from inside getNetworkInterfaces().
-            e.printStackTrace();
+            LimeLog.warning(e);
             return false;
         }
     }
@@ -610,7 +610,7 @@ public class PcView extends Activity {
         } catch (IllegalArgumentException | InterruptedException e) {
             // This can be thrown from OkHttp if the host fails to canonicalize to a valid name.
             // https://github.com/square/okhttp/blob/okhttp_27/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java#L705
-            e.printStackTrace();
+            LimeLog.warning(e);
             success = false;
         }
         if (!success) {
@@ -740,7 +740,7 @@ public class PcView extends Activity {
             } catch (FileNotFoundException e) {
                 message = getResources().getString(R.string.error_404);
             } catch (XmlPullParserException | IOException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
                 message = e.getMessage();
             }
 

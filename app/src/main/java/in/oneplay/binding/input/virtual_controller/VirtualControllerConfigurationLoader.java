@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.DisplayMetrics;
 
+import in.oneplay.LimeLog;
 import in.oneplay.nvstream.input.ControllerPacket;
 import in.oneplay.preferences.PreferenceConfiguration;
 
@@ -341,7 +342,7 @@ public class VirtualControllerConfigurationLoader {
             try {
                 prefEditor.putString(prefKey, element.getConfiguration().toString());
             } catch (JSONException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
             }
         }
 
@@ -359,7 +360,7 @@ public class VirtualControllerConfigurationLoader {
                 try {
                     element.loadConfiguration(new JSONObject(jsonConfig));
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
 
                     // Remove the corrupt element from the preferences
                     pref.edit().remove(prefKey).apply();

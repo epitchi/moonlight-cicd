@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
+import in.oneplay.LimeLog;
 import in.oneplay.nvstream.http.ComputerDetails;
 
 import java.io.ByteArrayInputStream;
@@ -38,7 +39,7 @@ public class LegacyDatabaseReader2 {
                             .generateCertificate(new ByteArrayInputStream(derCertData));
                 }
             } catch (CertificateException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
             }
         }
 

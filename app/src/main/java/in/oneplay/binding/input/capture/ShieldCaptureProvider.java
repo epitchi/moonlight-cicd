@@ -9,6 +9,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import in.oneplay.LimeLog;
+
 // NVIDIA extended the Android input APIs with support for using an attached mouse in relative
 // mode without having to grab the input device (which requires root). The data comes in the form
 // of new AXIS_RELATIVE_X and AXIS_RELATIVE_Y constants in the mouse's MotionEvent objects and
@@ -53,9 +55,9 @@ public class ShieldCaptureProvider extends InputCaptureProvider {
             methodSetCursorVisibility.invoke(context.getSystemService(Context.INPUT_SERVICE), visible);
             return true;
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         }
 
         return false;

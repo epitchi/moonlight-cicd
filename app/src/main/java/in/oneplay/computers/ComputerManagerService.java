@@ -230,7 +230,7 @@ public class ComputerManagerService extends Service {
                         discoveryServiceConnection.wait(1000);
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
 
                     // InterruptedException clears the thread's interrupt status. Since we can't
                     // handle that here, we will re-interrupt the thread to set the interrupt
@@ -245,7 +245,7 @@ public class ComputerManagerService extends Service {
                 try {
                     Thread.sleep(250);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
 
                     // InterruptedException clears the thread's interrupt status. Since we can't
                     // handle that here, we will re-interrupt the thread to set the interrupt
@@ -415,7 +415,7 @@ public class ComputerManagerService extends Service {
                         LimeLog.warning("Auto-discovered PC failed to respond: "+details);
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
 
                     // InterruptedException clears the thread's interrupt status. Since we can't
                     // handle that here, we will re-interrupt the thread to set the interrupt
@@ -563,7 +563,7 @@ public class ComputerManagerService extends Service {
 
             return newDetails;
         } catch (XmlPullParserException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
             return null;
         } catch (IOException e) {
             return null;
@@ -853,7 +853,7 @@ public class ComputerManagerService extends Service {
                                     cacheOut = CacheHelper.openCacheFileForOutput(getCacheDir(), "applist", computer.uuid);
                                     CacheHelper.writeStringToOutputStream(cacheOut, appList);
                                 } catch (IOException e) {
-                                    e.printStackTrace();
+                                    LimeLog.warning(e);
                                 } finally {
                                     try {
                                         if (cacheOut != null) {
@@ -881,9 +881,9 @@ public class ComputerManagerService extends Service {
                                 LimeLog.warning("Null app list received from "+computer.uuid);
                             }
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LimeLog.warning(e);
                         } catch (XmlPullParserException e) {
-                            e.printStackTrace();
+                            LimeLog.warning(e);
                         }
                     } while (waitPollingDelay());
                 }

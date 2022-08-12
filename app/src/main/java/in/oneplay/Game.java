@@ -467,7 +467,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         } catch (SecurityException e) {
             // Some Samsung Galaxy S10+/S10e devices throw a SecurityException from
             // WifiLock.acquire() even though we have android.permission.WAKE_LOCK in our manifest.
-            e.printStackTrace();
+            LimeLog.warning(e);
         }
 
         appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
@@ -487,7 +487,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         .generateCertificate(new ByteArrayInputStream(derCert.getEncoded()));
             }
         } catch (CertificateException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         }
 
         if (appId == StreamConfiguration.INVALID_APP_ID) {
@@ -794,13 +794,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 LimeLog.warning("SemWindowManager.getInstance() returned null");
             }
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
         }
     }
 
@@ -818,7 +818,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     // than crashing.
                     enterPictureInPictureMode(getPictureInPictureParams(false));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
                 }
             }
         }

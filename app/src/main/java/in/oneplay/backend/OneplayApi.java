@@ -277,9 +277,6 @@ public class OneplayApi {
 
             } catch (JSONException | IOException e) {
                 LimeLog.severe(e);
-                if (verbose) {
-                    e.printStackTrace();
-                }
             }
         }).start();
     }
@@ -301,9 +298,6 @@ public class OneplayApi {
             return (new JSONObject(response).getBoolean("status"));
         } catch (IOException | JSONException | InterruptedException e) {
             LimeLog.severe(e);
-            if (verbose) {
-                e.printStackTrace();
-            }
         }
 
         return false;
@@ -354,7 +348,7 @@ public class OneplayApi {
         Request request = new Request.Builder()
                 .url(url)
                 .header("User-Agent", userAgent)
-                .header("Connection", "close")
+//                .header("Connection", "close")
                 .post(RequestBody.create(
                         MediaType.get("application/json; charset=utf-8"),
                         requestBodyString))
@@ -400,9 +394,7 @@ public class OneplayApi {
 
             return respString;
         } catch (IOException e) {
-            if (verbose) {
-                e.printStackTrace();
-            }
+            LimeLog.severe(e);
 
             throw e;
         }

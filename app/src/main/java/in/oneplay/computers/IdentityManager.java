@@ -47,8 +47,7 @@ public class IdentityManager {
             LimeLog.info("No UID file found");
             return null;
         } catch (IOException e) {
-            LimeLog.severe(new Exception("Error while reading UID file"));
-            e.printStackTrace();
+            LimeLog.severe("Error while reading UID file", e);
             return null;
         } finally {
             if (reader != null) {

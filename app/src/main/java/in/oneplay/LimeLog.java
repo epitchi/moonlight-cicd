@@ -16,6 +16,19 @@ public class LimeLog {
             LOGGER.info(msg);
         }
     }
+
+    public static void warning(Throwable throwable) {
+        warning("", throwable);
+    }
+
+    public static void warning(String msg, Throwable throwable) {
+        StringWriter errors = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(errors));
+
+        msg = msg + "\n" + errors;
+
+        warning(msg);
+    }
     
     public static void warning(String msg) {
         if (BuildConfig.DEBUG) {

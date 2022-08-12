@@ -60,7 +60,6 @@ public class NvConnection {
 
             return keyGen.generateKey();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -251,12 +250,10 @@ public class NvConnection {
                     }
                     context.connListener.stageComplete(appName);
                 } catch (GfeHttpResponseException e) {
-                    e.printStackTrace();
                     context.connListener.displayMessage(e.getMessage());
                     context.connListener.stageFailed(appName, 0, e.getErrorCode());
                     return;
                 } catch (XmlPullParserException | IOException e) {
-                    e.printStackTrace();
                     context.connListener.displayMessage(e.getMessage());
                     context.connListener.stageFailed(appName, MoonBridge.ML_PORT_FLAG_TCP_47984 | MoonBridge.ML_PORT_FLAG_TCP_47989, 0);
                     return;

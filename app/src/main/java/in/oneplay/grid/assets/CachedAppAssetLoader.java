@@ -11,6 +11,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import in.oneplay.LimeLog;
 import in.oneplay.R;
 import in.oneplay.nvstream.http.ComputerDetails;
 import in.oneplay.nvstream.http.NvApp;
@@ -128,7 +129,7 @@ public class CachedAppAssetLoader {
             try {
                 Thread.sleep((int) (1000 + (Math.random() * 500)));
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
 
                 // InterruptedException clears the thread's interrupt status. Since we can't
                 // handle that here, we will re-interrupt the thread to set the interrupt

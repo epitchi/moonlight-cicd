@@ -17,7 +17,6 @@ public class EvdevCaptureProviderShim {
             Class providerClass = Class.forName("in.oneplay.binding.input.evdev.EvdevCaptureProvider");
             return (InputCaptureProvider) providerClass.getConstructors()[0].newInstance(activity, listener);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

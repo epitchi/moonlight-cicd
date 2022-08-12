@@ -44,7 +44,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
             try {
                 servSock = new ServerSocket(0, 1);
             } catch (IOException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
                 return;
             }
 
@@ -58,7 +58,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     su = new ProcessBuilder("su", "-c", evdevReaderCmd).start();
                 } catch (IOException e) {
                     reportDeviceNotRooted();
-                    e.printStackTrace();
+                    LimeLog.warning(e);
                     return;
                 }
             }
@@ -71,7 +71,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     su = builder.start();
                 } catch (IOException e) {
                     reportDeviceNotRooted();
-                    e.printStackTrace();
+                    LimeLog.warning(e);
                     return;
                 }
 
@@ -81,7 +81,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     suOut.writeChars(evdevReaderCmd+"\n");
                 } catch (IOException e) {
                     reportDeviceNotRooted();
-                    e.printStackTrace();
+                    LimeLog.warning(e);
                     return;
                 }
             }
@@ -93,7 +93,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                 evdevIn = evdevSock.getInputStream();
                 evdevOut = evdevSock.getOutputStream();
             } catch (IOException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
                 return;
             }
             LimeLog.info("EvdevReader connected from port "+evdevSock.getPort());
@@ -213,7 +213,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                 t.join();
             } catch (InterruptedException e) {
                 // The main thread should never be interrupted
-                e.printStackTrace();
+                LimeLog.warning(e);
             }
         }
         else {
@@ -241,7 +241,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                         try {
                             evdevOut.write(REGRAB_REQUEST);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LimeLog.warning(e);
                         }
                     }
                 }
@@ -260,7 +260,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     try {
                         evdevOut.write(UNGRAB_REQUEST);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LimeLog.warning(e);
                     }
                 }
             }
@@ -289,7 +289,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     try {
                         servSock.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LimeLog.warning(e);
                     }
                 }
 
@@ -297,7 +297,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     try {
                         evdevSock.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LimeLog.warning(e);
                     }
                 }
 
@@ -305,7 +305,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     try {
                         evdevIn.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LimeLog.warning(e);
                     }
                 }
 
@@ -313,7 +313,7 @@ public class EvdevCaptureProvider extends InputCaptureProvider {
                     try {
                         evdevOut.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LimeLog.warning(e);
                     }
                 }
             }

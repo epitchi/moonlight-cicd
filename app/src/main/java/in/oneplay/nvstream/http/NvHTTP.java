@@ -57,6 +57,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 
 public class NvHTTP {
@@ -160,7 +161,7 @@ public class NvHTTP {
                         return true;
                     }
                 } catch (SSLPeerUnverifiedException e) {
-                    e.printStackTrace();
+                    LimeLog.warning(e);
                 }
 
                 // Fall back to default HostnameVerifier for validating CA-issued certs
@@ -441,8 +442,7 @@ public class NvHTTP {
             return respString;
         } catch (IOException e) {
             if (verbose && !path.equals("serverinfo")) {
-                LimeLog.warning(getCompleteUrl(baseUrl, path, query)+" -> "+e.getMessage());
-                e.printStackTrace();
+                LimeLog.warning(getCompleteUrl(baseUrl, path, query)+" -> "+e.getMessage(), e);
             }
             
             throw e;

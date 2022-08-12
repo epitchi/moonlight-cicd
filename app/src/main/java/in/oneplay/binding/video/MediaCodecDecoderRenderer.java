@@ -376,7 +376,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
 
             if (videoDecoder != null) {
                 videoDecoder.release();
@@ -761,7 +761,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             try {
                 choreographerHandlerThread.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LimeLog.warning(e);
 
                 // InterruptedException clears the thread's interrupt status. Since we can't
                 // handle that here, we will re-interrupt the thread to set the interrupt
@@ -774,7 +774,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         try {
             rendererThread.join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LimeLog.warning(e);
 
             // InterruptedException clears the thread's interrupt status. Since we can't
             // handle that here, we will re-interrupt the thread to set the interrupt
