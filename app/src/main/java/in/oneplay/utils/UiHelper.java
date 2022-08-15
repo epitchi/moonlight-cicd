@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
-import in.oneplay.Game;
 import in.oneplay.R;
 import in.oneplay.nvstream.http.ComputerDetails;
 import in.oneplay.preferences.PreferenceConfiguration;
@@ -127,16 +126,7 @@ public class UiHelper {
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-        if (modeMgr.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            // Increase view padding on TVs
-            float scale = activity.getResources().getDisplayMetrics().density;
-            int verticalPaddingPixels = (int) (TV_VERTICAL_PADDING_DP*scale + 0.5f);
-            int horizontalPaddingPixels = (int) (TV_HORIZONTAL_PADDING_DP*scale + 0.5f);
-
-            rootView.setPadding(horizontalPaddingPixels, verticalPaddingPixels,
-                    horizontalPaddingPixels, verticalPaddingPixels);
-        }
-        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !(modeMgr.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION)) {
             // Draw under the status bar on Android Q devices
 
             // Using getDecorView() here breaks the translucent status/navigation bar when gestures are disabled

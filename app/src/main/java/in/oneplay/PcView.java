@@ -12,10 +12,13 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Service;
+import android.app.UiModeManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -426,6 +429,12 @@ public class PcView extends Activity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void initializeWebView() {
+        UiModeManager modeMgr = (UiModeManager) this.getSystemService(Context.UI_MODE_SERVICE);
+        if (modeMgr.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            webView.setInitialScale(1);
+            webView.getSettings().setLoadWithOverviewMode(true);
+            webView.getSettings().setUseWideViewPort(true);
+        }
         if (!BuildConfig.DEBUG) {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
