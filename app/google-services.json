@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "288317360848-8gjslts7vt88i8vceqq9oq785j53r874.apps.googleusercontent.com",
+          "client_id": "288317360848-q3bpkim0i6fq1tvcacq1bq0qgiapu13v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "in.oneplay",
-            "certificate_hash": "298c33d07cc78455c3c9e89413d5c4e372229a5b"
+            "certificate_hash": "edf70ce8045ade01e52c290ee3137f91584a6f30"
           }
         },
         {
@@ -51,11 +51,85 @@
       },
       "oauth_client": [
         {
-          "client_id": "288317360848-a0h10gihntdv4ud35jjeo6p2s297silc.apps.googleusercontent.com",
+          "client_id": "288317360848-qn6jt89dillo070ec9rrrekfem30a6os.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "in.oneplay.debug",
-            "certificate_hash": "298c33d07cc78455c3c9e89413d5c4e372229a5b"
+            "certificate_hash": "b4b582d0bef22b1b1e1299b135ba1d4621ac2bd4"
+          }
+        },
+        {
+          "client_id": "288317360848-v08lroc6e08sukecuvp6j8607asj1dg0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqWLrV39A4GgXLQGmjkYWYqsw0cRK87D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "288317360848-v08lroc6e08sukecuvp6j8607asj1dg0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288317360848:android:2fa5d09341b43664256cd5",
+        "android_client_info": {
+          "package_name": "in.oneplay.root"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "288317360848-rb7b9upo4rp5vdnbftp0b5dskin7vrpc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.oneplay.root",
+            "certificate_hash": "edf70ce8045ade01e52c290ee3137f91584a6f30"
+          }
+        },
+        {
+          "client_id": "288317360848-v08lroc6e08sukecuvp6j8607asj1dg0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqWLrV39A4GgXLQGmjkYWYqsw0cRK87D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "288317360848-v08lroc6e08sukecuvp6j8607asj1dg0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288317360848:android:26f5d58a53afb623256cd5",
+        "android_client_info": {
+          "package_name": "in.oneplay.root.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "288317360848-njfnrqlb7gp60fk2ao1tqap9rr19gt2c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.oneplay.root.debug",
+            "certificate_hash": "b4b582d0bef22b1b1e1299b135ba1d4621ac2bd4"
           }
         },
         {
