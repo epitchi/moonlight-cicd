@@ -98,6 +98,10 @@ public class ClientConfig {
      * Advance details.
      */
     private AdvanceDetails advanceDetails;
+    /**
+     * PortDetails. Which ports(such as http, https, audio, video, control, rtsp and pin) should we use for this connection.
+     */
+    private PortDetails portDetails;
 
     public static class AdvanceDetails {
         /**
@@ -261,6 +265,94 @@ public class ClientConfig {
         
     }
 
+    public static class PortDetails {
+        /**
+         * HTTP port for connection
+         */
+        private Integer httpPort;
+        /**
+         * HTTPS port for connection
+         */
+        private Integer httpsPort;
+        /**
+         * Audio port for stream
+         */
+        private Integer audioPort;
+        /**
+         * Video port for stream
+         */
+        private Integer videoPort;
+        /**
+         * Control port for stream
+         */
+        private Integer controlPort;
+        /**
+         * RTSP port for stream
+         */
+        private Integer rtspPort;
+
+        /**
+         * PIN request port
+         */
+        private Integer pinPort;
+
+        public Integer getHttpPort() {
+            return httpPort;
+        }
+
+        public void setHttpPort(Integer httpPort) {
+            this.httpPort = httpPort;
+        }
+
+        public Integer getHttpsPort() {
+            return httpsPort;
+        }
+
+        public void setHttpsPort(Integer httpsPort) {
+            this.httpsPort = httpsPort;
+        }
+
+        public Integer getAudioPort() {
+            return audioPort;
+        }
+
+        public void setAudioPort(Integer audioPort) {
+            this.audioPort = audioPort;
+        }
+
+        public Integer getVideoPort() {
+            return videoPort;
+        }
+
+        public void setVideoPort(Integer videoPort) {
+            this.videoPort = videoPort;
+        }
+
+        public Integer getControlPort() {
+            return controlPort;
+        }
+
+        public void setControlPort(Integer controlPort) {
+            this.controlPort = controlPort;
+        }
+
+        public Integer getRtspPort() {
+            return rtspPort;
+        }
+
+        public void setRtspPort(Integer rtspPort) {
+            this.rtspPort = rtspPort;
+        }
+
+        public Integer getPinPort() {
+            return pinPort;
+        }
+
+        public void setPinPort(Integer pinPort) {
+            this.pinPort = pinPort;
+        }
+    }
+
     public void setAudioType(String audioType) {
         this.audioType = audioType;
     }
@@ -357,6 +449,10 @@ public class ClientConfig {
         this.advanceDetails = advanceDetails;
     }
 
+    public void setPortDetails(PortDetails portDetails) {
+        this.portDetails = portDetails;
+    }
+
     public String getAudioType() {
         return audioType;
     }
@@ -451,5 +547,9 @@ public class ClientConfig {
 
     public AdvanceDetails getAdvanceDetails() {
         return advanceDetails;
+    }
+
+    public PortDetails getPortDetails() {
+        return portDetails;
     }
 }

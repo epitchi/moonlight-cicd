@@ -189,6 +189,17 @@ public class OneplayApi {
     private ClientConfig getClientConfig(JSONObject data) throws JSONException {
         JSONObject otherDetailsData = data.getJSONObject("other_details");
         JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
+        JSONObject serverDetailsData = data.getJSONObject("server_details");
+        JSONObject portDetailsData = serverDetailsData.getJSONObject("port_details");
+
+        ClientConfig.PortDetails portDetails = new ClientConfig.PortDetails();
+        portDetails.setHttpPort(Utils.getInt(portDetailsData, "http_port"));
+        portDetails.setHttpsPort(Utils.getInt(portDetailsData, "https_port"));
+        portDetails.setAudioPort(Utils.getInt(portDetailsData, "audio_port"));
+        portDetails.setVideoPort(Utils.getInt(portDetailsData, "video_port"));
+        portDetails.setControlPort(Utils.getInt(portDetailsData, "control_port"));
+        portDetails.setRtspPort(Utils.getInt(portDetailsData, "rtsp_port"));
+        portDetails.setRtspPort(Utils.getInt(portDetailsData, "pin_port"));
 
         ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
 //        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
@@ -230,6 +241,7 @@ public class OneplayApi {
 //        clientConfig.setVideoDecoderSelection(Utils.getString(otherDetailsData, "video_decoder_selection"));
         clientConfig.setWindowMode(Utils.getString(otherDetailsData, "window_mode"));
         clientConfig.setAdvanceDetails(advanceDetails);
+        clientConfig.setPortDetails(portDetails);
         return clientConfig;
     }
 
