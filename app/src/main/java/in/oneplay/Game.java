@@ -1214,27 +1214,26 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             if (!isNeedRefresh) {
                 String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
                 LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
-                String message = null;
                 try {
                     if (conn.stopApp()) {
                         LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
                     } else {
-                        message = getString(R.string.applist_quit_fail) + " " + appName;
+                        LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
                     }
                 } catch (GfeHttpResponseException e) {
                     if (e.getErrorCode() == 599) {
-                        message = "This session wasn't started by this device," +
+                        LimeLog.severe("This session wasn't started by this device," +
                                 " so it cannot be quit. End streaming on the original " +
-                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")";
+                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
                     } else {
-                        message = e.getMessage();
+                        LimeLog.severe(e);
                     }
                 } catch (UnknownHostException e) {
-                    message = getString(R.string.error_unknown_host);
+                    LimeLog.severe(getString(R.string.error_unknown_host), e);
                 } catch (FileNotFoundException e) {
-                    message = getString(R.string.error_404);
+                    LimeLog.severe(getString(R.string.error_404), e);
                 } catch (IOException | XmlPullParserException e) {
-                    message = e.getMessage();
+                    LimeLog.severe(e.getMessage());
                 } finally {
                     if (!isNeedRelaunch) {
                         try {
@@ -1243,10 +1242,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                             LimeLog.severe(e);
                         }
                     }
-                }
-
-                if (message != null) {
-                    LimeLog.severe(new Exception(message));
                 }
             }
             finish();
