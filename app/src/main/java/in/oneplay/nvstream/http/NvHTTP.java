@@ -1,5 +1,6 @@
 package in.oneplay.nvstream.http;
 
+import android.content.Context;
 import android.os.Build;
 
 import java.io.FileNotFoundException;
@@ -50,6 +51,7 @@ import in.oneplay.LimeLog;
 import in.oneplay.nvstream.ConnectionContext;
 import in.oneplay.nvstream.http.PairingManager.PairState;
 
+import in.oneplay.preferences.PreferenceConfiguration;
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -57,20 +59,20 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 
 public class NvHTTP {
     private String uniqueId;
     private PairingManager pm;
 
-    public static final int HTTPS_PORT = 47984;
-    public static final int HTTP_PORT = 47989;
     public static int CONNECTION_TIMEOUT = 3000;
     public static int READ_TIMEOUT = 5000;
 
     // Print URL and content to logcat on debug builds
     private static boolean verbose = BuildConfig.DEBUG;
+
+    public final int httpsPort;
+    public final int httpPort;
 
     private HttpUrl baseUrlHttps;
     private HttpUrl baseUrlHttp;
@@ -182,7 +184,7 @@ public class NvHTTP {
                 .build();
     }
     
-    public NvHTTP(String address, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider) throws IOException {
+    public NvHTTP(Context context, String address, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider) throws IOException {
         // Use the same UID for all Moonlight clients so we can quit games
         // started by other Moonlight clients.
         this.uniqueId = "0123456789ABCDEF";
@@ -191,17 +193,21 @@ public class NvHTTP {
 
         initializeHttpState(cryptoProvider);
 
+        PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(context);
+        httpsPort = prefConfig.httpsPort;
+        httpPort = prefConfig.httpPort;
+
         try {
             this.baseUrlHttp = new HttpUrl.Builder()
                     .scheme("http")
                     .host(address)
-                    .port(HTTP_PORT)
+                    .port(httpPort)
                     .build();
 
             this.baseUrlHttps = new HttpUrl.Builder()
                     .scheme("https")
                     .host(address)
-                    .port(HTTPS_PORT)
+                    .port(httpsPort)
                     .build();
         } catch (IllegalArgumentException e) {
             // Encapsulate IllegalArgumentException into IOException for callers to handle more easily

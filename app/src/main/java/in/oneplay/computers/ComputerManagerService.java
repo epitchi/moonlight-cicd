@@ -544,7 +544,7 @@ public class ComputerManagerService extends Service {
 
     private ComputerDetails tryPollIp(ComputerDetails details, String address) {
         try {
-            NvHTTP http = new NvHTTP(address, idManager.getUniqueId(), details.serverCert,
+            NvHTTP http = new NvHTTP(this, address, idManager.getUniqueId(), details.serverCert,
                     PlatformBinding.getCryptoProvider(ComputerManagerService.this));
 
             ComputerDetails newDetails = http.getComputerDetails();
@@ -820,7 +820,7 @@ public class ComputerManagerService extends Service {
                         PollingTuple tuple = getPollingTuple(computer);
 
                         try {
-                            NvHTTP http = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer), idManager.getUniqueId(),
+                            NvHTTP http = new NvHTTP(ComputerManagerService.this, ServerHelper.getCurrentAddressFromComputer(computer), idManager.getUniqueId(),
                                     computer.serverCert, PlatformBinding.getCryptoProvider(ComputerManagerService.this));
 
                             String appList;

@@ -1215,7 +1215,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
                 LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
                 try {
-                    if (conn.stopApp()) {
+                    if (conn.stopApp(Game.this)) {
                         LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
                     } else {
                         LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
@@ -2156,7 +2156,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             UiHelper.notifyStreamConnecting(Game.this);
 
             decoderRenderer.setRenderTarget(holder);
-            conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+            conn.start(this, new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
                     decoderRenderer, Game.this);
         }
     }

@@ -688,7 +688,8 @@ public class PcView extends Activity {
                 // Stop updates and wait while pairing
                 stopComputerUpdates();
 
-                httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
+                httpConn = new NvHTTP(this,
+                        ServerHelper.getCurrentAddressFromComputer(computer),
                         managerBinder.getUniqueId(),
                         computer.serverCert,
                         PlatformBinding.getCryptoProvider(PcView.this));
@@ -812,7 +813,8 @@ public class PcView extends Activity {
 
     private void startGame(String host, String uniqueId, String uuid, String pcName,
                            X509Certificate serverCert) throws XmlPullParserException, IOException {
-        NvHTTP httpConn = new NvHTTP(host,
+        NvHTTP httpConn = new NvHTTP(this,
+                host,
                 uniqueId,
                 serverCert,
                 PlatformBinding.getCryptoProvider(PcView.this));

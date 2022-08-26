@@ -1,6 +1,7 @@
 package in.oneplay.nvstream;
 
 import android.app.ActivityManager;
+import android.content.Context;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -83,9 +84,9 @@ public class NvConnection {
         connectionAllowed.release();
     }
     
-    private boolean startApp() throws XmlPullParserException, IOException
+    private boolean startApp(Context appContext) throws XmlPullParserException, IOException
     {
-        NvHTTP h = new NvHTTP(context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
+        NvHTTP h = new NvHTTP(appContext, context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
 
         String serverInfo = h.getServerInfo();
         
@@ -191,8 +192,8 @@ public class NvConnection {
         }
     }
 
-    public boolean stopApp() throws XmlPullParserException, IOException {
-        NvHTTP h = new NvHTTP(context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
+    public boolean stopApp(Context appContext) throws XmlPullParserException, IOException {
+        NvHTTP h = new NvHTTP(appContext, context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
         return h.quitApp();
     }
 
@@ -231,7 +232,7 @@ public class NvConnection {
         return true;
     }
 
-    public void start(final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
+    public void start(Context appContext, final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
     {
         new Thread(new Runnable() {
             public void run() {
@@ -244,7 +245,7 @@ public class NvConnection {
                 context.connListener.stageStarting(appName);
 
                 try {
-                    if (!startApp()) {
+                    if (!startApp(appContext)) {
                         context.connListener.stageFailed(appName, 0, 0);
                         return;
                     }
