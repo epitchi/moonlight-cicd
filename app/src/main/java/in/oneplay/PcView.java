@@ -745,12 +745,14 @@ public class PcView extends Activity {
                     message = null;
                 }
             } catch (UnknownHostException e) {
-                message = getResources().getString(R.string.error_unknown_host);
+                runOnUiThread(() -> processingError(getResources().getString(R.string.error_unknown_host), e, true));
+                return;
             } catch (FileNotFoundException e) {
-                message = getResources().getString(R.string.error_404);
+                runOnUiThread(() -> processingError(getResources().getString(R.string.error_404), e, true));
+                return;
             } catch (XmlPullParserException | IOException e) {
-                LimeLog.warning(e);
-                message = e.getMessage();
+                runOnUiThread(() -> processingError(e, true));
+                return;
             }
 
             final String finalMessage = message;
@@ -795,7 +797,11 @@ public class PcView extends Activity {
     }
 
     private void processingError(Throwable error, boolean isRemoveComputer) {
-        LimeLog.severe(error);
+        processingError("", error, isRemoveComputer);
+    }
+
+    private void processingError(String message, Throwable error, boolean isRemoveComputer) {
+        LimeLog.severe(message, error);
 
         if (isRemoveComputer) {
             removeComputer();
