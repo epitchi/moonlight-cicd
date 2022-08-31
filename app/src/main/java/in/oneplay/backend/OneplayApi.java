@@ -1,11 +1,8 @@
 package in.oneplay.backend;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
-
-import in.oneplay.BuildConfig;
-import in.oneplay.LimeLog;
-import in.oneplay.nvstream.http.GfeHttpResponseException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,8 +23,13 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import in.oneplay.BuildConfig;
+import in.oneplay.LimeLog;
+import in.oneplay.OneplayApp;
+import in.oneplay.nvstream.http.GfeHttpResponseException;
+import in.oneplay.preferences.PreferenceConfiguration;
 import okhttp3.ConnectionPool;
-import okhttp3.Interceptor;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -36,10 +38,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class OneplayApi {
-    public static int CONNECTION_TIMEOUT = 3000;
-    public static int READ_TIMEOUT = 5000;
-
-    public static final int REQUEST_PORT = 47990;
+    public static int connectionTimeout = 3000;
+    public static int readTimeout = 5000;
 
     private static volatile OneplayApi instance;
 
@@ -47,43 +47,31 @@ public class OneplayApi {
     private static final boolean verbose = BuildConfig.DEBUG;
 
     private static final String userAgent = BuildConfig.USER_AGENT;
-    private static final String startVmUrl = new Uri.Builder()
+    private static final HttpUrl baseStartVmUrl = new HttpUrl.Builder()
             .scheme(BuildConfig.CONNECTION_SCHEME)
-            .authority(BuildConfig.API_DOMAIN)
+            .host(BuildConfig.API_DOMAIN)
             .encodedPath(BuildConfig.API_START_VM_ENDPOINT)
-            .encodedQuery("vm_ip=")
-            .build()
-            .toString();
-    private static final String serverInfoUrl = new Uri.Builder()
+            .build();
+    private static final HttpUrl baseServerInfoUrl = new HttpUrl.Builder()
             .scheme(BuildConfig.CONNECTION_SCHEME)
-            .authority(BuildConfig.API_DOMAIN)
+            .host(BuildConfig.API_DOMAIN)
             .encodedPath(BuildConfig.API_GET_SESSION_ENDPOINT)
-            .build()
-            .toString();
-    private static final String quitUrl = new Uri.Builder()
+            .build();
+    private static final HttpUrl baseStopVmUrl = new HttpUrl.Builder()
             .scheme(BuildConfig.CONNECTION_SCHEME)
-            .authority(BuildConfig.DOMAIN)
+            .host(BuildConfig.DOMAIN)
             .encodedPath(BuildConfig.APP_QUIT_LINK_PATH)
-            .build()
-            .toString();
-    private static final String eventsUrl = new Uri.Builder()
+            .build();
+    private static final HttpUrl baseEventsUrl = new HttpUrl.Builder()
             .scheme(BuildConfig.CONNECTION_SCHEME)
-            .authority(BuildConfig.API_DOMAIN)
+            .host(BuildConfig.API_DOMAIN)
             .encodedPath(BuildConfig.API_EVENTS_ENDPOINT)
-            .build()
-            .toString();
+            .build();
 
     private final OkHttpClient httpClient;
-    private String sessionKey;
-    private String userId;
-    private String hostAddress;
-    private String gameId;
 
-    private ClientConfig clientConfig;
-
-    public interface PinAuthorizationCallback {
-        void onResult(boolean result);
-    }
+    private UserSession session;
+    private Integer pinPort;
 
     public static OneplayApi getInstance() {
         OneplayApi localInstance = instance;
@@ -100,219 +88,112 @@ public class OneplayApi {
     }
 
     private OneplayApi() {
+        Context context = OneplayApp.getAppContext();
+        if (context != null) {
+            PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(context);
+            this.pinPort = prefConfig.pinPort;
+        }
+
         this.httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
-                .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
-                .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
+                .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                .connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS)
                 .build();
     }
 
-    public String getSessionKey() {
-        return sessionKey;
-    }
+    public UserSession connectTo(Uri uri) throws IOException, JSONException {
+        HttpUrl serverInfoUrl = baseServerInfoUrl.newBuilder()
+                .addEncodedPathSegment(uri.getQueryParameter("payload"))
+                .build();
+        String serverInfo = openHttpConnectionPostToString(serverInfoUrl);
 
-    public String getHostAddress() {
-        return hostAddress;
-    }
-
-    public ClientConfig getClientConfig() {
-        return clientConfig;
-    }
-
-    public String getGameId() {
-        return gameId;
-    }
-
-    public void connectTo(Uri uri) throws IOException {
-        loadServerInfo(uri.getQueryParameter("payload"));
+        this.session = UserSession.formJsonString(serverInfo);
 
         if (!unpairAll()) {
             throw new IOException("Unable to unpair clients.");
         }
+
+        return this.session;
     }
 
-    public String startVm(String serverAddress) throws IOException {
-        String response = openHttpConnectionPostToString(startVmUrl + serverAddress);
+    public boolean setPin(String key) throws IOException, JSONException {
+        if (session == null || pinPort == null) {
+            return false;
+        }
+
+        HttpUrl pinRequestUrl = new HttpUrl.Builder()
+                .scheme(BuildConfig.CONNECTION_SCHEME)
+                .host(session.getHostAddress())
+                .port(pinPort)
+                .addEncodedPathSegments("api/pin")
+                .build();
+
+        String body = new JSONObject().put("pin", key).toString();
+        String response = openHttpConnectionPostToString(pinRequestUrl, body);
+
+        return (new JSONObject(response).getBoolean("status"));
+    }
+
+    public String startVm(String serverAddress) throws IOException, JSONException {
+        HttpUrl startVmUrl = baseStartVmUrl.newBuilder()
+                .addEncodedQueryParameter("vm_ip", serverAddress)
+                .build();
+        String response = openHttpConnectionPostToString(startVmUrl);
 
         String sessionSignature = "";
-        try {
-            JSONObject responseData = new JSONObject(response).getJSONObject("data");
-            sessionSignature = responseData.getString("session_signature");
-
-        } catch (JSONException e) {
-            LimeLog.severe(e);
-        }
+        JSONObject responseData = new JSONObject(response).getJSONObject("data");
+        sessionSignature = responseData.getString("session_signature");
 
         return sessionSignature;
     }
 
-    public Interceptor getInterceptor(PinAuthorizationCallback c) {
-        return (Interceptor.Chain chain) -> {
-            Request request = chain.request();
-            if ("GET".equals(request.method()) &&
-                    hostAddress.equals(request.url().host()) &&
-                    "/pair".equals(request.url().encodedPath())) {
+    public boolean stopVm(String sessionKey) throws IOException {
+        HttpUrl stopVmUrl = baseStopVmUrl.newBuilder()
+                .addEncodedQueryParameter("session_id", sessionKey)
+                .addEncodedQueryParameter("source", "android_app_" + BuildConfig.SHORT_VERSION_NAME)
+                .build();
+        openHttpConnectionPostToString(stopVmUrl);
 
-                new Thread(() -> c.onResult(setHostSessionKey(sessionKey))).start();
-            }
-
-            return chain.proceed(request);
-        };
+        return true;
     }
 
-    private void loadServerInfo(String sessionKey) throws IOException {
-        String serverInfo = openHttpConnectionPostToString(serverInfoUrl + sessionKey);
-
-        String serverAddress = "";
-        String hostSessionKey = "";
-        String userId = "";
-        String gameId = "";
-        ClientConfig clientConfig = null;
-        try {
-            JSONObject serverData = new JSONObject(serverInfo).getJSONObject("data");
-            serverAddress = serverData.getJSONObject("server_details").getString("server_ip");
-            hostSessionKey = serverData.getString("host_session_key");
-            userId = serverData.getJSONObject("user_details").getString("user_id");
-            gameId = serverData.getJSONObject("game_details").getString("id");
-            clientConfig = getClientConfig(serverData);
-        } catch (JSONException e) {
-            LimeLog.severe(e);
+    public boolean unpairAll() throws IOException, JSONException {
+        if (session == null || pinPort == null) {
+            return false;
         }
 
-        this.hostAddress = serverAddress;
-        this.sessionKey = hostSessionKey;
-        this.userId = userId;
-        this.gameId = gameId;
-        this.clientConfig = clientConfig;
-    }
-
-    private ClientConfig getClientConfig(JSONObject data) throws JSONException {
-        JSONObject otherDetailsData = data.getJSONObject("other_details");
-        JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
-        JSONObject serverDetailsData = data.getJSONObject("server_details");
-        JSONObject portDetailsData = serverDetailsData.getJSONObject("port_details");
-
-        ClientConfig.PortDetails portDetails = new ClientConfig.PortDetails();
-        portDetails.setHttpPort(Utils.getInt(portDetailsData, "http_port"));
-        portDetails.setHttpsPort(Utils.getInt(portDetailsData, "https_port"));
-        portDetails.setAudioPort(Utils.getInt(portDetailsData, "audio_port"));
-        portDetails.setVideoPort(Utils.getInt(portDetailsData, "video_port"));
-        portDetails.setControlPort(Utils.getInt(portDetailsData, "control_port"));
-        portDetails.setRtspPort(Utils.getInt(portDetailsData, "rtsp_port"));
-        portDetails.setRtspPort(Utils.getInt(portDetailsData, "pin_port"));
-
-        ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
-//        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
-        advanceDetails.setAbsoluteTouchMode(Utils.getBoolean(advanceDetailsData, "absolute_touch_mode"));
-//        advanceDetails.setBackgroundGamepad(Utils.getBoolean(advanceDetailsData, "background_gamepad"));
-//        advanceDetails.setFramePacing(Utils.getBoolean(advanceDetailsData, "frame_pacing"));
-        advanceDetails.setGameOptimizations(Utils.getBoolean(advanceDetailsData, "game_optimizations"));
-        advanceDetails.setMultiControl(Utils.getBoolean(advanceDetailsData, "multi_color")); //typo "multi_color" it means "multi controller"
-//        advanceDetails.setMuteOnFocusLoss(Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"));
-//        advanceDetails.setPacketSize(Utils.getInt(advanceDetailsData, "packet_size"));
-        advanceDetails.setPlayAudioOnHost(Utils.getBoolean(advanceDetailsData, "play_audio_on_host"));
-//        advanceDetails.setQuitAppAfter(Utils.getBoolean(advanceDetailsData, "quit_app_after"));
-        advanceDetails.setReverseScrollDirection(Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"));
-        advanceDetails.setSwapFaceButtons(Utils.getBoolean(advanceDetailsData, "swap_face_buttons"));
-//        advanceDetails.setSwapMouseButtons( Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons"));
-
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.setAudioType(Utils.getString(otherDetailsData, "audio_type"));
-        clientConfig.setBitrateKbps(Utils.getInt(otherDetailsData, "bitrate_kbps"));
-//        clientConfig.setCaptureSysKeys(Utils.getBoolean(otherDetailsData, "capture_sys_keys"));
-        clientConfig.setControllerMouseEmulationEnabled(Utils.getBoolean(otherDetailsData, "controller_mouse_emulation"));
-        clientConfig.setControllerUsbDriverSupportEnabled(Utils.getBoolean(otherDetailsData, "controller_usb_driver_support"));
-        clientConfig.setFrameDropDisabled(Utils.getBoolean(otherDetailsData, "disable_frame_drop"));
-        clientConfig.setHdrEnabled(Utils.getBoolean(otherDetailsData, "enable_hdr"));
-        clientConfig.setPerfOverlayEnabled(Utils.getBoolean(otherDetailsData, "enable_perf_overlay"));
-        clientConfig.setPipEnabled(Utils.getBoolean(otherDetailsData, "enable_pip"));
-        clientConfig.setPostStreamToastEnabled(Utils.getBoolean(otherDetailsData, "enable_post_stream_toast"));
-        clientConfig.setGameFps(Utils.getInt(otherDetailsData, "game_fps"));
-//        clientConfig.setVsyncEnabled(Utils.getBoolean(otherDetailsData, "is_vsync_enabled"));
-//        clientConfig.setMaxBitrateKbps(Utils.getInt(otherDetailsData, "max_bitrate_kbps"));
-//        clientConfig.setMaxFps(Utils.getInt(otherDetailsData, "max_fps"));
-//        clientConfig.setMaxResolution(Utils.getString(otherDetailsData, "max_resolution"));
-        clientConfig.setMouseNavButtonsEnabled(Utils.getBoolean(otherDetailsData, "mouse_nav_buttons"));
-        clientConfig.setOnscreenControlsEnabled(Utils.getBoolean(otherDetailsData, "onscreen_controls"));
-        clientConfig.setResolution(Utils.getString(otherDetailsData, "resolution"));
-        clientConfig.setStreamCodec(Utils.getString(otherDetailsData, "stream_codec"));
-        clientConfig.setUnlockFpsEnabled(Utils.getBoolean(otherDetailsData, "unlock_fps"));
-        clientConfig.setVibrateOscEnabled(Utils.getBoolean(otherDetailsData, "vibrate_osc"));
-//        clientConfig.setVideoDecoderSelection(Utils.getString(otherDetailsData, "video_decoder_selection"));
-        clientConfig.setWindowMode(Utils.getString(otherDetailsData, "window_mode"));
-        clientConfig.setAdvanceDetails(advanceDetails);
-        clientConfig.setPortDetails(portDetails);
-        return clientConfig;
-    }
-
-    private boolean unpairAll() throws IOException {
-        String unpairUrl = new Uri.Builder()
+        HttpUrl unpairAllUrl = new HttpUrl.Builder()
                 .scheme(BuildConfig.CONNECTION_SCHEME)
-                .encodedAuthority(this.hostAddress + ":" + REQUEST_PORT)
-                .encodedPath("/api/clients/unpair")
-                .build()
+                .host(session.getHostAddress())
+                .port(pinPort)
+                .addEncodedPathSegments("api/clients/unpair")
+                .build();
+
+        String response = openHttpConnectionPostToString(unpairAllUrl);
+
+        return new JSONObject(response).getBoolean("status");
+    }
+
+    public void registerEvent(String text) throws IOException, JSONException {
+        String userId = session != null && session.getUserId() != null ? session.getUserId() : "";
+        String sessionKey = session != null && session.getKey() != null ? session.getKey() : "";
+        String gameId = session != null && session.getGameId() != null ? session.getGameId() : "";
+        String hostAddress = session != null && session.getHostAddress() != null ? session.getHostAddress() : "";
+
+        String body = new JSONObject()
+                .put("user_id", userId)
+                .put("error", text)
+                .put("token", sessionKey)
+                .put("device", ("android " +
+                        Build.VERSION.RELEASE + " " +
+                        Build.MANUFACTURER + " " +
+                        Build.MODEL).replace(' ', '_'))
+                .put("version", BuildConfig.SHORT_VERSION_NAME)
+                .put("game_id", gameId)
+                .put("vm_ip", hostAddress)
                 .toString();
 
-        String response = openHttpConnectionPostToString(unpairUrl);
-        try {
-            if (new JSONObject(response).getBoolean("status")) {
-                return true;
-            }
-        } catch (JSONException ignore) { }
-
-        return false;
-    }
-
-    public void doQuit() throws IOException {
-        openHttpConnectionPostToString(quitUrl + "?" +
-                "session_id=" + this.sessionKey + "&" +
-                "source=" + "android_app_" + BuildConfig.SHORT_VERSION_NAME);
-    }
-
-    public void registerEvent(String text) {
-        new Thread(() -> {
-            try {
-                String body = new JSONObject()
-                        .put("user_id", userId != null ? userId : "")
-                        .put("error", text)
-                        .put("token", sessionKey != null ? sessionKey : "")
-                        .put("device", ("android " +
-                                Build.VERSION.RELEASE + " " +
-                                Build.MANUFACTURER + " " +
-                                Build.MODEL).replace(' ', '_'))
-                        .put("version", BuildConfig.SHORT_VERSION_NAME)
-                        .put("game_id", gameId != null ? gameId : "")
-                        .put("vm_ip", hostAddress != null ? hostAddress : "")
-                        .toString();
-
-                openHttpConnectionPostToString(eventsUrl, body);
-
-            } catch (JSONException | IOException e) {
-                LimeLog.severe(e);
-            }
-        }).start();
-    }
-
-    private boolean setHostSessionKey(String key) {
-        try {
-            String pinRequestUrl = new Uri.Builder()
-                    .scheme(BuildConfig.CONNECTION_SCHEME)
-                    .encodedAuthority(this.hostAddress + ":" + REQUEST_PORT)
-                    .encodedPath("/api/pin")
-                    .build()
-                    .toString();
-
-            // Give time to process request at the server
-            Thread.sleep(500);
-            String body = new JSONObject().put("pin", key).toString();
-            String response = openHttpConnectionPostToString(pinRequestUrl, body);
-
-            return (new JSONObject(response).getBoolean("status"));
-        } catch (IOException | JSONException | InterruptedException e) {
-            LimeLog.severe(e);
-        }
-
-        return false;
+        openHttpConnectionPostToString(baseEventsUrl, body);
     }
 
     // This hack is Android-specific but we do it on all platforms
@@ -356,14 +237,13 @@ public class OneplayApi {
         }
     }
 
-    private ResponseBody openHttpConnectionPost(String url, String requestBodyString) throws IOException {
+    private ResponseBody openHttpConnectionPost(HttpUrl baseUrl, String requestBodyString) throws IOException {
         Request request = new Request.Builder()
-                .url(url)
+                .url(baseUrl)
                 .header("User-Agent", userAgent)
-//                .header("Connection", "close")
                 .post(RequestBody.create(
-                        MediaType.get("application/json; charset=utf-8"),
-                        requestBodyString))
+                        requestBodyString,
+                        MediaType.get("application/json; charset=utf-8")))
                 .build();
         Response response = performAndroidTlsHackOnePlay(httpClient).newCall(request).execute();
 
@@ -379,29 +259,29 @@ public class OneplayApi {
         }
 
         if (response.code() == 404) {
-            throw new FileNotFoundException(url);
+            throw new FileNotFoundException(baseUrl.toString());
         }
         else {
             throw new GfeHttpResponseException(response.code(), response.message());
         }
     }
 
-    private String openHttpConnectionPostToString(String url) throws IOException {
-        return openHttpConnectionPostToString(url, "");
+    private String openHttpConnectionPostToString(HttpUrl baseUrl) throws IOException {
+        return openHttpConnectionPostToString(baseUrl, "");
     }
 
-    private String openHttpConnectionPostToString(String url, String requestBodyString) throws IOException {
+    private String openHttpConnectionPostToString(HttpUrl baseUrl, String requestBodyString) throws IOException {
         try {
             if (verbose) {
-                LimeLog.info("Requesting URL: "+url+"\nBody: "+requestBodyString);
+                LimeLog.info("Requesting URL: "+baseUrl+"\nBody: "+requestBodyString);
             }
 
-            ResponseBody resp = openHttpConnectionPost(url, requestBodyString);
+            ResponseBody resp = openHttpConnectionPost(baseUrl, requestBodyString);
             String respString = resp.string();
             resp.close();
 
             if (verbose) {
-                LimeLog.info(url+" -> "+respString);
+                LimeLog.info(baseUrl+" -> "+respString);
             }
 
             return respString;

@@ -21,8 +21,9 @@ public class ServerHelper {
         return computer.activeAddress;
     }
 
-    public static Intent createStartIntent(Activity parent, String host, NvApp app, String uniqueId, String uuid,
-                                           String pcName, X509Certificate serverCert) {
+    public static Intent createStartIntent(Activity parent, String host, NvApp app, String uniqueId,
+                                           String uuid, String pcName, X509Certificate serverCert,
+                                           String sessionKey) {
         Intent intent = new Intent(parent, Game.class);
         intent.putExtra(Game.EXTRA_HOST, host);
         intent.putExtra(Game.EXTRA_APP_NAME, app.getAppName());
@@ -32,6 +33,7 @@ public class ServerHelper {
         intent.putExtra(Game.EXTRA_PC_UUID, uuid);
         intent.putExtra(Game.EXTRA_PC_NAME, pcName);
         intent.putExtra(Game.EXTRA_SERVER_CERT, serverCert);
+        intent.putExtra(Game.EXTRA_SESSION_KEY, sessionKey);
         return intent;
     }
 

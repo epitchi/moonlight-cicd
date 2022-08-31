@@ -3,6 +3,10 @@ package in.oneplay.nvstream.http;
 import android.content.Context;
 import android.os.Build;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,19 +46,14 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
+import in.oneplay.OneplayApp;
 import in.oneplay.nvstream.ConnectionContext;
 import in.oneplay.nvstream.http.PairingManager.PairState;
-
 import in.oneplay.preferences.PreferenceConfiguration;
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -62,21 +61,21 @@ import okhttp3.ResponseBody;
 
 
 public class NvHTTP {
-    private String uniqueId;
-    private PairingManager pm;
+    private final String uniqueId;
+    private final PairingManager pm;
 
-    public static int CONNECTION_TIMEOUT = 3000;
-    public static int READ_TIMEOUT = 5000;
+    public static int connectionTimeout = 3000;
+    public static int readTimeout = 5000;
 
     // Print URL and content to logcat on debug builds
-    private static boolean verbose = BuildConfig.DEBUG;
+    private static final boolean verbose = BuildConfig.DEBUG;
 
     public final int httpsPort;
     public final int httpPort;
 
-    private HttpUrl baseUrlHttps;
-    private HttpUrl baseUrlHttp;
-    
+    private final HttpUrl baseUrlHttps;
+    private final HttpUrl baseUrlHttp;
+
     private OkHttpClient httpClient;
     private OkHttpClient httpClientWithReadTimeout;
 
@@ -175,16 +174,16 @@ public class NvHTTP {
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .hostnameVerifier(hv)
                 .readTimeout(0, TimeUnit.MILLISECONDS)
-                .connectTimeout(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
+                .connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS)
                 .proxy(Proxy.NO_PROXY)
                 .build();
         
         httpClientWithReadTimeout = httpClient.newBuilder()
-                .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
+                .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
                 .build();
     }
     
-    public NvHTTP(Context context, String address, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider) throws IOException {
+    public NvHTTP(String address, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider) throws IOException {
         // Use the same UID for all Moonlight clients so we can quit games
         // started by other Moonlight clients.
         this.uniqueId = "0123456789ABCDEF";
@@ -193,6 +192,7 @@ public class NvHTTP {
 
         initializeHttpState(cryptoProvider);
 
+        Context context = OneplayApp.getAppContext();
         PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(context);
         httpsPort = prefConfig.httpsPort;
         httpPort = prefConfig.httpPort;
@@ -215,12 +215,6 @@ public class NvHTTP {
         }
 
         this.pm = new PairingManager(this, cryptoProvider);
-    }
-
-    public void addInterceptor(Interceptor interceptor) {
-        this.httpClient = this.httpClient.newBuilder()
-                .addInterceptor(interceptor)
-                .build();
     }
 
     static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {

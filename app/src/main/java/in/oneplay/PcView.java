@@ -4,6 +4,7 @@ import static in.oneplay.Game.EXTRA_HOST;
 import static in.oneplay.Game.EXTRA_PC_NAME;
 import static in.oneplay.Game.EXTRA_PC_UUID;
 import static in.oneplay.Game.EXTRA_SERVER_CERT;
+import static in.oneplay.Game.EXTRA_SESSION_KEY;
 import static in.oneplay.Game.EXTRA_UNIQUEID;
 import static in.oneplay.utils.UiHelper.dp;
 
@@ -49,6 +50,7 @@ import com.google.android.play.core.install.model.AppUpdateType;
 import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.FileNotFoundException;
@@ -66,6 +68,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import in.oneplay.backend.OneplayApi;
+import in.oneplay.backend.UserSession;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.crypto.AndroidCryptoProvider;
 import in.oneplay.computers.ComputerManagerService;
@@ -87,6 +90,7 @@ public class PcView extends Activity {
     private OnBackInvokedCallback onBackInvokedCallback;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
+    private UserSession session;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
 
@@ -327,10 +331,8 @@ public class PcView extends Activity {
                                     int connectionTimeout = Integer.parseInt(dialogConnTimeoutField.getText().toString());
                                     int readTimeout = Integer.parseInt(dialogReadTimeoutField.getText().toString());
 
-                                    OneplayApi.CONNECTION_TIMEOUT = connectionTimeout;
-                                    OneplayApi.READ_TIMEOUT = readTimeout;
-                                    NvHTTP.CONNECTION_TIMEOUT = connectionTimeout;
-                                    NvHTTP.READ_TIMEOUT = readTimeout;
+                                    NvHTTP.connectionTimeout = connectionTimeout;
+                                    NvHTTP.readTimeout = readTimeout;
 
                                     OneplayApi connection = OneplayApi.getInstance();
                                     String sessionSignature = connection.startVm(dialogIpField.getText().toString());
@@ -357,7 +359,7 @@ public class PcView extends Activity {
                                             Toast.makeText(PcView.this, "Can't get session signature. Try again.", Toast.LENGTH_LONG).show();
                                         });
                                     }
-                                } catch (IOException e) {
+                                } catch (IOException | JSONException e) {
                                     runOnUiThread(() -> processingError(e, true));
                                 }
                             }).start();
@@ -398,7 +400,8 @@ public class PcView extends Activity {
                             data.getStringExtra(EXTRA_UNIQUEID),
                             data.getStringExtra(EXTRA_PC_UUID),
                             data.getStringExtra(EXTRA_PC_NAME),
-                            (X509Certificate) data.getSerializableExtra(EXTRA_SERVER_CERT)
+                            (X509Certificate) data.getSerializableExtra(EXTRA_SERVER_CERT),
+                            data.getStringExtra(EXTRA_SESSION_KEY)
                     );
                 } catch (XmlPullParserException | IOException e) {
                     LimeLog.severe("Unable to restart the game activity.", e);
@@ -544,11 +547,10 @@ public class PcView extends Activity {
         new Thread(() -> {
             Uri uri = currentIntent.getData();
             try {
-                OneplayApi client = OneplayApi.getInstance();
-                client.connectTo(uri);
-                OneplayPreferenceConfiguration.savePreferences(this, client.getClientConfig());
-                doAddPc(client.getHostAddress());
-            } catch (IOException e) {
+                session = OneplayApi.getInstance().connectTo(uri);
+                OneplayPreferenceConfiguration.savePreferences(this, session.getConfig());
+                doAddPc();
+            } catch (IOException | JSONException e) {
                 processingError(e, false);
             }
         }).start();
@@ -607,14 +609,14 @@ public class PcView extends Activity {
         }
     }
 
-    private void doAddPc(String host) {
+    private void doAddPc() {
         boolean wrongSiteLocal = false;
         boolean success;
         int portTestResult;
 
         ComputerDetails fakeDetails = new ComputerDetails();
         try {
-            fakeDetails.manualAddress = host;
+            fakeDetails.manualAddress = session.getHostAddress();
             success = managerBinder.addComputerBlocking(fakeDetails);
         } catch (IllegalArgumentException | InterruptedException e) {
             // This can be thrown from OkHttp if the host fails to canonicalize to a valid name.
@@ -623,7 +625,7 @@ public class PcView extends Activity {
             success = false;
         }
         if (!success) {
-            wrongSiteLocal = isWrongSubnetSiteLocalAddress(host);
+            wrongSiteLocal = isWrongSubnetSiteLocalAddress(session.getHostAddress());
         }
         if (!success && !wrongSiteLocal) {
             // Run the test before dismissing the spinner because it can take a few seconds.
@@ -688,43 +690,17 @@ public class PcView extends Activity {
                 // Stop updates and wait while pairing
                 stopComputerUpdates();
 
-                httpConn = new NvHTTP(this,
-                        ServerHelper.getCurrentAddressFromComputer(computer),
+                httpConn = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(computer),
                         managerBinder.getUniqueId(),
                         computer.serverCert,
                         PlatformBinding.getCryptoProvider(PcView.this));
-                OneplayApi client = OneplayApi.getInstance();
-                final String pinStr = client.getSessionKey();
-
-                Thread thread = Thread.currentThread();
-
-                PairingManager pm = httpConn.getPairingManager();
-
-                httpConn.addInterceptor(client.getInterceptor((result -> {
-                    if (!result) {
-                        runOnUiThread(() -> processingError(
-                                new Exception("Session key not accepted or the server did not respond in time"),
-                                true)
-                        );
-                        // Cancel pairing process
-                        try {
-                            httpConn.unpair();
-                        } catch (IOException e) {
-                            LimeLog.severe("Unable to abort pairing process", e);
-                        }
-
-                        // Interrupt pairing thread
-                        if (!thread.isInterrupted()) {
-                            thread.interrupt();
-                        }
-                    }
-                })));
 
                 if (computer == null) {
                     return;
                 }
 
-                PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), pinStr);
+                PairingManager pm = httpConn.getPairingManager();
+                PairingManager.PairState pairState = pm.pair(httpConn.getServerInfo(), session.getKey());
                 if (pairState == PairingManager.PairState.PIN_WRONG) {
                     message = getResources().getString(R.string.pair_incorrect_pin);
                 } else if (pairState == PairingManager.PairState.FAILED) {
@@ -772,7 +748,8 @@ public class PcView extends Activity {
                                 managerBinder.getUniqueId(),
                                 computer.uuid,
                                 computer.name,
-                                computer.serverCert
+                                computer.serverCert,
+                                session.getKey()
                         );
                     } catch (XmlPullParserException | IOException e) {
                         processingError(e, true);
@@ -812,9 +789,9 @@ public class PcView extends Activity {
     }
 
     private void startGame(String host, String uniqueId, String uuid, String pcName,
-                           X509Certificate serverCert) throws XmlPullParserException, IOException {
-        NvHTTP httpConn = new NvHTTP(this,
-                host,
+                           X509Certificate serverCert, String sessionKey)
+            throws XmlPullParserException, IOException {
+        NvHTTP httpConn = new NvHTTP(host,
                 uniqueId,
                 serverCert,
                 PlatformBinding.getCryptoProvider(PcView.this));
@@ -823,7 +800,7 @@ public class PcView extends Activity {
 
         if (currentApp != null) {
             Intent intent = ServerHelper.createStartIntent(this, host, currentApp, uniqueId,
-                    uuid, pcName, serverCert);
+                    uuid, pcName, serverCert, sessionKey);
             runOnUiThread(() -> ServerHelper.doStart(this, intent));
         } else {
             processingError(new Exception(getString(R.string.applist_refresh_error_msg)), true);

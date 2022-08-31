@@ -84,9 +84,9 @@ public class NvConnection {
         connectionAllowed.release();
     }
     
-    private boolean startApp(Context appContext) throws XmlPullParserException, IOException
+    private boolean startApp() throws XmlPullParserException, IOException
     {
-        NvHTTP h = new NvHTTP(appContext, context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
+        NvHTTP h = new NvHTTP(context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
 
         String serverInfo = h.getServerInfo();
         
@@ -192,8 +192,8 @@ public class NvConnection {
         }
     }
 
-    public boolean stopApp(Context appContext) throws XmlPullParserException, IOException {
-        NvHTTP h = new NvHTTP(appContext, context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
+    public boolean stopApp() throws XmlPullParserException, IOException {
+        NvHTTP h = new NvHTTP(context.serverAddress, uniqueId, context.serverCert, cryptoProvider);
         return h.quitApp();
     }
 
@@ -245,7 +245,7 @@ public class NvConnection {
                 context.connListener.stageStarting(appName);
 
                 try {
-                    if (!startApp(appContext)) {
+                    if (!startApp()) {
                         context.connListener.stageFailed(appName, 0, 0);
                         return;
                     }
