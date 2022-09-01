@@ -1,5 +1,13 @@
 package in.oneplay.preferences;
 
+import static in.oneplay.backend.OneplayApi.DEFAULT_PIN_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_AUDIO_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_CONTROL_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTPS_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTP_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_RTSP_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_VIDEO_PORT;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -85,13 +93,6 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_FRAME_PACING = "latency";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
     private static final boolean DEFAULT_ENABLE_AUDIO_FX = false;
-    private static final int DEFAULT_HTTP_PORT = 47989;
-    private static final int DEFAULT_HTTPS_PORT = 47984;
-    private static final int DEFAULT_AUDIO_PORT = 48000;
-    private static final int DEFAULT_VIDEO_PORT = 47998;
-    private static final int DEFAULT_CONTROL_PORT = 47999;
-    private static final int DEFAULT_RTSP_PORT = 48010;
-    private static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
 
     public static final int FORCE_H265_ON = -1;
     public static final int AUTOSELECT_H265 = 0;
