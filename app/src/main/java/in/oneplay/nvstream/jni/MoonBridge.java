@@ -323,5 +323,7 @@ public class MoonBridge {
     // The RTT is in the top 32 bits, and the RTT variance is in the bottom 32 bits
     public static native long getEstimatedRttInfo();
 
+    public static native void setPorts(int https, int http, int rtsp, int audio, int video, int control);
+
     public static native void init();
 }
