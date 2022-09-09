@@ -439,6 +439,8 @@ public class PcView extends Activity {
             webView.getSettings().setUseWideViewPort(true);
         }
         if (!BuildConfig.DEBUG) {
+            webView.getSettings().setLoadsImagesAutomatically(true);
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
             webView.getSettings().setDomStorageEnabled(true);
