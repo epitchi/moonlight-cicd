@@ -185,6 +185,55 @@ public class OneplayPreferenceConfiguration {
         editor.apply();
     }
 
+    private static void setHttpPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_HTTP_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setHttpsPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_HTTPS_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setAudioPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_AUDIO_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setVideoPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_VIDEO_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setControlPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_CONTROL_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setRtspPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_RTSP_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
+    private static void setPinPort(Integer port, SharedPreferences.Editor editor) {
+        if (port != null && (port > 0 && port <= 0xFFFF)) {
+            editor.putInt(PreferenceConfiguration.CUSTOM_PIN_PORT_STRING, port);
+            editor.apply();
+        }
+    }
+
     public static void savePreferences(Context context, ClientConfig config) {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 
@@ -211,6 +260,13 @@ public class OneplayPreferenceConfiguration {
         setUnlockFps(config.isUnlockFpsEnabled(), editor);
         setVibrateOsc(config.isVibrateOscEnabled(), editor);
         setWindowMode(context, config.getWindowMode(), editor);
+        setHttpPort(config.getPortDetails().getHttpPort(), editor);
+        setHttpsPort(config.getPortDetails().getHttpsPort(), editor);
+        setAudioPort(config.getPortDetails().getAudioPort(), editor);
+        setVideoPort(config.getPortDetails().getVideoPort(), editor);
+        setControlPort(config.getPortDetails().getControlPort(), editor);
+        setRtspPort(config.getPortDetails().getRtspPort(), editor);
+        setPinPort(config.getPortDetails().getPinPort(), editor);
 
         editor.apply();
     }

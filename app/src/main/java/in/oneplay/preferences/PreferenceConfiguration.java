@@ -14,7 +14,7 @@ public class PreferenceConfiguration {
 
     static final String RESOLUTION_PREF_STRING = "list_resolution";
     static final String FPS_PREF_STRING = "list_fps";
-    static final String MAX_BITRATE_PREF_STRING = "seekbar_max_bitrate_kbps"; //TODO save with all other settings??? variable
+    static final String MAX_BITRATE_PREF_STRING = "seekbar_max_bitrate_kbps";
     static final String BITRATE_PREF_STRING = "seekbar_bitrate_kbps";
     private static final String BITRATE_PREF_OLD_STRING = "seekbar_bitrate";
     static final String STRETCH_PREF_STRING = "checkbox_stretch_video";
@@ -47,6 +47,13 @@ public class PreferenceConfiguration {
     private static final String FRAME_PACING_PREF_STRING = "frame_pacing";
     private static final String ABSOLUTE_MOUSE_MODE_PREF_STRING = "checkbox_absolute_mouse_mode";
     private static final String ENABLE_AUDIO_FX_PREF_STRING = "checkbox_enable_audiofx";
+    static final String CUSTOM_HTTP_PORT_STRING = "http_port";
+    static final String CUSTOM_HTTPS_PORT_STRING = "https_port";
+    static final String CUSTOM_AUDIO_PORT_STRING = "audio_port";
+    static final String CUSTOM_VIDEO_PORT_STRING = "video_port";
+    static final String CUSTOM_CONTROL_PORT_STRING = "control_port";
+    static final String CUSTOM_RTSP_PORT_STRING = "rtsp_port";
+    static final String CUSTOM_PIN_PORT_STRING = "rtsp_port";
 
     static final String DEFAULT_RESOLUTION = "1280x720";
     static final String DEFAULT_FPS = "60";
@@ -78,6 +85,13 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_FRAME_PACING = "latency";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
     private static final boolean DEFAULT_ENABLE_AUDIO_FX = false;
+    private static final int DEFAULT_HTTP_PORT = 47989;
+    private static final int DEFAULT_HTTPS_PORT = 47984;
+    private static final int DEFAULT_AUDIO_PORT = 48000;
+    private static final int DEFAULT_VIDEO_PORT = 47998;
+    private static final int DEFAULT_CONTROL_PORT = 47999;
+    private static final int DEFAULT_RTSP_PORT = 48010;
+    private static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
 
     public static final int FORCE_H265_ON = -1;
     public static final int AUTOSELECT_H265 = 0;
@@ -122,6 +136,13 @@ public class PreferenceConfiguration {
     public int framePacing;
     public boolean absoluteMouseMode;
     public boolean enableAudioFx;
+    public int httpPort;
+    public int httpsPort;
+    public int audioPort;
+    public int videoPort;
+    public int controlPort;
+    public int rtspPort;
+    public int pinPort;
 
     public static boolean isNativeResolution(int width, int height) {
         // It's not a native resolution if it matches an existing resolution option
@@ -479,6 +500,15 @@ public class PreferenceConfiguration {
         config.enableLatencyToast = prefs.getBoolean(LATENCY_TOAST_PREF_STRING, DEFAULT_LATENCY_TOAST);
         config.absoluteMouseMode = prefs.getBoolean(ABSOLUTE_MOUSE_MODE_PREF_STRING, DEFAULT_ABSOLUTE_MOUSE_MODE);
         config.enableAudioFx = prefs.getBoolean(ENABLE_AUDIO_FX_PREF_STRING, DEFAULT_ENABLE_AUDIO_FX);
+
+        // Ports
+        config.httpPort = prefs.getInt(CUSTOM_HTTP_PORT_STRING, DEFAULT_HTTP_PORT);
+        config.httpsPort = prefs.getInt(CUSTOM_HTTPS_PORT_STRING, DEFAULT_HTTPS_PORT);
+        config.audioPort = prefs.getInt(CUSTOM_AUDIO_PORT_STRING, DEFAULT_AUDIO_PORT);
+        config.videoPort = prefs.getInt(CUSTOM_VIDEO_PORT_STRING, DEFAULT_VIDEO_PORT);
+        config.controlPort = prefs.getInt(CUSTOM_CONTROL_PORT_STRING, DEFAULT_CONTROL_PORT);
+        config.rtspPort = prefs.getInt(CUSTOM_RTSP_PORT_STRING, DEFAULT_RTSP_PORT);
+        config.pinPort = prefs.getInt(CUSTOM_PIN_PORT_STRING, DEFAULT_PIN_PORT);
 
         return config;
     }
