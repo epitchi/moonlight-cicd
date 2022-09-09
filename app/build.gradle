@@ -4,7 +4,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 ext {
     buildNumber = (Long) (System.currentTimeMillis() / 1000L)
-    defaultVersionName = '1.1.0'
+    defaultVersionName = '1.1.1'
 }
 
 android {
