@@ -4,7 +4,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 ext {
     buildNumber = (Long) (System.currentTimeMillis() / 1000L)
-    defaultVersionName = '1.1.0'
+    defaultVersionName = '1.1.1'
 }
 
 android {
@@ -138,7 +138,7 @@ android {
             buildConfigField "String", "APP_QUIT_LINK_PATH", "\"/client/quit\""
             buildConfigField "String", "APP_CONNECTIVITY_TEST_CHECK_DOMAIN", "\"clientconnectivity.ping.oneplay.in\""
             buildConfigField "String", "API_DOMAIN", "\"client-apis.oneplay.in\""
-            buildConfigField "String", "API_START_VM_ENDPOINT", "\"\""
+            buildConfigField "String", "API_START_VM_ENDPOINT", "\"/\""
             buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session/\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
 
@@ -154,6 +154,11 @@ android {
         ndkBuild {
             path "src/main/jni/Android.mk"
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 

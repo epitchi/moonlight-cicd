@@ -1,5 +1,6 @@
 package in.oneplay;
 
+import org.json.JSONException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -53,7 +54,12 @@ public class LimeLog {
         if (BuildConfig.DEBUG) {
             LOGGER.severe(msg);
         } else {
-            OneplayApi.getInstance().registerEvent(msg);
+            new Thread(() -> {
+                try {
+                    OneplayApi.getInstance().registerEvent(msg);
+                } catch (IOException | JSONException ignored) {} // TODO maybe need to implement a queue (send an event after a connection is established)
+            }).start();
+
         }
     }
     

@@ -1,42 +1,6 @@
 package in.oneplay;
 
 
-import in.oneplay.backend.OneplayApi;
-import in.oneplay.binding.PlatformBinding;
-import in.oneplay.binding.audio.AndroidAudioRenderer;
-import in.oneplay.binding.input.ControllerHandler;
-import in.oneplay.binding.input.KeyboardTranslator;
-import in.oneplay.binding.input.capture.InputCaptureManager;
-import in.oneplay.binding.input.capture.InputCaptureProvider;
-import in.oneplay.binding.input.touch.AbsoluteTouchContext;
-import in.oneplay.binding.input.touch.RelativeTouchContext;
-import in.oneplay.binding.input.driver.UsbDriverService;
-import in.oneplay.binding.input.evdev.EvdevListener;
-import in.oneplay.binding.input.touch.TouchContext;
-import in.oneplay.binding.input.virtual_controller.VirtualController;
-import in.oneplay.binding.video.CrashListener;
-import in.oneplay.binding.video.MediaCodecDecoderRenderer;
-import in.oneplay.binding.video.MediaCodecHelper;
-import in.oneplay.binding.video.PerfOverlayListener;
-import in.oneplay.nvstream.NvConnection;
-import in.oneplay.nvstream.NvConnectionListener;
-import in.oneplay.nvstream.StreamConfiguration;
-import in.oneplay.nvstream.http.GfeHttpResponseException;
-import in.oneplay.nvstream.http.NvApp;
-import in.oneplay.nvstream.input.KeyboardPacket;
-import in.oneplay.nvstream.input.MouseButtonPacket;
-import in.oneplay.nvstream.jni.MoonBridge;
-import in.oneplay.preferences.GlPreferences;
-import in.oneplay.preferences.OneplayPreferenceConfiguration;
-import in.oneplay.preferences.PreferenceConfiguration;
-import in.oneplay.ui.GameGestures;
-import in.oneplay.ui.StreamView;
-import in.oneplay.utils.Dialog;
-import in.oneplay.utils.NetHelper;
-import in.oneplay.utils.ServerHelper;
-import in.oneplay.utils.SpinnerDialog;
-import in.oneplay.utils.UiHelper;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -76,21 +40,22 @@ import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -100,6 +65,41 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import in.oneplay.backend.OneplayApi;
+import in.oneplay.binding.PlatformBinding;
+import in.oneplay.binding.audio.AndroidAudioRenderer;
+import in.oneplay.binding.input.ControllerHandler;
+import in.oneplay.binding.input.KeyboardTranslator;
+import in.oneplay.binding.input.capture.InputCaptureManager;
+import in.oneplay.binding.input.capture.InputCaptureProvider;
+import in.oneplay.binding.input.driver.UsbDriverService;
+import in.oneplay.binding.input.evdev.EvdevListener;
+import in.oneplay.binding.input.touch.AbsoluteTouchContext;
+import in.oneplay.binding.input.touch.RelativeTouchContext;
+import in.oneplay.binding.input.touch.TouchContext;
+import in.oneplay.binding.input.virtual_controller.VirtualController;
+import in.oneplay.binding.video.CrashListener;
+import in.oneplay.binding.video.MediaCodecDecoderRenderer;
+import in.oneplay.binding.video.MediaCodecHelper;
+import in.oneplay.binding.video.PerfOverlayListener;
+import in.oneplay.nvstream.NvConnection;
+import in.oneplay.nvstream.NvConnectionListener;
+import in.oneplay.nvstream.StreamConfiguration;
+import in.oneplay.nvstream.http.GfeHttpResponseException;
+import in.oneplay.nvstream.http.NvApp;
+import in.oneplay.nvstream.input.KeyboardPacket;
+import in.oneplay.nvstream.input.MouseButtonPacket;
+import in.oneplay.nvstream.jni.MoonBridge;
+import in.oneplay.preferences.GlPreferences;
+import in.oneplay.preferences.OneplayPreferenceConfiguration;
+import in.oneplay.preferences.PreferenceConfiguration;
+import in.oneplay.ui.GameGestures;
+import in.oneplay.ui.StreamView;
+import in.oneplay.utils.Dialog;
+import in.oneplay.utils.NetHelper;
+import in.oneplay.utils.ServerHelper;
+import in.oneplay.utils.SpinnerDialog;
+import in.oneplay.utils.UiHelper;
 
 public class Game extends Activity implements SurfaceHolder.Callback,
     OnGenericMotionListener, OnTouchListener, NvConnectionListener, EvdevListener,
@@ -192,6 +192,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public static final String EXTRA_PC_NAME = "PcName";
     public static final String EXTRA_APP_HDR = "HDR";
     public static final String EXTRA_SERVER_CERT = "ServerCert";
+    public static final String EXTRA_SESSION_KEY = "SessionKey";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -405,7 +406,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 .setPositiveButton(android.R.string.ok, (dialog, id) -> {
                                     String message = reportIssueText.getText().toString();
                                     if (!message.isEmpty()) {
-                                        OneplayApi.getInstance().registerEvent(message);
+                                        new Thread(() -> {
+                                            try {
+                                                OneplayApi.getInstance().registerEvent(message);
+                                            } catch (IOException | JSONException e) {
+                                                LimeLog.severe(e);
+                                            }
+                                        }).start();
                                     } else {
                                         dialog.dismiss();
                                     }
@@ -1214,39 +1221,35 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             if (!isNeedRefresh) {
                 String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
                 LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
-                String message = null;
                 try {
                     if (conn.stopApp()) {
                         LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
                     } else {
-                        message = getString(R.string.applist_quit_fail) + " " + appName;
+                        LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
                     }
                 } catch (GfeHttpResponseException e) {
                     if (e.getErrorCode() == 599) {
-                        message = "This session wasn't started by this device," +
+                        LimeLog.severe("This session wasn't started by this device," +
                                 " so it cannot be quit. End streaming on the original " +
-                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")";
+                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
                     } else {
-                        message = e.getMessage();
+                        LimeLog.severe(e);
                     }
                 } catch (UnknownHostException e) {
-                    message = getString(R.string.error_unknown_host);
+                    LimeLog.severe(getString(R.string.error_unknown_host), e);
                 } catch (FileNotFoundException e) {
-                    message = getString(R.string.error_404);
+                    LimeLog.severe(getString(R.string.error_404), e);
                 } catch (IOException | XmlPullParserException e) {
-                    message = e.getMessage();
+                    LimeLog.severe(e.getMessage());
                 } finally {
                     if (!isNeedRelaunch) {
                         try {
-                            OneplayApi.getInstance().doQuit();
+                            String sessionKey = Game.this.getIntent().getStringExtra(EXTRA_SESSION_KEY);
+                            OneplayApi.getInstance().stopVm(sessionKey);
                         } catch (IOException e) {
                             LimeLog.severe(e);
                         }
                     }
-                }
-
-                if (message != null) {
-                    LimeLog.severe(new Exception(message));
                 }
             }
             finish();
@@ -2161,7 +2164,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             UiHelper.notifyStreamConnecting(Game.this);
 
             decoderRenderer.setRenderTarget(holder);
-            conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+            conn.start(this, new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
                     decoderRenderer, Game.this);
         }
     }

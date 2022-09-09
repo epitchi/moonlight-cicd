@@ -1,5 +1,8 @@
 package in.oneplay.backend;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class ClientConfig {
     /**
      * Audio mode. One of "stereo", "5.1-surround", "7.1-surround".
@@ -98,6 +101,10 @@ public class ClientConfig {
      * Advance details.
      */
     private AdvanceDetails advanceDetails;
+    /**
+     * PortDetails. Which ports(such as http, https, audio, video, control, rtsp and pin) should we use for this connection.
+     */
+    private PortDetails portDetails;
 
     public static class AdvanceDetails {
         /**
@@ -261,6 +268,94 @@ public class ClientConfig {
         
     }
 
+    public static class PortDetails {
+        /**
+         * HTTP port for connection
+         */
+        private Integer httpPort;
+        /**
+         * HTTPS port for connection
+         */
+        private Integer httpsPort;
+        /**
+         * Audio port for stream
+         */
+        private Integer audioPort;
+        /**
+         * Video port for stream
+         */
+        private Integer videoPort;
+        /**
+         * Control port for stream
+         */
+        private Integer controlPort;
+        /**
+         * RTSP port for stream
+         */
+        private Integer rtspPort;
+
+        /**
+         * PIN request port
+         */
+        private Integer pinPort;
+
+        public Integer getHttpPort() {
+            return httpPort;
+        }
+
+        public void setHttpPort(Integer httpPort) {
+            this.httpPort = httpPort;
+        }
+
+        public Integer getHttpsPort() {
+            return httpsPort;
+        }
+
+        public void setHttpsPort(Integer httpsPort) {
+            this.httpsPort = httpsPort;
+        }
+
+        public Integer getAudioPort() {
+            return audioPort;
+        }
+
+        public void setAudioPort(Integer audioPort) {
+            this.audioPort = audioPort;
+        }
+
+        public Integer getVideoPort() {
+            return videoPort;
+        }
+
+        public void setVideoPort(Integer videoPort) {
+            this.videoPort = videoPort;
+        }
+
+        public Integer getControlPort() {
+            return controlPort;
+        }
+
+        public void setControlPort(Integer controlPort) {
+            this.controlPort = controlPort;
+        }
+
+        public Integer getRtspPort() {
+            return rtspPort;
+        }
+
+        public void setRtspPort(Integer rtspPort) {
+            this.rtspPort = rtspPort;
+        }
+
+        public Integer getPinPort() {
+            return pinPort;
+        }
+
+        public void setPinPort(Integer pinPort) {
+            this.pinPort = pinPort;
+        }
+    }
+
     public void setAudioType(String audioType) {
         this.audioType = audioType;
     }
@@ -357,6 +452,10 @@ public class ClientConfig {
         this.advanceDetails = advanceDetails;
     }
 
+    public void setPortDetails(PortDetails portDetails) {
+        this.portDetails = portDetails;
+    }
+
     public String getAudioType() {
         return audioType;
     }
@@ -451,5 +550,69 @@ public class ClientConfig {
 
     public AdvanceDetails getAdvanceDetails() {
         return advanceDetails;
+    }
+
+    public PortDetails getPortDetails() {
+        return portDetails;
+    }
+
+    public static ClientConfig fromJsonString(String json) throws JSONException {
+        JSONObject data = new JSONObject(json);
+        JSONObject otherDetailsData = data.getJSONObject("other_details");
+        JSONObject advanceDetailsData = otherDetailsData.getJSONObject("advance_details");
+        JSONObject serverDetailsData = data.getJSONObject("server_details");
+        JSONObject portDetailsData = serverDetailsData.getJSONObject("port_details");
+
+        ClientConfig.PortDetails portDetails = new ClientConfig.PortDetails();
+        portDetails.setHttpPort(Utils.getInt(portDetailsData, "http_port"));
+        portDetails.setHttpsPort(Utils.getInt(portDetailsData, "https_port"));
+        portDetails.setAudioPort(Utils.getInt(portDetailsData, "audio_port"));
+        portDetails.setVideoPort(Utils.getInt(portDetailsData, "video_port"));
+        portDetails.setControlPort(Utils.getInt(portDetailsData, "control_port"));
+        portDetails.setRtspPort(Utils.getInt(portDetailsData, "rtsp_port"));
+        portDetails.setRtspPort(Utils.getInt(portDetailsData, "pin_port"));
+
+        ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
+//        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
+        advanceDetails.setAbsoluteTouchMode(Utils.getBoolean(advanceDetailsData, "absolute_touch_mode"));
+//        advanceDetails.setBackgroundGamepad(Utils.getBoolean(advanceDetailsData, "background_gamepad"));
+//        advanceDetails.setFramePacing(Utils.getBoolean(advanceDetailsData, "frame_pacing"));
+        advanceDetails.setGameOptimizations(Utils.getBoolean(advanceDetailsData, "game_optimizations"));
+        advanceDetails.setMultiControl(Utils.getBoolean(advanceDetailsData, "multi_color")); //typo "multi_color" it means "multi controller"
+//        advanceDetails.setMuteOnFocusLoss(Utils.getBoolean(advanceDetailsData, "mute_on_focus_loss"));
+//        advanceDetails.setPacketSize(Utils.getInt(advanceDetailsData, "packet_size"));
+        advanceDetails.setPlayAudioOnHost(Utils.getBoolean(advanceDetailsData, "play_audio_on_host"));
+//        advanceDetails.setQuitAppAfter(Utils.getBoolean(advanceDetailsData, "quit_app_after"));
+        advanceDetails.setReverseScrollDirection(Utils.getBoolean(advanceDetailsData, "reverse_scroll_direction"));
+        advanceDetails.setSwapFaceButtons(Utils.getBoolean(advanceDetailsData, "swap_face_buttons"));
+//        advanceDetails.setSwapMouseButtons( Utils.getBoolean(advanceDetailsData, "swap_mouse_buttons"));
+
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.setAudioType(Utils.getString(otherDetailsData, "audio_type"));
+        clientConfig.setBitrateKbps(Utils.getInt(otherDetailsData, "bitrate_kbps"));
+//        clientConfig.setCaptureSysKeys(Utils.getBoolean(otherDetailsData, "capture_sys_keys"));
+        clientConfig.setControllerMouseEmulationEnabled(Utils.getBoolean(otherDetailsData, "controller_mouse_emulation"));
+        clientConfig.setControllerUsbDriverSupportEnabled(Utils.getBoolean(otherDetailsData, "controller_usb_driver_support"));
+        clientConfig.setFrameDropDisabled(Utils.getBoolean(otherDetailsData, "disable_frame_drop"));
+        clientConfig.setHdrEnabled(Utils.getBoolean(otherDetailsData, "enable_hdr"));
+        clientConfig.setPerfOverlayEnabled(Utils.getBoolean(otherDetailsData, "enable_perf_overlay"));
+        clientConfig.setPipEnabled(Utils.getBoolean(otherDetailsData, "enable_pip"));
+        clientConfig.setPostStreamToastEnabled(Utils.getBoolean(otherDetailsData, "enable_post_stream_toast"));
+        clientConfig.setGameFps(Utils.getInt(otherDetailsData, "game_fps"));
+//        clientConfig.setVsyncEnabled(Utils.getBoolean(otherDetailsData, "is_vsync_enabled"));
+//        clientConfig.setMaxBitrateKbps(Utils.getInt(otherDetailsData, "max_bitrate_kbps"));
+//        clientConfig.setMaxFps(Utils.getInt(otherDetailsData, "max_fps"));
+//        clientConfig.setMaxResolution(Utils.getString(otherDetailsData, "max_resolution"));
+        clientConfig.setMouseNavButtonsEnabled(Utils.getBoolean(otherDetailsData, "mouse_nav_buttons"));
+        clientConfig.setOnscreenControlsEnabled(Utils.getBoolean(otherDetailsData, "onscreen_controls"));
+        clientConfig.setResolution(Utils.getString(otherDetailsData, "resolution"));
+        clientConfig.setStreamCodec(Utils.getString(otherDetailsData, "stream_codec"));
+        clientConfig.setUnlockFpsEnabled(Utils.getBoolean(otherDetailsData, "unlock_fps"));
+        clientConfig.setVibrateOscEnabled(Utils.getBoolean(otherDetailsData, "vibrate_osc"));
+//        clientConfig.setVideoDecoderSelection(Utils.getString(otherDetailsData, "video_decoder_selection"));
+        clientConfig.setWindowMode(Utils.getString(otherDetailsData, "window_mode"));
+        clientConfig.setAdvanceDetails(advanceDetails);
+        clientConfig.setPortDetails(portDetails);
+        return clientConfig;
     }
 }

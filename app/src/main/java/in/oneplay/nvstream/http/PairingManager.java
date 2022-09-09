@@ -4,9 +4,11 @@ import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.engines.AESLightEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import in.oneplay.LimeLog;
+import in.oneplay.backend.OneplayApi;
 
 import java.security.cert.Certificate;
 import java.io.*;
@@ -192,6 +194,36 @@ public class PairingManager {
 
         // Combine the salt and pin, then create an AES key from them
         byte[] aesKey = generateAesKey(hashAlgo, saltPin(salt, pin));
+
+        Thread pairingThread = Thread.currentThread();
+
+        // Send the pin to the server after pairing request
+        new Thread(() -> {
+            try {
+                // Give time to process request at the server
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {}
+
+            try {
+                if (!OneplayApi.getInstance().setPin(pin)) {
+                    throw new IOException("The session key wasn't accept by the server.");
+                }
+            } catch (IOException | JSONException pinEx) {
+                LimeLog.severe(pinEx);
+
+                // Cancel pairing process
+                try {
+                    http.unpair();
+                } catch (IOException unpairEx) {
+                    LimeLog.severe("Unable to abort pairing process", unpairEx);
+                }
+
+                // Interrupt pairing thread
+                if (!pairingThread.isInterrupted()) {
+                    pairingThread.interrupt();
+                }
+            }
+        }).start();
         
         // Send the salt and get the server cert. This doesn't have a read timeout
         // because the user must enter the PIN before the server responds

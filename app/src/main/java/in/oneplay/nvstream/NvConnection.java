@@ -1,6 +1,7 @@
 package in.oneplay.nvstream;
 
 import android.app.ActivityManager;
+import android.content.Context;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -231,7 +232,7 @@ public class NvConnection {
         return true;
     }
 
-    public void start(final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
+    public void start(Context appContext, final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
     {
         new Thread(new Runnable() {
             public void run() {
