@@ -16,7 +16,7 @@ android {
         minSdk 19
         targetSdk 33
 
-        versionCode defaultVersionName.replace('.','').toInteger()
+        versionCode 111
         versionName "$defaultVersionName build: $buildNumber"
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
