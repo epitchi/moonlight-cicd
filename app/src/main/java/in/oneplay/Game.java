@@ -585,7 +585,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                     } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_perf_overlay) {
                                         initCheckboxBehavior(
                                                 advancedMenuItem,
-                                                OneplayPreferenceConfiguration::setEnablePerfOverlay
+                                                (context, value) -> {
+                                                    performanceOverlayView.setVisibility(value ? View.VISIBLE : View.GONE);
+                                                    prefConfig.enablePerfOverlay = value;
+                                                    OneplayPreferenceConfiguration.setEnablePerfOverlay(context, value);
+                                                },
+                                                false
                                         );
                                     } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_post_stream_toast) {
                                         initCheckboxBehavior(
@@ -2547,9 +2552,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     private void initCheckboxBehavior(MenuItem item, BiConsumer<Context, Boolean> setter) {
+        initCheckboxBehavior(item, setter, true);
+    }
+
+    private void initCheckboxBehavior(MenuItem item, BiConsumer<Context, Boolean> setter, boolean isNeedRestart) {
         item.setChecked(!item.isChecked());
         setter.accept(this, item.isChecked());
-        reloadActivity();
+        if (isNeedRestart) {
+            reloadActivity();
+        }
     }
 
     private AlertDialog createSimpleDialog(int resTitle, int message, Runnable setMethod) {
