@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/checkbox_show_onscreen_controls"
+        android:title="@string/title_checkbox_show_onscreen_controls"
+        android:checkable="true" />
+
+    <item
+        android:id="@+id/checkbox_vibrate_osc"
+        android:title="@string/title_checkbox_vibrate_osc"
+        android:checkable="true" />
+
+    <item
+        android:id="@+id/checkbox_only_show_L3R3"
+        android:title="@string/title_only_l3r3"
+        android:checkable="true" />
+
+    <item
+        android:id="@+id/seekbar_osc_opacity"
+        android:title="@string/dialog_title_osc_opacity" />
+
+    <item
+        android:id="@+id/reset_osc"
+        android:title="@string/title_reset_osc" />
+</menu>

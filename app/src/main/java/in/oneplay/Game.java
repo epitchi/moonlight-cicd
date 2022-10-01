@@ -31,6 +31,7 @@ import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -64,6 +65,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.binding.PlatformBinding;
@@ -265,134 +267,363 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         settingsButton.setOnClickListener((view) -> {
             Handler handler = new Handler();
             handler.postDelayed(() -> {
-                PopupMenu settingsMenu = new PopupMenu(Game.this, settingsButton);
-                settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
-                settingsMenu.setOnMenuItemClickListener((menuItem) -> {
+                createMenu(settingsButton, R.menu.game_setting_menu, (menuItem) -> {
                     if (menuItem.getItemId() == R.id.show_keyboard) {
-                        settingsMenu.setOnDismissListener(menu -> {
-                            Runnable showKeyboardRunnable = this::toggleKeyboard;
-                            streamView.postDelayed(showKeyboardRunnable, 500);
-                            streamView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                                @Override
-                                public void onViewAttachedToWindow(View v) {}
-
-                                @Override
-                                public void onViewDetachedFromWindow(View v) {
-                                    streamView.removeOnAttachStateChangeListener(this);
-                                    view.removeCallbacks(showKeyboardRunnable);
-                                }
-                            });
-                        });
-                    } else if (menuItem.getItemId() == R.id.show_hide_stats) {
-                        boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
-                        performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
-                        prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
-                    } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
-                        OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
-                        isNeedRefresh = true;
-                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                        finish();
-                    } else if (menuItem.getItemId() == R.id.quit_stream) {
-                        finish();
-                    } else if (menuItem.getItemId() == R.id.change_resolution) {
-                        String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
-                        List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
-                        int currentResolutionIndex = resolutions.indexOf(currentResolution);
-                        AtomicInteger selectedResolutionIndex = new AtomicInteger(currentResolutionIndex);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        builder.setTitle(R.string.menu_change_resolution)
-                                .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
-                                        (dialog, which) -> selectedResolutionIndex.set(which))
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentResolutionIndex != selectedResolutionIndex.get()) {
-                                        OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else if (menuItem.getItemId() == R.id.change_bitrate) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        LayoutInflater inflater = Game.this.getLayoutInflater();
-
-                        View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
-
-                        int currentBitrate = prefConfig.bitrate;
-                        final int[] selectedBitrate = {currentBitrate};
-
-                        ((TextView)seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(R.string.menu_change_bitrate);
-                        ((TextView)seekBarView.findViewById(R.id.seekbar_value_label)).setText("kbps");
-
-                        TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
-                        dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
-
-                        int minValue = 500;
-
-                        SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+                        Runnable showKeyboardRunnable = this::toggleKeyboard;
+                        streamView.postDelayed(showKeyboardRunnable, 500);
+                        streamView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                             @Override
-                            public void onStopTrackingTouch(SeekBar seekBar) { }
+                            public void onViewAttachedToWindow(View v) {}
 
                             @Override
-                            public void onStartTrackingTouch(SeekBar seekBar) { }
-
-                            @Override
-                            public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
-                                progress = minValue + progress;
-                                progress = progress / 500;
-                                progress = progress * 500;
-                                dialogSeekBarValue.setText(String.valueOf(progress));
-                                selectedBitrate[0] = progress;
+                            public void onViewDetachedFromWindow(View v) {
+                                streamView.removeOnAttachStateChangeListener(this);
+                                view.removeCallbacks(showKeyboardRunnable);
                             }
-                        };
-
-                        SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
-                        dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
-                        dialogSeekBar.incrementProgressBy(500);
-                        dialogSeekBar.setProgress(selectedBitrate[0]);
-                        dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
-
-                        builder.setView(seekBarView)
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentBitrate != selectedBitrate[0]) {
-                                        OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
+                        });
+                    } else if (menuItem.getItemId() == R.id.show_stream_settings) {
+                        createMenu(settingsButton, R.menu.stream_settings_menu, (streamMenuItem) -> {
+                            if (streamMenuItem.getItemId() == R.id.show_basic_settings) {
+                                PopupMenu basicSettingsMenu = createMenu(settingsButton, R.menu.basic_settings_menu, (basicMenuItem) -> {
+                                    if (basicMenuItem.getItemId() == R.id.list_resolution) {
+                                        createListDialog(
+                                                OneplayPreferenceConfiguration.getResolution(Game.this),
+                                                R.string.title_resolution_list,
+                                                R.array.resolution_values,
+                                                R.array.resolution_names,
+                                                OneplayPreferenceConfiguration::setScreenResolution
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.list_fps) {
+                                        createListDialog(
+                                                prefConfig.fps,
+                                                R.string.title_fps_list,
+                                                R.array.fps_values,
+                                                R.array.fps_names,
+                                                OneplayPreferenceConfiguration::setFps
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.seekbar_bitrate_kbps) {
+                                        createSeekBarDialog(
+                                                prefConfig.bitrate / 1000,
+                                                R.string.title_seekbar_bitrate,
+                                                R.string.suffix_seekbar_bitrate_mbps,
+                                                1,
+                                                1,
+                                                prefConfig.maxBitrate / 1000,
+                                                OneplayPreferenceConfiguration::setBitrateKbps
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.frame_pacing) {
+                                        createListDialog(
+                                                prefConfig.framePacing,
+                                                R.string.title_fps_list,
+                                                R.array.video_frame_pacing_values,
+                                                R.array.video_frame_pacing_names,
+                                                OneplayPreferenceConfiguration::setFramePacing
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.checkbox_stretch_video) {
+                                        initCheckboxBehavior(
+                                                basicMenuItem,
+                                                OneplayPreferenceConfiguration::setWindowMode
+                                        );
                                     } else {
-                                        dialog.dismiss();
+                                        return false;
                                     }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else if (menuItem.getItemId() == R.id.change_decoder) {
-                        String currentDecoder = OneplayPreferenceConfiguration.getVideoCodecConfig(this);
-                        List<String> videoFormatValues = Arrays.asList(getResources().getStringArray(R.array.video_format_values));
-                        int currentDecoderIndex = videoFormatValues.indexOf(currentDecoder);
-                        AtomicInteger selectedDecoderIndex = new AtomicInteger(currentDecoderIndex);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        builder.setTitle(R.string.menu_change_decoder)
-                                .setSingleChoiceItems(R.array.video_format_names, currentDecoderIndex,
-                                        (dialog, which) -> selectedDecoderIndex.set(which))
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentDecoderIndex != selectedDecoderIndex.get()) {
-                                        OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                basicSettingsMenu.getMenu().findItem(R.id.checkbox_stretch_video)
+                                        .setChecked(prefConfig.stretchVideo);
+
+                                basicSettingsMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_audio_settings) {
+                                PopupMenu audioSettingsMenu = createMenu(settingsButton, R.menu.audio_settings_menu, (audioMenuItem) -> {
+                                    if (audioMenuItem.getItemId() == R.id.list_audio_config) {
+                                        createListDialog(
+                                                OneplayPreferenceConfiguration.getAudioConfig(Game.this),
+                                                R.string.title_audio_config_list,
+                                                R.array.audio_config_values,
+                                                R.array.audio_config_names,
+                                                OneplayPreferenceConfiguration::setAudioConfig
+                                        ).show();
+                                    } else if (audioMenuItem.getItemId() == R.id.checkbox_enable_audiofx) {
+                                        initCheckboxBehavior(
+                                                audioMenuItem,
+                                                OneplayPreferenceConfiguration::setEnableAudioFx
+                                        );
+                                    } else {
+                                        return false;
                                     }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                audioSettingsMenu.getMenu().findItem(R.id.checkbox_enable_audiofx)
+                                        .setChecked(prefConfig.enableAudioFx);
+
+                                audioSettingsMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_input_settings) {
+                                PopupMenu inputSettingMenu = createMenu(settingsButton, R.menu.input_settings_menu, (inputMenuItem) -> {
+                                    if (inputMenuItem.getItemId() == R.id.seekbar_deadzone) {
+                                        createSeekBarDialog(
+                                                prefConfig.deadzonePercentage,
+                                                R.string.title_seekbar_deadzone,
+                                                R.string.suffix_seekbar_deadzone,
+                                                0,
+                                                1,
+                                                20,
+                                                OneplayPreferenceConfiguration::setDeadzonePercentage
+                                        ).show();
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_touchscreen_trackpad) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setTouchscreenTrackpad
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_multi_controller) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setMultipleControllersSupport
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_mouse_nav_buttons) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setMouseNavButtons
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_usb_driver) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setControllerUsbDriverSupport
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_usb_bind_all) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setBindAllUsb
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_mouse_emulation) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setControllerMouseEmulation
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_vibrate_fallback) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setVibrateFallback
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_flip_face_buttons) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setSwapFaceButtons
+                                        );
+                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_absolute_mouse_mode) {
+                                        initCheckboxBehavior(
+                                                inputMenuItem,
+                                                OneplayPreferenceConfiguration::setAbsoluteMouseMode
+                                        );
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_touchscreen_trackpad)
+                                        .setChecked(prefConfig.touchscreenTrackpad);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_multi_controller)
+                                        .setChecked(prefConfig.multiController);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_mouse_nav_buttons)
+                                        .setChecked(prefConfig.mouseNavButtons);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_usb_driver)
+                                        .setChecked(prefConfig.usbDriver);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_usb_bind_all)
+                                        .setChecked(prefConfig.bindAllUsb);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_mouse_emulation)
+                                        .setChecked(prefConfig.mouseEmulation);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_vibrate_fallback)
+                                        .setChecked(prefConfig.vibrateFallbackToDevice);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_flip_face_buttons)
+                                        .setChecked(prefConfig.flipFaceButtons);
+                                inputSettingMenu.getMenu().findItem(R.id.checkbox_absolute_mouse_mode)
+                                        .setChecked(prefConfig.absoluteMouseMode);
+
+                                inputSettingMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_on_screen_settings) {
+                                PopupMenu onscreenControlSettingMenu = createMenu(settingsButton, R.menu.onscreen_control_settings_menu, (onscreenControlMenuItem) -> {
+                                    if (onscreenControlMenuItem.getItemId() == R.id.checkbox_show_onscreen_controls) {
+                                        initCheckboxBehavior(
+                                                onscreenControlMenuItem,
+                                                OneplayPreferenceConfiguration::setOnscreenController
+                                        );
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.checkbox_vibrate_osc) {
+                                        initCheckboxBehavior(
+                                                onscreenControlMenuItem,
+                                                OneplayPreferenceConfiguration::setVibrateOsc
+                                        );
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.checkbox_only_show_L3R3) {
+                                        initCheckboxBehavior(
+                                                onscreenControlMenuItem,
+                                                OneplayPreferenceConfiguration::setOnlyShowL2R3
+                                        );
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.seekbar_osc_opacity) {
+                                        createSeekBarDialog(
+                                                prefConfig.oscOpacity,
+                                                R.string.dialog_title_osc_opacity,
+                                                R.string.suffix_osc_opacity,
+                                                0,
+                                                1,
+                                                100,
+                                                OneplayPreferenceConfiguration::setOscOpacity
+                                        ).show();
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.reset_osc) {
+                                        createSimpleDialog(
+                                                R.string.dialog_title_reset_osc,
+                                                R.string.dialog_text_reset_osc,
+                                                () -> {
+                                                    OneplayPreferenceConfiguration.resetOsc(Game.this);
+                                                    Toast.makeText(Game.this, R.string.toast_reset_osc_success, Toast.LENGTH_SHORT).show();
+                                                }
+                                        ).show();
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                MenuItem checkboxShowOnscreenControls = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_show_onscreen_controls);
+                                checkboxShowOnscreenControls.setChecked(prefConfig.onscreenController);
+                                MenuItem checkboxVibrateOsc = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_vibrate_osc);
+                                checkboxVibrateOsc.setChecked(prefConfig.vibrateOsc);
+                                checkboxVibrateOsc.setVisible(prefConfig.onscreenController);
+                                MenuItem checkboxOnlyShowL3R3 = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_only_show_L3R3);
+                                checkboxOnlyShowL3R3.setChecked(prefConfig.onlyL3R3);
+                                checkboxOnlyShowL3R3.setVisible(prefConfig.onscreenController);
+                                MenuItem seekbarOscOpacity = onscreenControlSettingMenu.getMenu().findItem(R.id.seekbar_osc_opacity);
+                                seekbarOscOpacity.setVisible(prefConfig.onscreenController);
+
+                                onscreenControlSettingMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_host_settings) {
+                                PopupMenu hostSettingMenu = createMenu(settingsButton, R.menu.host_settings_menu, (hostMenuItem) -> {
+                                    if (hostMenuItem.getItemId() == R.id.checkbox_enable_sops) {
+                                        initCheckboxBehavior(
+                                                hostMenuItem,
+                                                OneplayPreferenceConfiguration::setGameOptimizations
+                                        );
+                                    } else if (hostMenuItem.getItemId() == R.id.checkbox_host_audio) {
+                                        initCheckboxBehavior(
+                                                hostMenuItem,
+                                                OneplayPreferenceConfiguration::setPlayAudioOnHost
+                                        );
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                hostSettingMenu.getMenu().findItem(R.id.checkbox_enable_sops)
+                                        .setChecked(prefConfig.enableSops);
+                                hostSettingMenu.getMenu().findItem(R.id.checkbox_host_audio)
+                                        .setChecked(prefConfig.playHostAudio);
+
+                                hostSettingMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_ui_settings) {
+                                PopupMenu uiSettingMenu = createMenu(settingsButton, R.menu.ui_settings_menu, (uiMenuItem) -> {
+                                    if (uiMenuItem.getItemId() == R.id.checkbox_enable_pip) {
+                                        initCheckboxBehavior(
+                                                uiMenuItem,
+                                                OneplayPreferenceConfiguration::setEnablePip
+                                        );
+                                    } else if (uiMenuItem.getItemId() == R.id.list_languages) {
+                                        createListDialog(
+                                                prefConfig.language,
+                                                R.string.title_language_list,
+                                                R.array.language_values,
+                                                R.array.language_names,
+                                                OneplayPreferenceConfiguration::setLanguage
+                                        ).show();
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                uiSettingMenu.getMenu().findItem(R.id.checkbox_enable_pip)
+                                        .setChecked(prefConfig.enablePip);
+
+                                uiSettingMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_advanced_settings) {
+                                PopupMenu advancedSettingMenu = createMenu(settingsButton, R.menu.advanced_settings_menu, (advancedMenuItem) -> {
+                                    if (advancedMenuItem.getItemId() == R.id.checkbox_unlock_fps) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                OneplayPreferenceConfiguration::setUnlockFps
+                                        );
+                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_disable_warnings) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                OneplayPreferenceConfiguration::setDisableToasts
+                                        );
+                                    } else if (advancedMenuItem.getItemId() == R.id.video_format) {
+                                        createListDialog(
+                                                OneplayPreferenceConfiguration.getVideoCodecConfig(Game.this),
+                                                R.string.title_video_format,
+                                                R.array.video_format_values,
+                                                R.array.video_format_names,
+                                                OneplayPreferenceConfiguration::setVideoCodecConfig
+                                        ).show();
+                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_hdr) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                OneplayPreferenceConfiguration::setEnableHdr
+                                        );
+                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_perf_overlay) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                OneplayPreferenceConfiguration::setEnablePerfOverlay
+                                        );
+                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_post_stream_toast) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                OneplayPreferenceConfiguration::setLatencyToast
+                                        );
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_unlock_fps)
+                                        .setChecked(prefConfig.unlockFps);
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_disable_warnings)
+                                        .setChecked(prefConfig.disableWarnings);
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_hdr)
+                                        .setChecked(prefConfig.enableHdr);
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_perf_overlay)
+                                        .setChecked(prefConfig.enablePerfOverlay);
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_post_stream_toast)
+                                        .setChecked(prefConfig.enableLatencyToast);
+
+                                advancedSettingMenu.show();
+                            } else {
+                                return false;
+                            }
+
+                            return true;
+                        }).show();
                     } else if (menuItem.getItemId() == R.id.relaunch_game) {
                         isNeedRefresh = false;
                         isNeedRelaunch = true;
                         setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                        finish();
+                    } else if (menuItem.getItemId() == R.id.quit_stream) {
                         finish();
                     } else if (menuItem.getItemId() == R.id.report_issue) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
@@ -426,9 +657,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     }
 
                     return true;
-                });
-
-                settingsMenu.show();
+                }).show();
             }, 200);
 
             ResultReceiver callback = new ResultReceiver(handler);
@@ -2302,5 +2531,105 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void onUsbPermissionPromptCompleted() {
         suppressPipRefCount--;
         updatePipAutoEnter();
+    }
+
+    private void reloadActivity() {
+        isNeedRefresh = true;
+        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+        finish();
+    }
+
+    private PopupMenu createMenu(View anchor, int menuRes, PopupMenu.OnMenuItemClickListener listener) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenuInflater().inflate(menuRes, menu.getMenu());
+        menu.setOnMenuItemClickListener(listener);
+        return menu;
+    }
+
+    private void initCheckboxBehavior(MenuItem item, BiConsumer<Context, Boolean> setter) {
+        item.setChecked(!item.isChecked());
+        setter.accept(this, item.isChecked());
+        reloadActivity();
+    }
+
+    private AlertDialog createSimpleDialog(int resTitle, int message, Runnable setMethod) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(resTitle).setMessage(message)
+                .setPositiveButton(android.R.string.yes, (dialog, id) -> setMethod.run())
+                .setNegativeButton(android.R.string.no, (dialog, id) -> dialog.dismiss());
+        return builder.create();
+    }
+
+    private AlertDialog createListDialog(Object currentValue, int resTitle, int resValuesArray,
+                                         int resNamesArray, BiConsumer<Context, String> setMethod) {
+        List<String> valuesList = Arrays.asList(getResources().getStringArray(resValuesArray));
+        int currentIndex = valuesList.indexOf(String.valueOf(currentValue));
+        AtomicInteger selectedIndex = new AtomicInteger(currentIndex);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(resTitle)
+                .setSingleChoiceItems(resNamesArray, currentIndex, (dialog, which) -> selectedIndex.set(which))
+                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                    if (currentIndex != selectedIndex.get()) {
+                        setMethod.accept(this, valuesList.get(selectedIndex.get()));
+                        reloadActivity();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+        return builder.create();
+    }
+
+    private AlertDialog createSeekBarDialog(int currentValue, int resTitle, int resValueLabel,
+                                            int minValue, int stepValue, int maxValue,
+                                            BiConsumer<Context, Integer> setMethod) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
+
+        final int[] selectedValue = {currentValue};
+
+        ((TextView) seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(resTitle);
+        ((TextView) seekBarView.findViewById(R.id.seekbar_value_label)).setText(resValueLabel);
+
+        TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
+        dialogSeekBarValue.setText(String.valueOf(selectedValue[0]));
+
+        SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
+                progress = minValue + progress;
+                progress = progress / stepValue;
+                progress = progress * stepValue;
+                dialogSeekBarValue.setText(String.valueOf(progress));
+                selectedValue[0] = progress;
+            }
+        };
+
+        SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
+        dialogSeekBar.setMax(maxValue - minValue);
+        dialogSeekBar.incrementProgressBy(stepValue);
+        dialogSeekBar.setProgress(selectedValue[0]);
+        dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
+
+        builder.setView(seekBarView)
+                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                    if (currentValue != selectedValue[0]) {
+                        setMethod.accept(this, selectedValue[0]);
+                        reloadActivity();
+                    } else {
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+
+        return builder.create();
     }
 }

@@ -5,28 +5,12 @@
         android:title="@string/menu_show_keyboard" />
 
     <item
-        android:id="@+id/show_hide_stats"
-        android:title="@string/menu_show_hide_stats" />
-
-    <item
-        android:id="@+id/toggle_full_screen"
-        android:title="@string/menu_toggle_full_screen" />
+        android:id="@+id/show_stream_settings"
+        android:title="@string/category_stream_settings" />
 
     <item
         android:id="@+id/quit_stream"
         android:title="@string/menu_quit_stream" />
-
-    <item
-        android:id="@+id/change_resolution"
-        android:title="@string/menu_change_resolution" />
-
-    <item
-        android:id="@+id/change_bitrate"
-        android:title="@string/menu_change_bitrate" />
-
-    <item
-        android:id="@+id/change_decoder"
-        android:title="@string/menu_change_decoder" />
 
     <item
         android:id="@+id/relaunch_game"

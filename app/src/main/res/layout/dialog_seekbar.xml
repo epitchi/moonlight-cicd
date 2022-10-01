@@ -27,9 +27,10 @@
 
         <TextView
             android:id="@+id/seekbar_value"
-            android:layout_width="80dp"
+            android:layout_width="50dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical" />
+            android:layout_gravity="center_vertical"
+            android:gravity="end" />
 
         <TextView
             android:id="@+id/seekbar_value_label"

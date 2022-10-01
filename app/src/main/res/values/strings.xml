@@ -80,6 +80,8 @@
     <string name="addpc_wrong_sitelocal">That address doesn\'t look right. You must use your router\'s public IP address for streaming over the Internet.</string>
 
     <!-- Preferences -->
+    <string name="category_stream_settings">Stream settings</string>
+
     <string name="category_basic_settings">Basic Settings</string>
     <string name="title_resolution_list">Video resolution</string>
     <string name="summary_resolution_list">Increase to improve image clarity. Decrease for better performance on lower end devices and slower networks.</string>

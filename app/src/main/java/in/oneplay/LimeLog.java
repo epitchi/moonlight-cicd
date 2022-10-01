@@ -59,7 +59,6 @@ public class LimeLog {
                     OneplayApi.getInstance().registerEvent(msg);
                 } catch (IOException | JSONException ignored) {} // TODO maybe need to implement a queue (send an event after a connection is established)
             }).start();
-
         }
     }
     
