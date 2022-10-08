@@ -53,13 +53,15 @@
     <string name="summary_audio_config_list">Включить объёмный звук 5.1 или 7.1 для систем домашнего кинотеатра</string>
     <string name="title_checkbox_multi_controller">Поддержка нескольких контроллеров</string>
     <string name="summary_checkbox_multi_controller">Когда отключена, все контроллеры определяются как один</string>
+    <string name="title_seekbar_deadzone">Регулировать мертвую зону аналогового стика</string>
+    <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Драйвер контроллеров Xbox 360/One</string>
     <string name="summary_checkbox_xb1_driver">Включить встроенный USB драйвер для устройств без собственной поддержки контроллеров Xbox</string>
     <string name="title_checkbox_flip_face_buttons">Перевернуть кнопки A/B и X/Y</string>
     <string name="summary_checkbox_flip_face_buttons">Меняет местами кнопки A/B и X/Y на геймпадах и экранных кнопках</string>
     <string name="category_ui_settings">Настройки Интерфейса</string>
     <string name="title_language_list">Язык</string>
-    <string name="summary_language_list">Язык, который будет использоваться в Oneplay</string>
+    <string name="summary_language_list">Язык, который будет использоваться в Moonlight</string>
     <string name="title_checkbox_small_icon_mode">Использовать маленькие иконки</string>
     <string name="summary_checkbox_small_icon_mode">Использовать маленькие иконки в сетке для отображения большего числа элементов на экране</string>
     <string name="category_host_settings">Настройки Хоста</string>
@@ -80,9 +82,8 @@
     <string name="help_loading_title">Просмотр Помощи</string>
     <string name="help_loading_msg">Загрузка страницы помощи…</string>
     <string name="pair_already_in_progress">Сопряжение уже в процессе</string>
-    <string name="help">Помощь</string>
     <string name="title_decoding_error">Сбой Видео Декодера</string>
-    <string name="message_decoding_error">Произошел сбой Oneplay из-за проблем с видео декодером данного устройства. Попробуйте изменить настройки трансляции если сбои будут продолжаться.</string>
+    <string name="message_decoding_error">Произошел сбой Moonlight из-за проблем с видео декодером данного устройства. Попробуйте изменить настройки трансляции если сбои будут продолжаться.</string>
     <string name="title_decoding_reset">Видео Настройки Сброшены</string>
     <string name="message_decoding_reset">Видео декодер Вашего устройства давал сбои с выбранными настройками. Настройки трансляции были сброшены до значений по умолчанию.</string>
     <string name="error_usb_prohibited">USB доступ запрещен администратором устройства. Проверьте настройки Knox или MDM.</string>
@@ -90,7 +91,7 @@
     <string name="title_checkbox_enable_pip">Включить просмотр в режиме \"Картинка в картинке\"</string>
     <string name="summary_checkbox_enable_pip">Позволяет просматривать трансляцию (но не управлять ей) во время работы в других приложениях</string>
     <string name="title_checkbox_usb_bind_all">Переопределить поддержку контроллеров Android</string>
-    <string name="summary_checkbox_usb_bind_all">Заставляет USB драйвер Oneplay взять на себя работу со всеми поддерживаемыми Xbox геймпадами</string>
+    <string name="summary_checkbox_usb_bind_all">Заставляет USB драйвер Moonlight взять на себя работу со всеми поддерживаемыми Xbox геймпадами</string>
     <string name="title_checkbox_mouse_emulation">Эмуляция мыши на геймпаде</string>
     <string name="summary_checkbox_mouse_emulation">Долгое нажатие кнопки Start переключит геймпад в режим мыши</string>
     <string name="title_reset_osc">Сбросить схему расположения экранных кнопок</string>
@@ -135,7 +136,7 @@
 \nЕсли проблема сохраняется, попробуйте переустановить драйверы для GPU и GeForce Experience.</string>
     <string name="no_frame_received_error">Ваше сетевое подключение не справляется с заданными настройками. Попробуйте изменить битрейт или использовать более быстрое подключение.</string>
     <string name="no_video_received_error">Видео от хоста не получено.</string>
-    <string name="nettest_text_blocked">Текущее сетевое соединение вашего устройства блокирует Oneplay. Потоковая передача через Интернет может не работать при подключении к этой сети.</string>
+    <string name="nettest_text_blocked">Текущее сетевое соединение вашего устройства блокирует Moonlight. Потоковая передача через Интернет может не работать при подключении к этой сети.</string>
     <string name="video_decoder_init_failed">Видеодекодер не инициализирован. Ваше устройство может не поддерживать выбранное разрешение или частоту кадров.</string>
     <string name="perf_overlay_streamdetails">Видеострим: %1$s %2$.2f FPS</string>
     <string name="perf_overlay_netlatency">Средняя задержка сети: %1$d мс (дисперсия: %2$d мс)</string>

@@ -50,6 +50,8 @@
     <string name="category_audio_settings">Configuración de audio</string>
     <string name="title_checkbox_multi_controller">Soporte para múltiples mandos</string>
     <string name="summary_checkbox_multi_controller">Si no está marcado, todos los mandos aparecen como uno solo</string>
+    <string name="title_seekbar_deadzone">Ajustar zona muerta del stick analógico</string>
+    <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Driver para mando Xbox 360/One</string>
     <string name="summary_checkbox_xb1_driver">Activa el driver USB incluido para dispositivos sin soporte nativo para mandos de Xbox.</string>
     <string name="category_on_screen_controls_settings">Configuración de controles en pantalla</string>
@@ -59,7 +61,7 @@
     <string name="summary_only_l3r3">Ocultar todo excepto L3 y R3</string>
     <string name="category_ui_settings">Configuración de la interfaz</string>
     <string name="title_language_list">Idioma</string>
-    <string name="summary_language_list">Idioma a usar por Oneplay</string>
+    <string name="summary_language_list">Idioma a usar por Moonlight</string>
     <string name="title_checkbox_small_icon_mode">Usar iconos pequeños</string>
     <string name="summary_checkbox_small_icon_mode">Usar iconos pequeños en las entradas de cuadrículas para permitir más entradas en la pantalla</string>
     <string name="category_host_settings">Configuración de servidor</string>
@@ -77,6 +79,6 @@
     <string name="help_loading_title">Visor de Ayuda</string>
     <string name="title_decoding_error">Falló el Decodificador de Video</string>
     <string name="help_loading_msg">Cargando página de ayuda …</string>
-    <string name="nettest_text_blocked">La conexión de red actual de tu dispositivo esta bloqueando Oneplay. La Transmisión mediante Internet puede no funcionar mientras estés conectado a esta red.</string>
+    <string name="nettest_text_blocked">La conexión de red actual de tu dispositivo esta bloqueando Moonlight. La Transmisión mediante Internet puede no funcionar mientras estés conectado a esta red.</string>
     <string name="pair_already_in_progress">Emparejamiento ya en progreso</string>
 </resources>

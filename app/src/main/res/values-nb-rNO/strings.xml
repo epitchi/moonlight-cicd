@@ -29,6 +29,7 @@
     <string name="pair_fail">Parring mislyktes</string>
     <string name="pair_pc_ingame">Datamaskinen er for øyeblikket i et spill. Du må lukke spillet før parring.</string>
     <string name="pairing">Parrer …</string>
+    <string name="title_seekbar_deadzone">Dødsonejustering for analogstikke</string>
     <string name="title_checkbox_xb1_driver">Driver for Xbox 360/One USB-spillkontroller</string>
     <string name="title_video_format">Endre HEVC-innstillinger</string>
     <string name="title_checkbox_disable_warnings">Skru av advarselsmeldinger</string>
@@ -37,7 +38,7 @@
     <string name="title_checkbox_host_audio">Spill lyd på PC</string>
     <string name="title_checkbox_enable_sops">Optimaliser spillinnstillinger</string>
     <string name="category_host_settings">Vertsinnstillinger</string>
-    <string name="summary_language_list">Språk brukt i Oneplay</string>
+    <string name="summary_language_list">Språk brukt i Moonlight</string>
     <string name="title_language_list">Språk</string>
     <string name="category_ui_settings">Grensesnittsinnstillinger</string>
     <string name="suffix_osc_opacity">%</string>
@@ -47,6 +48,7 @@
     <string name="title_only_l3r3">Kun vis L3 og R3</string>
     <string name="title_checkbox_vibrate_osc">Skru på vibrering</string>
     <string name="title_checkbox_mouse_emulation">Museemulering via spillkontroller</string>
+    <string name="suffix_seekbar_deadzone">%</string>
     <string name="category_input_settings">Inndatainnstillinger</string>
     <string name="title_audio_config_list">Kringlydsoppsett</string>
     <string name="category_audio_settings">Lydinnstillinger</string>
@@ -60,7 +62,6 @@
     <string name="slow_connection_msg">Vis tilkobling til PC
 \nReduser bitraten din</string>
     <string name="delete_pc_msg">Er du sikker på at du vil slette denne PC-en\?</string>
-    <string name="help">Hjelp</string>
     <string name="no">Nei</string>
     <string name="yes">Ja</string>
     <string name="conn_terminated_msg">Tilkoblingen ble avsluttet</string>
@@ -81,10 +82,10 @@
     <string name="title_checkbox_vibrate_fallback">Vibrasjonsemulering</string>
     <string name="summary_checkbox_touchscreen_trackpad">Får pekeskjermen til å oppføre seg som en pekeflate. Ellers kontrolleres pekeskjermen musen direkte.</string>
     <string name="title_decoding_reset">Tilbakestilling av videoinnstillinger</string>
-    <string name="message_decoding_error">Oneplay har krasjet som følge av inkompabilitet med denne enhetens videodekoder. Forsikre deg om at GeForce Experience er oppdatert til seneste versjon på din PC. Prøv å justere strømmingsinnstillingene hvis problemet vedvarer.</string>
+    <string name="message_decoding_error">Moonlight har krasjet som følge av inkompabilitet med denne enhetens videodekoder. Forsikre deg om at GeForce Experience er oppdatert til seneste versjon på din PC. Prøv å justere strømmingsinnstillingene hvis problemet vedvarer.</string>
     <string name="error_404">GFE returnerte en HTTP-404-feil. Forsikre deg om at PC-en kjører et støttet skjermkort. Bruk av fjernskrivebordsprogramvare kan også forårsake denne feilen. Prøv å starte maskinen på ny, eller å reinstallere GFE.</string>
     <string name="error_manager_not_running">ComputerManager-tjenesten kjører ikke. Vent noen sekunder eller start programmet på ny.</string>
-    <string name="nettest_text_blocked">Nettverkstilkoblingen på din enhet ser ut til å blokkere Oneplay. Strømming over Internett vil muligens ikke fungere tilkoblet gjennom dette nettverket.</string>
+    <string name="nettest_text_blocked">Nettverkstilkoblingen på din enhet ser ut til å blokkere Moonlight. Strømming over Internett vil muligens ikke fungere tilkoblet gjennom dette nettverket.</string>
     <string name="summary_enable_perf_overlay">Viser ytelsesinfo i sanntid under strømming</string>
     <string name="title_enable_perf_overlay">Vis ytelsesstatistikk under strømming</string>
     <string name="summary_enable_hdr">Strøm HDR når spillet og PC-ens skjermkort støtter det. HDR krever GTX 1000-eller nyere.</string>
@@ -95,7 +96,7 @@
     <string name="summary_checkbox_show_onscreen_controls">Vis virtuelle innstillingskontroller for innstillinger i overleggslag på pekeskjermen</string>
     <string name="title_checkbox_show_onscreen_controls">Vis innstillingskontroller på skjermen</string>
     <string name="category_on_screen_controls_settings">Innstillinger for innstillingskontroller som vises på skjermen</string>
-    <string name="summary_checkbox_usb_bind_all">Bruk Oneplay sin USB-driver for alle støttede spillkontrollere, selv når systemspesifikk kontrollerstøtte er tilgjengelig</string>
+    <string name="summary_checkbox_usb_bind_all">Bruk Moonlight sin USB-driver for alle støttede spillkontrollere, selv når systemspesifikk kontrollerstøtte er tilgjengelig</string>
     <string name="summary_audio_config_list">Skru på for 5,1- eller 7,1-kringlyd for hjemmekinosystemer</string>
     <string name="summary_seekbar_bitrate">Øk for bedret bildekvalitet. Senk for bedre ytelse på trege tilkoblinger.</string>
     <string name="summary_fps_list">Øk for jevnere videostrøm. Senk for bedre ytelse på trege enheter.</string>

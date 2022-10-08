@@ -50,6 +50,8 @@
     <string name="category_audio_settings">Geluidsinstellingen</string>
     <string name="title_checkbox_multi_controller">Multi-gamepad support</string>
     <string name="summary_checkbox_multi_controller">Deze optie uitvinken zorgt ervoor dat er altijd een gamepad beschikbaar is</string>
+    <string name="title_seekbar_deadzone">Pas analoge dode zone aan</string>
+    <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Xbox 360/One controller stuurprogramma</string>
     <string name="summary_checkbox_xb1_driver">Gebruikt de ingebouwde USB stuurprogramma voor apparaten zonder Xbox controller ondersteuning</string>
     <string name="category_on_screen_controls_settings">On-screen Controller Instellingen</string>
@@ -57,7 +59,7 @@
     <string name="summary_checkbox_show_onscreen_controls">Geeft een virtuele controller weer op het touchscreen</string>
     <string name="category_ui_settings">UI Installingen</string>
     <string name="title_language_list">Taal</string>
-    <string name="summary_language_list">Taal te gebruiken in Oneplay</string>
+    <string name="summary_language_list">Taal te gebruiken in Moonlight</string>
     <string name="title_checkbox_small_icon_mode">Gebruik kleine iconen</string>
     <string name="summary_checkbox_small_icon_mode">Gebruik kleine iconen in kolom onderdelen zodat meer items tegelijk zichtbaar worden</string>
     <string name="category_host_settings">Host Instellingen</string>
@@ -69,9 +71,9 @@
     <string name="title_video_format">Verander HEVC instellingen</string>
     <string name="summary_video_format">HEVC verlaagt video bandbreedte vereisten maar benodigd een recent apparaat</string>
     <string name="suffix_osc_opacity">%</string>
-    <string name="message_decoding_error">Oneplay is gecrasht door een compatibiliteitsprobleem met de video decoder van dit toestel. Zorg ervoor dat GeForce Experience bijgewerkt is naar de laatste versie op uw PC. Probeer de streamingsinstellingen te wijzigen bij blijvende crashes.</string>
+    <string name="message_decoding_error">Moonlight is gecrasht door een compatibiliteitsprobleem met de video decoder van dit toestel. Zorg ervoor dat GeForce Experience bijgewerkt is naar de laatste versie op uw PC. Probeer de streamingsinstellingen te wijzigen bij blijvende crashes.</string>
     <string name="help_loading_msg">Hulppagina laden…</string>
-    <string name="nettest_text_blocked">De internetverbinding van dit toestel blokkeert Oneplay. Streamen over het internet werkt mogelijks niet wanneer u verbonden bent met dit netwerk.</string>
+    <string name="nettest_text_blocked">De internetverbinding van dit toestel blokkeert Moonlight. Streamen over het internet werkt mogelijks niet wanneer u verbonden bent met dit netwerk.</string>
     <string name="pair_already_in_progress">Koppelen al bezig</string>
     <string name="title_decoding_error">Video Decoder Gecrasht</string>
     <string name="title_decoding_reset">Video Instellingen Resetten</string>
@@ -105,7 +107,6 @@
     <string name="summary_enable_hdr">Stream HDR als het spel en de GPU van de PC dit ondersteund. HDR vereist een GTX 1000-reeks GPU of later.</string>
     <string name="title_enable_perf_overlay">Prestatiestatistieken tonen tijdens het streamen</string>
     <string name="delete_pc_msg">Bent u zeker dat u deze PC wilt verwijderen\?</string>
-    <string name="help">Help</string>
     <string name="perf_overlay_streamdetails">Video stream: %1$s %2$.2f FPS</string>
     <string name="perf_overlay_incomingfps">Binnenkomende frame rate van het netwerk: %1$.2f FPS</string>
     <string name="early_termination_error">Er is iets misgegaan op de host PC bij het starten van de stream.
@@ -118,7 +119,7 @@
     <string name="summary_fps_list">Verhogen voor een vloeiendere video stream. Verlagen voor betere prestaties op minder krachtige apparaten.</string>
     <string name="summary_audio_config_list">5.1 of 7.1 surround sound inschakelen voor home-cinema systemen</string>
     <string name="summary_checkbox_touchscreen_trackpad">Wanneer ingeschakeld functioneert het touchscreen als een trackpad. Wanneer uitgeschakeld bedient het touchscreen rechtstreeks de muiscursor.</string>
-    <string name="summary_checkbox_usb_bind_all">Gebruik Oneplay\'s USB driver voor alle ondersteunde gamepads, zelfs als een standaard Xbox controller aanwezig is</string>
+    <string name="summary_checkbox_usb_bind_all">Gebruik Moonlight\'s USB driver voor alle ondersteunde gamepads, zelfs als een standaard Xbox controller aanwezig is</string>
     <string name="dialog_text_reset_osc">Bent u zeker dat u uw opgeslagen on-screen controle-elementen wilt verwijderen\?</string>
     <string name="summary_enable_perf_overlay">Real-time prestatie-informatie tonen tijdens het streamen</string>
     <string name="title_checkbox_vibrate_fallback">Simuleer rumble-ondersteuning met trillingen</string>
