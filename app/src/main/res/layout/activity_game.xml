@@ -47,6 +47,6 @@
         android:layout_alignParentTop="true"
         android:cropToPadding="false"
         android:scaleType="fitXY"
-        android:src="@drawable/ic_game_settings" />
+        android:src="@drawable/ic_settings" />
 
 </merge>
