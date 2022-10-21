@@ -59,6 +59,9 @@
     <string name="summary_checkbox_xb1_driver">Включить встроенный USB драйвер для устройств без собственной поддержки контроллеров Xbox</string>
     <string name="title_checkbox_flip_face_buttons">Перевернуть кнопки A/B и X/Y</string>
     <string name="summary_checkbox_flip_face_buttons">Меняет местами кнопки A/B и X/Y на геймпадах и экранных кнопках</string>
+    <string name="dialog_title_move_buttons">Переместить кнопки</string>
+    <string name="dialog_title_resize_buttons">Изменить размер кнопок</string>
+    <string name="dialog_title_save_profile">Сохранить профиль</string>
     <string name="category_ui_settings">Настройки Интерфейса</string>
     <string name="title_language_list">Язык</string>
     <string name="summary_language_list">Язык, который будет использоваться в Moonlight</string>

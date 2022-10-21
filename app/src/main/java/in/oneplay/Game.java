@@ -263,6 +263,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         streamView.setInputCallbacks(this);
 
         settingsButton = findViewById(R.id.settingsButton);
+        settingsButton.setAlpha(0.13f);
+        settingsButton.setFocusable(false);
 
         settingsButton.setOnClickListener((view) -> {
             Handler handler = new Handler();
@@ -460,11 +462,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                                 onscreenControlMenuItem,
                                                 OneplayPreferenceConfiguration::setVibrateOsc
                                         );
-                                    } else if (onscreenControlMenuItem.getItemId() == R.id.checkbox_only_show_L3R3) {
-                                        initCheckboxBehavior(
-                                                onscreenControlMenuItem,
-                                                OneplayPreferenceConfiguration::setOnlyShowL2R3
-                                        );
                                     } else if (onscreenControlMenuItem.getItemId() == R.id.seekbar_osc_opacity) {
                                         createSeekBarDialog(
                                                 prefConfig.oscOpacity,
@@ -475,6 +472,18 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                                 100,
                                                 OneplayPreferenceConfiguration::setOscOpacity
                                         ).show();
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_move_buttons) {
+                                        if (virtualController != null) {
+                                            virtualController.setControllerMode(VirtualController.ControllerMode.MoveButtons);
+                                        }
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_resize_buttons) {
+                                        if (virtualController != null) {
+                                            virtualController.setControllerMode(VirtualController.ControllerMode.ResizeButtons);
+                                        }
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_save_profile) {
+                                        if (virtualController != null) {
+                                            virtualController.saveProfile();
+                                        }
                                     } else if (onscreenControlMenuItem.getItemId() == R.id.reset_osc) {
                                         createSimpleDialog(
                                                 R.string.dialog_title_reset_osc,
@@ -482,6 +491,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                                 () -> {
                                                     OneplayPreferenceConfiguration.resetOsc(Game.this);
                                                     Toast.makeText(Game.this, R.string.toast_reset_osc_success, Toast.LENGTH_SHORT).show();
+                                                    if (virtualController != null) {
+                                                        virtualController.refreshLayout();
+                                                    }
                                                 }
                                         ).show();
                                     } else {
@@ -497,11 +509,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 MenuItem checkboxVibrateOsc = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_vibrate_osc);
                                 checkboxVibrateOsc.setChecked(prefConfig.vibrateOsc);
                                 checkboxVibrateOsc.setVisible(prefConfig.onscreenController);
-                                MenuItem checkboxOnlyShowL3R3 = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_only_show_L3R3);
-                                checkboxOnlyShowL3R3.setChecked(prefConfig.onlyL3R3);
-                                checkboxOnlyShowL3R3.setVisible(prefConfig.onscreenController);
                                 MenuItem seekbarOscOpacity = onscreenControlSettingMenu.getMenu().findItem(R.id.seekbar_osc_opacity);
                                 seekbarOscOpacity.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonMoveButtons = onscreenControlSettingMenu.getMenu().findItem(R.id.button_move_buttons);
+                                buttonMoveButtons.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonResizeButtons = onscreenControlSettingMenu.getMenu().findItem(R.id.button_resize_buttons);
+                                buttonResizeButtons.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonSaveProfile = onscreenControlSettingMenu.getMenu().findItem(R.id.button_save_profile);
+                                buttonSaveProfile.setVisible(prefConfig.onscreenController);
 
                                 onscreenControlSettingMenu.show();
                             } else if (streamMenuItem.getItemId() == R.id.show_host_settings) {

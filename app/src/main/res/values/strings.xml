@@ -135,6 +135,9 @@
     <string name="summary_osc_opacity">Make the on-screen controls more/less transparent</string>
     <string name="dialog_title_osc_opacity">Change opacity</string>
     <string name="suffix_osc_opacity">%</string>
+    <string name="dialog_title_move_buttons">Move buttons</string>
+    <string name="dialog_title_resize_buttons">Resize buttons</string>
+    <string name="dialog_title_save_profile">Save profile</string>
 
     <string name="category_ui_settings">UI Settings</string>
     <string name="title_checkbox_enable_pip">Enable Picture-in-Picture observer mode</string>
