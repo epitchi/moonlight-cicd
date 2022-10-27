@@ -233,10 +233,6 @@ public class AnalogStick extends VirtualControllerElement {
         }
         canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius_complete, paint);
 
-        paint.setColor(getDefaultSecondColor());
-        // draw dead zone
-        canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius_dead_zone, paint);
-
         paint.setStyle(Paint.Style.FILL);
 
         // draw stick depending on state
@@ -253,6 +249,11 @@ public class AnalogStick extends VirtualControllerElement {
                 break;
             }
         }
+
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(getDefaultSecondColor());
+        // draw dead zone
+        canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius_dead_zone, paint);
     }
 
     private void updatePosition(long eventTime) {
