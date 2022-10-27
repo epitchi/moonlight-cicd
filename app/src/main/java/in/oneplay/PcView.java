@@ -729,7 +729,7 @@ public class PcView extends Activity {
             } catch (FileNotFoundException e) {
                 runOnUiThread(() -> processingError(getResources().getString(R.string.error_404), e, true));
                 return;
-            } catch (XmlPullParserException | IOException e) {
+            } catch (XmlPullParserException | IOException | InterruptedException e) {
                 runOnUiThread(() -> processingError(e, true));
                 return;
             }
