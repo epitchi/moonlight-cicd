@@ -41,7 +41,9 @@ public abstract class VirtualControllerElement extends View {
 
     private final Paint paint = new Paint();
 
-    private int normalColor = 0xF0888888;
+    private int normalColor = 0xF0413E3D;
+    private int secondNormalColor = 0xF09A9A9A;
+    private int textColor = 0xF0FFFFFF;
     protected int pressedColor = 0xF00000FF;
     private int configMoveColor = 0xF0FF0000;
     private int configResizeColor = 0xF0FF00FF;
@@ -163,6 +165,14 @@ public abstract class VirtualControllerElement extends View {
             return configResizeColor;
         else
             return normalColor;
+    }
+
+    protected int getDefaultSecondColor() {
+        return secondNormalColor;
+    }
+
+    protected int getTextColor() {
+        return textColor;
     }
 
     protected int getDefaultStrokeWidth() {

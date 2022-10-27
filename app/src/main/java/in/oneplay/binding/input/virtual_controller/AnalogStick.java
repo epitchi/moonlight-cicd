@@ -212,7 +212,7 @@ public class AnalogStick extends VirtualControllerElement {
         // calculate new radius sizes depending
         radius_complete = getPercent(getCorrectWidth() / 2, 100) - 2 * getDefaultStrokeWidth();
         radius_dead_zone = getPercent(getCorrectWidth() / 2, 30);
-        radius_analog_stick = getPercent(getCorrectWidth() / 2, 20);
+        radius_analog_stick = radius_dead_zone;
 
         super.onSizeChanged(w, h, oldw, oldh);
     }
@@ -233,9 +233,11 @@ public class AnalogStick extends VirtualControllerElement {
         }
         canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius_complete, paint);
 
-        paint.setColor(getDefaultColor());
+        paint.setColor(getDefaultSecondColor());
         // draw dead zone
         canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius_dead_zone, paint);
+
+        paint.setStyle(Paint.Style.FILL);
 
         // draw stick depending on state
         switch (stick_state) {
