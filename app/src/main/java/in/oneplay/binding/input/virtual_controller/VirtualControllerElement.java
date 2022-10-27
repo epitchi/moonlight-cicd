@@ -171,7 +171,7 @@ public abstract class VirtualControllerElement extends View {
         return secondNormalColor;
     }
 
-    protected int getTextColor() {
+    protected int getDefaultTextColor() {
         return textColor;
     }
 
