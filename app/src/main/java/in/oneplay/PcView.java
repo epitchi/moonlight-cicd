@@ -6,7 +6,6 @@ import static in.oneplay.Game.EXTRA_PC_UUID;
 import static in.oneplay.Game.EXTRA_SERVER_CERT;
 import static in.oneplay.Game.EXTRA_SESSION_KEY;
 import static in.oneplay.Game.EXTRA_UNIQUEID;
-import static in.oneplay.utils.UiHelper.dp;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -26,17 +25,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.text.InputType;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
@@ -64,8 +58,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import in.oneplay.backend.OneplayApi;
 import in.oneplay.backend.UserSession;
@@ -78,6 +71,7 @@ import in.oneplay.nvstream.http.NvHTTP;
 import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.jni.MoonBridge;
 import in.oneplay.preferences.OneplayPreferenceConfiguration;
+import in.oneplay.ui.DebugDialog;
 import in.oneplay.utils.ServerHelper;
 import in.oneplay.utils.UiHelper;
 
@@ -93,6 +87,7 @@ public class PcView extends Activity {
     private UserSession session;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
+    private DebugDialog debugDialog;
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -159,6 +154,10 @@ public class PcView extends Activity {
         progress = findViewById(R.id.progress);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        if (BuildConfig.DEBUG) {
+            debugDialog = new DebugDialog(this);
+        }
 
         initializeWebView();
     }
@@ -234,147 +233,52 @@ public class PcView extends Activity {
             progress.setVisibility(View.GONE);
 
             if (BuildConfig.DEBUG) {
-                String defaultServerIPAddress = BuildConfig.SERVER_DEFAULT_IP_ADDRESS;
-                String defaultConnectionTimeout = String.valueOf(BuildConfig.SERVER_DEFAULT_CONNECTION_TIMEOUT);
-                String defaultReadTimeout = String.valueOf(BuildConfig.SERVER_DEFAULT_READ_TIMEOUT);
+                debugDialog.setOnShowListener(di -> {
+                    debugDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                        debugDialog.dismiss();
+                        progress.setVisibility(View.VISIBLE);
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        new Thread(() -> {
+                            try {
+                                int connectionTimeout = Integer.parseInt(debugDialog.getConnectionTimeout());
+                                int readTimeout = Integer.parseInt(debugDialog.getReadTimeout());
 
-                // Layout
-                RelativeLayout dialogLayout = new RelativeLayout(this);
-                int padding = dp(this, 20);
-                dialogLayout.setPadding(padding, padding, padding, padding);
-                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                dialogLayout.setLayoutParams(params);
+                                NvHTTP.connectionTimeout = connectionTimeout;
+                                NvHTTP.readTimeout = readTimeout;
 
-                // IP label
-                TextView dialogIpLabel = new TextView(this);
-                dialogIpLabel.setId(View.generateViewId());
-                dialogIpLabel.setText("Enter the server IP:");
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                dialogIpLabel.setLayoutParams(params);
-                dialogLayout.addView(dialogIpLabel);
-
-                // IP field
-                EditText dialogIpField = new EditText(this);
-                dialogIpField.setId(View.generateViewId());
-                dialogIpField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                dialogIpField.setText(defaultServerIPAddress);
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
-                params.addRule(RelativeLayout.BELOW, dialogIpLabel.getId());
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
-                dialogIpField.setLayoutParams(params);
-                dialogLayout.addView(dialogIpField);
-
-                // Connection timeout label
-                TextView dialogConnTimeoutLabel = new TextView(this);
-                dialogConnTimeoutLabel.setId(View.generateViewId());
-                dialogConnTimeoutLabel.setText("Enter the connection timeout, ms:");
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                params.addRule(RelativeLayout.BELOW, dialogIpField.getId());
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                dialogConnTimeoutLabel.setLayoutParams(params);
-                dialogLayout.addView(dialogConnTimeoutLabel);
-
-                // Connection timeout field
-                EditText dialogConnTimeoutField = new EditText(this);
-                dialogConnTimeoutField.setId(View.generateViewId());
-                dialogConnTimeoutField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                dialogConnTimeoutField.setText(defaultConnectionTimeout);
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
-                params.addRule(RelativeLayout.BELOW, dialogConnTimeoutLabel.getId());
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
-                dialogConnTimeoutField.setLayoutParams(params);
-                dialogLayout.addView(dialogConnTimeoutField);
-
-                // Read timeout label
-                TextView dialogReadTimeoutLabel = new TextView(this);
-                dialogReadTimeoutLabel.setId(View.generateViewId());
-                dialogReadTimeoutLabel.setText("Enter the read timeout, ms:");
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                params.addRule(RelativeLayout.BELOW, dialogConnTimeoutField.getId());
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                dialogReadTimeoutLabel.setLayoutParams(params);
-                dialogLayout.addView(dialogReadTimeoutLabel);
-
-                // Read timeout field
-                EditText dialogReadTimeoutField = new EditText(this);
-                dialogReadTimeoutField.setId(View.generateViewId());
-                dialogReadTimeoutField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                dialogReadTimeoutField.setText(defaultReadTimeout);
-                params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(this, 48));
-                params.addRule(RelativeLayout.BELOW, dialogReadTimeoutLabel.getId());
-                params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-                params.addRule(RelativeLayout.TEXT_ALIGNMENT_GRAVITY, RelativeLayout.CENTER_VERTICAL);
-                dialogReadTimeoutField.setLayoutParams(params);
-                dialogLayout.addView(dialogReadTimeoutField);
-
-                builder.setView(dialogLayout)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .setNeutralButton("Default", null);
-                AlertDialog dialog = builder.create();
-                dialog.setOnShowListener(di -> {
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                        Pattern pattern = Pattern.compile("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$");
-                        Matcher matcher = pattern.matcher(dialogIpField.getText());
-                        if (matcher.matches()) {
-                            new Thread(() -> {
-                                try {
+                                OneplayApi connection = OneplayApi.getInstance();
+                                String sessionSignature = connection.startVm(debugDialog.getIp());
+                                if (!sessionSignature.isEmpty()) {
                                     runOnUiThread(() -> {
-                                        dialog.dismiss();
-                                        progress.setVisibility(View.VISIBLE);
+                                        isFirstStart = true;
+                                        Uri uri = new Uri.Builder()
+                                                .scheme(BuildConfig.CONNECTION_SCHEME)
+                                                .authority(BuildConfig.DOMAIN)
+                                                .path(BuildConfig.APP_LAUNCH_LINK_PATH)
+                                                .encodedQuery("payload=" + sessionSignature)
+                                                .build();
+                                        Intent intent = new Intent(
+                                                Intent.ACTION_VIEW,
+                                                uri,
+                                                PcView.this,
+                                                PcView.class);
+                                        startActivity(intent);
                                     });
-
-                                    int connectionTimeout = Integer.parseInt(dialogConnTimeoutField.getText().toString());
-                                    int readTimeout = Integer.parseInt(dialogReadTimeoutField.getText().toString());
-
-                                    NvHTTP.connectionTimeout = connectionTimeout;
-                                    NvHTTP.readTimeout = readTimeout;
-
-                                    OneplayApi connection = OneplayApi.getInstance();
-                                    String sessionSignature = connection.startVm(dialogIpField.getText().toString());
-                                    if (!sessionSignature.isEmpty()) {
-                                        runOnUiThread(() -> {
-                                            isFirstStart = true;
-                                            Uri uri = new Uri.Builder()
-                                                    .scheme(BuildConfig.CONNECTION_SCHEME)
-                                                    .authority(BuildConfig.DOMAIN)
-                                                    .path(BuildConfig.APP_LAUNCH_LINK_PATH)
-                                                    .encodedQuery("payload=" + sessionSignature)
-                                                    .build();
-                                            Intent intent = new Intent(
-                                                    Intent.ACTION_VIEW,
-                                                    uri,
-                                                    PcView.this,
-                                                    PcView.class);
-                                            startActivity(intent);
-                                        });
-                                    } else {
-                                        runOnUiThread(() -> {
-                                            progress.setVisibility(View.GONE);
-                                            dialog.show();
-                                            Toast.makeText(PcView.this, "Can't get session signature. Try again.", Toast.LENGTH_LONG).show();
-                                        });
-                                    }
-                                } catch (IOException | JSONException e) {
-                                    runOnUiThread(() -> processingError(e, true));
+                                } else {
+                                    runOnUiThread(() -> {
+                                        progress.setVisibility(View.GONE);
+                                        debugDialog.show();
+                                        Toast.makeText(PcView.this, "Can't get session signature. Try again.", Toast.LENGTH_LONG).show();
+                                    });
                                 }
-                            }).start();
-                        } else {
-                            Toast.makeText(PcView.this, "Wrong IP. Try again.", Toast.LENGTH_LONG).show();
-                        }
+                            } catch (IOException | JSONException e) {
+                                runOnUiThread(() -> processingError(e, true));
+                            }
+                        }).start();
                     });
-                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
-                        dialogIpField.setText(defaultServerIPAddress);
-                        dialogConnTimeoutField.setText(defaultConnectionTimeout);
-                        dialogReadTimeoutField.setText(defaultReadTimeout);
-                    });
+                    debugDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener((v) -> debugDialog.setDefaults());
                 });
-
-                dialog.show();
+                debugDialog.show();
             }
         }
     }
