@@ -64,7 +64,6 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -167,6 +166,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private WifiManager.WifiLock highPerfWifiLock;
     private WifiManager.WifiLock lowLatencyWifiLock;
 
+    private boolean isNeedRefresh = false;
     private boolean isNeedReload = false;
 
     private boolean connectedToUsbDriverService = false;
@@ -1462,23 +1462,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
-        // Quit app
-        if (!isNeedReload) {
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> quitApp(latch, this::stopVm)).start();
-
-            // Waiting for exit from stream
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                LimeLog.severe(e);
-            }
-        } else {
-            isNeedReload = false;
-        }
+        finish();
     }
 
-    private void quitApp(CountDownLatch latch, Runnable doAfterQuit) {
+    private void quitApp(Runnable doAfterQuit) {
         String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
         LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
         try {
@@ -1502,12 +1489,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         } catch (IOException | XmlPullParserException e) {
             LimeLog.severe(e.getMessage());
         } finally {
-            latch.countDown();
             if (doAfterQuit != null) {
                 doAfterQuit.run();
             }
         }
-        finish();
     }
 
     private void stopVm() {
@@ -2192,7 +2177,19 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // during the process of stopping this one.
             new Thread() {
                 public void run() {
-                    conn.stop();
+                    conn.stop(() -> {
+                        if (isNeedRefresh) {
+                            isNeedRefresh = false;
+                        } else {
+                            quitApp(() -> {
+                                if (isNeedReload) {
+                                    isNeedReload = false;
+                                } else {
+                                    stopVm();
+                                }
+                            });
+                        }
+                    });
                 }
             }.start();
         }
@@ -2569,17 +2566,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private void reloadActivity() {
         isNeedReload = true;
+        finishWithRefreshResult();
+    }
 
-        // Quit app
-        CountDownLatch latch = new CountDownLatch(1);
-        new Thread(() -> quitApp(latch, null)).start();
-        // Waiting for exit from stream
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            LimeLog.severe(e);
-        }
+    private void refreshActivity() {
+        isNeedRefresh = true;
+        finishWithRefreshResult();
+    }
 
+    private void finishWithRefreshResult() {
         setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
         finish();
     }
@@ -2599,7 +2594,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         item.setChecked(!item.isChecked());
         setter.accept(this, item.isChecked());
         if (isNeedRestart) {
-            reloadActivity();
+            refreshActivity();
         }
     }
 
@@ -2622,7 +2617,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setPositiveButton(android.R.string.ok, (dialog, id) -> {
                     if (currentIndex != selectedIndex.get()) {
                         setMethod.accept(this, valuesList.get(selectedIndex.get()));
-                        reloadActivity();
+                        refreshActivity();
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
@@ -2674,7 +2669,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setPositiveButton(android.R.string.ok, (dialog, id) -> {
                     if (currentValue != selectedValue[0]) {
                         setMethod.accept(this, selectedValue[0]);
-                        reloadActivity();
+                        refreshActivity();
                     } else {
                         dialog.dismiss();
                     }

@@ -757,16 +757,8 @@ public class NvHTTP {
     
     public boolean quitApp() throws IOException, XmlPullParserException {
         String xmlStr = openHttpConnectionToString(baseUrlHttps, "cancel", false);
-        try {
-            if (getXmlString(xmlStr, "cancel", true).equals("0")) {
-                return false;
-            }
-        } catch (GfeHttpResponseException e) {
-            // Server possible returns 503 code with <resume>0</resume> response text due to a race condition
-            // the client should try again (see the file of the sunshine server nvhttp.cpp method "cancel")
-            if (e.getErrorCode() == 503 && getXmlString(xmlStr, "resume", true, false).equals("0")) {
-                quitApp();
-            }
+        if (getXmlString(xmlStr, "cancel", true).equals("0")) {
+            return false;
         }
 
         // Newer GFE versions will just return success even if quitting fails
