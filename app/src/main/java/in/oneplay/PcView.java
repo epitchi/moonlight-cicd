@@ -235,16 +235,16 @@ public class PcView extends Activity {
             if (BuildConfig.DEBUG) {
                 debugDialog.setOnShowListener(di -> {
                     debugDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                        int connectionTimeout = Integer.parseInt(debugDialog.getConnectionTimeout());
+                        int readTimeout = Integer.parseInt(debugDialog.getReadTimeout());
+
                         debugDialog.dismiss();
                         progress.setVisibility(View.VISIBLE);
 
                         new Thread(() -> {
                             try {
-                                int connectionTimeout = Integer.parseInt(debugDialog.getConnectionTimeout());
-                                int readTimeout = Integer.parseInt(debugDialog.getReadTimeout());
-
-                                NvHTTP.connectionTimeout = connectionTimeout;
-                                NvHTTP.readTimeout = readTimeout;
+                                NvHTTP.connectionTimeout = OneplayApi.connectionTimeout = connectionTimeout;
+                                NvHTTP.readTimeout = OneplayApi.readTimeout = readTimeout;
 
                                 OneplayApi connection = OneplayApi.getInstance();
                                 String sessionSignature = connection.startVm(debugDialog.getIp());
