@@ -167,7 +167,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private WifiManager.WifiLock highPerfWifiLock;
     private WifiManager.WifiLock lowLatencyWifiLock;
 
-    private boolean isNeedRelaunch = false;
+    private boolean isNeedReload = false;
 
     private boolean connectedToUsbDriverService = false;
     private ServiceConnection usbDriverServiceConnection = new ServiceConnection() {
@@ -639,9 +639,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                             return true;
                         }).show();
                     } else if (menuItem.getItemId() == R.id.relaunch_game) {
-                        isNeedRelaunch = true;
-                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                        finish();
+                        reloadActivity();
                     } else if (menuItem.getItemId() == R.id.quit_stream) {
                         finish();
                     } else if (menuItem.getItemId() == R.id.report_issue) {
@@ -1464,50 +1462,59 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
-        CountDownLatch latch = new CountDownLatch(1);
-
         // Quit app
-        new Thread(() -> {
-            String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
-            LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
-            try {
-                if (conn.stopApp()) {
-                    LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
-                } else {
-                    LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
-                }
-            } catch (GfeHttpResponseException e) {
-                if (e.getErrorCode() == 599) {
-                    LimeLog.severe("This session wasn't started by this device," +
-                            " so it cannot be quit. End streaming on the original " +
-                            "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
-                } else {
-                    LimeLog.severe(e);
-                }
-            } catch (UnknownHostException e) {
-                LimeLog.severe(getString(R.string.error_unknown_host), e);
-            } catch (FileNotFoundException e) {
-                LimeLog.severe(getString(R.string.error_404), e);
-            } catch (IOException | XmlPullParserException e) {
-                LimeLog.severe(e.getMessage());
-            } finally {
-                latch.countDown();
-                if (!isNeedRelaunch) {
-                    try {
-                        String sessionKey = Game.this.getIntent().getStringExtra(EXTRA_SESSION_KEY);
-                        OneplayApi.getInstance().stopVm(sessionKey);
-                    } catch (IOException e) {
-                        LimeLog.severe(e);
-                    }
-                }
-            }
-            finish();
-        }).start();
+        if (!isNeedReload) {
+            CountDownLatch latch = new CountDownLatch(1);
+            new Thread(() -> quitApp(latch, this::stopVm)).start();
 
-        // Waiting for exit from stream
+            // Waiting for exit from stream
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                LimeLog.severe(e);
+            }
+        } else {
+            isNeedReload = false;
+        }
+    }
+
+    private void quitApp(CountDownLatch latch, Runnable doAfterQuit) {
+        String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
+        LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
         try {
-            latch.await();
-        } catch (InterruptedException e) {
+            if (conn.stopApp()) {
+                LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
+            } else {
+                LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
+            }
+        } catch (GfeHttpResponseException e) {
+            if (e.getErrorCode() == 599) {
+                LimeLog.severe("This session wasn't started by this device," +
+                        " so it cannot be quit. End streaming on the original " +
+                        "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
+            } else {
+                LimeLog.severe(e);
+            }
+        } catch (UnknownHostException e) {
+            LimeLog.severe(getString(R.string.error_unknown_host), e);
+        } catch (FileNotFoundException e) {
+            LimeLog.severe(getString(R.string.error_404), e);
+        } catch (IOException | XmlPullParserException e) {
+            LimeLog.severe(e.getMessage());
+        } finally {
+            latch.countDown();
+            if (doAfterQuit != null) {
+                doAfterQuit.run();
+            }
+        }
+        finish();
+    }
+
+    private void stopVm() {
+        try {
+            String sessionKey = Game.this.getIntent().getStringExtra(EXTRA_SESSION_KEY);
+            OneplayApi.getInstance().stopVm(sessionKey);
+        } catch (IOException e) {
             LimeLog.severe(e);
         }
     }
@@ -2561,6 +2568,18 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     private void reloadActivity() {
+        isNeedReload = true;
+
+        // Quit app
+        CountDownLatch latch = new CountDownLatch(1);
+        new Thread(() -> quitApp(latch, null)).start();
+        // Waiting for exit from stream
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            LimeLog.severe(e);
+        }
+
         setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
         finish();
     }

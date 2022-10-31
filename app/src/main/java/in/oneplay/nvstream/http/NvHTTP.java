@@ -217,7 +217,7 @@ public class NvHTTP {
         this.pm = new PairingManager(this, cryptoProvider);
     }
 
-    static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
+    static String getXmlString(Reader r, String tagname, boolean throwIfMissing, boolean checkStatus) throws XmlPullParserException, IOException {
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(true);
         XmlPullParser xpp = factory.newPullParser();
@@ -229,7 +229,7 @@ public class NvHTTP {
         while (eventType != XmlPullParser.END_DOCUMENT) {
             switch (eventType) {
             case (XmlPullParser.START_TAG):
-                if (xpp.getName().equals("root")) {
+                if (checkStatus && xpp.getName().equals("root")) {
                     verifyResponseStatus(xpp);
                 }
                 currentTag.push(xpp.getName());
@@ -258,7 +258,11 @@ public class NvHTTP {
     }
 
     static String getXmlString(String str, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
-        return getXmlString(new StringReader(str), tagname, throwIfMissing);
+        return getXmlString(str, tagname, throwIfMissing, true);
+    }
+
+    static String getXmlString(String str, String tagname, boolean throwIfMissing, boolean checkStatus) throws XmlPullParserException, IOException {
+        return getXmlString(new StringReader(str), tagname, throwIfMissing, checkStatus);
     }
     
     private static void verifyResponseStatus(XmlPullParser xpp) throws GfeHttpResponseException {
@@ -753,8 +757,16 @@ public class NvHTTP {
     
     public boolean quitApp() throws IOException, XmlPullParserException {
         String xmlStr = openHttpConnectionToString(baseUrlHttps, "cancel", false);
-        if (getXmlString(xmlStr, "cancel", true).equals("0")) {
-            return false;
+        try {
+            if (getXmlString(xmlStr, "cancel", true).equals("0")) {
+                return false;
+            }
+        } catch (GfeHttpResponseException e) {
+            // Server possible returns 503 code with <resume>0</resume> response text due to a race condition
+            // the client should try again (see the file of the sunshine server nvhttp.cpp method "cancel")
+            if (e.getErrorCode() == 503 && getXmlString(xmlStr, "resume", true, false).equals("0")) {
+                quitApp();
+            }
         }
 
         // Newer GFE versions will just return success even if quitting fails
