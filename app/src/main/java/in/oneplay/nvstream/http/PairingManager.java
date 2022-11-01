@@ -196,8 +196,6 @@ public class PairingManager {
         // Combine the salt and pin, then create an AES key from them
         byte[] aesKey = generateAesKey(hashAlgo, saltPin(salt, pin));
 
-        Thread pairingThread = Thread.currentThread();
-
         // Send the pin to the server after pairing request
         new Thread(() -> {
             try {
@@ -210,28 +208,15 @@ public class PairingManager {
                     throw new IOException("The session key wasn't accept by the server.");
                 }
             } catch (IOException | JSONException pinEx) {
-                LimeLog.severe(pinEx);
-
-                // Cancel pairing process
-                try {
-                    http.unpair();
-                } catch (IOException unpairEx) {
-                    LimeLog.severe("Unable to abort pairing process", unpairEx);
-                }
-
-                // Interrupt pairing thread
-                if (!pairingThread.isInterrupted()) {
-                    pairingThread.interrupt();
-                }
+                LimeLog.warning(pinEx);
             }
         }).start();
 
         try {
-            // Send the salt and get the server cert. This doesn't have a read timeout
-            // because the user must enter the PIN before the server responds
+            // Send the salt and get the server cert.
             String getCert = http.executePairingCommand("phrase=getservercert&salt=" +
                             bytesToHex(salt) + "&clientcert=" + bytesToHex(pemCertBytes),
-                    false);
+                    true);
             if (!NvHTTP.getXmlString(getCert, "paired", true).equals("1")) {
                 return PairState.FAILED;
             }
