@@ -2576,6 +2576,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private void finishWithRefreshResult() {
         setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+        stopConnection();
         finish();
     }
 
