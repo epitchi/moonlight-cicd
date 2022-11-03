@@ -28,7 +28,6 @@ import javax.net.ssl.X509TrustManager;
 
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
-import in.oneplay.nvstream.http.GfeHttpResponseException;
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -275,7 +274,7 @@ public class OneplayApi {
             throw new FileNotFoundException(baseUrl.toString());
         }
         else {
-            throw new GfeHttpResponseException(response.code(), response.message());
+            throw new IOException("Server returned error: "+response.message()+" (Error code: "+response.code()+")");
         }
     }
 
@@ -317,7 +316,7 @@ public class OneplayApi {
             RequestBody formBody = bodyBuilder.build();
 
             if (verbose) {
-                LimeLog.info("Requesting URL: "+baseUrl+"\nBody: "+data);
+                LimeLog.info("Requesting URL: "+baseUrl+"\nData: "+data);
             }
 
             ResponseBody resp = openHttpConnectionPostForm(baseUrl, formBody);
