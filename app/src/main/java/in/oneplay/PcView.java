@@ -453,7 +453,6 @@ public class PcView extends Activity {
     private void connectToComputer() {
         if (!isConnecting) {
             isConnecting = true;
-            new Throwable().printStackTrace();
             new Thread(() -> {
                 Uri uri = currentIntent.getData();
                 try {
