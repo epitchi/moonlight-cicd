@@ -69,7 +69,7 @@ public class NvConnection {
         return new SecureRandom().nextInt();
     }
 
-    public void stop() {
+    public void stop(Runnable doAfterStop) {
         // Interrupt any pending connection. This is thread-safe.
         MoonBridge.interruptConnection();
 
@@ -78,6 +78,10 @@ public class NvConnection {
         synchronized (MoonBridge.class) {
             MoonBridge.stopConnection();
             MoonBridge.cleanupBridge();
+        }
+
+        if (doAfterStop != null) {
+            doAfterStop.run();
         }
 
         // Now a pending connection can be processed

@@ -217,7 +217,7 @@ public class NvHTTP {
         this.pm = new PairingManager(this, cryptoProvider);
     }
 
-    static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
+    static String getXmlString(Reader r, String tagname, boolean throwIfMissing, boolean checkStatus) throws XmlPullParserException, IOException {
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(true);
         XmlPullParser xpp = factory.newPullParser();
@@ -229,7 +229,7 @@ public class NvHTTP {
         while (eventType != XmlPullParser.END_DOCUMENT) {
             switch (eventType) {
             case (XmlPullParser.START_TAG):
-                if (xpp.getName().equals("root")) {
+                if (checkStatus && xpp.getName().equals("root")) {
                     verifyResponseStatus(xpp);
                 }
                 currentTag.push(xpp.getName());
@@ -258,7 +258,11 @@ public class NvHTTP {
     }
 
     static String getXmlString(String str, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
-        return getXmlString(new StringReader(str), tagname, throwIfMissing);
+        return getXmlString(str, tagname, throwIfMissing, true);
+    }
+
+    static String getXmlString(String str, String tagname, boolean throwIfMissing, boolean checkStatus) throws XmlPullParserException, IOException {
+        return getXmlString(new StringReader(str), tagname, throwIfMissing, checkStatus);
     }
     
     private static void verifyResponseStatus(XmlPullParser xpp) throws GfeHttpResponseException {
