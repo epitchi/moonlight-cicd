@@ -84,6 +84,7 @@ public class PcView extends Activity {
     private OnBackInvokedCallback onBackInvokedCallback;
     private boolean isResumed = false;
     private boolean isFirstStart = true;
+    private boolean isConnecting = false;
     private UserSession session;
     private volatile ComputerDetails computer;
     private volatile ComputerManagerService.ComputerManagerBinder managerBinder;
@@ -450,16 +451,20 @@ public class PcView extends Activity {
     }
 
     private void connectToComputer() {
-        new Thread(() -> {
-            Uri uri = currentIntent.getData();
-            try {
-                session = OneplayApi.getInstance().connectTo(uri);
-                OneplayPreferenceConfiguration.savePreferences(this, session.getConfig());
-                doAddPc();
-            } catch (IOException | JSONException e) {
-                processingError(e, false);
-            }
-        }).start();
+        if (!isConnecting) {
+            isConnecting = true;
+            new Throwable().printStackTrace();
+            new Thread(() -> {
+                Uri uri = currentIntent.getData();
+                try {
+                    session = OneplayApi.getInstance().connectTo(uri);
+                    OneplayPreferenceConfiguration.savePreferences(this, session.getConfig());
+                    doAddPc();
+                } catch (IOException | JSONException e) {
+                    processingError(e, false);
+                }
+            }).start();
+        }
     }
 
     private void removeComputer() {
@@ -691,6 +696,8 @@ public class PcView extends Activity {
             removeComputer();
         }
 
+        isConnecting = false;
+
         startActivity(new Intent(Intent.ACTION_MAIN, null, PcView.this, PcView.class));
     }
 
@@ -707,7 +714,10 @@ public class PcView extends Activity {
         if (currentApp != null) {
             Intent intent = ServerHelper.createStartIntent(this, host, currentApp, uniqueId,
                     uuid, pcName, serverCert, sessionKey);
-            runOnUiThread(() -> ServerHelper.doStart(this, intent));
+            runOnUiThread(() -> {
+                isConnecting = false;
+                ServerHelper.doStart(this, intent);
+            });
         } else {
             processingError(new Exception(getString(R.string.applist_refresh_error_msg)), true);
         }
