@@ -88,12 +88,6 @@ public class OneplayApi {
     }
 
     private OneplayApi() {
-        Context context = OneplayApp.getAppContext();
-        if (context != null) {
-            PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(context);
-            this.pinPort = prefConfig.pinPort;
-        }
-
         this.httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
@@ -108,6 +102,8 @@ public class OneplayApi {
         String serverInfo = openHttpConnectionPostToString(serverInfoUrl);
 
         this.session = UserSession.formJsonString(serverInfo);
+        Integer pinPort = this.session.getConfig().getPortDetails().getPinPort();
+        this.pinPort = (pinPort != null) ? pinPort : DEFAULT_PIN_PORT;
 
         if (!unpairAll()) {
             throw new IOException("Unable to unpair clients.");
