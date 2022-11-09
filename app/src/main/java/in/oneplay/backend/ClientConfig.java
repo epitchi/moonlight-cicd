@@ -570,7 +570,7 @@ public class ClientConfig {
         portDetails.setVideoPort(Utils.getInt(portDetailsData, "video_port"));
         portDetails.setControlPort(Utils.getInt(portDetailsData, "control_port"));
         portDetails.setRtspPort(Utils.getInt(portDetailsData, "rtsp_port"));
-        portDetails.setRtspPort(Utils.getInt(portDetailsData, "pin_port"));
+        portDetails.setPinPort(Utils.getInt(portDetailsData, "pin_port"));
 
         ClientConfig.AdvanceDetails advanceDetails = new ClientConfig.AdvanceDetails();
 //        advanceDetails.setAbsoluteMouseMode(Utils.getBoolean(advanceDetailsData, "absolute_mouse_mode"));
