@@ -156,36 +156,36 @@ public class VirtualControllerConfigurationLoader {
     // Face buttons are defined based on the Y button (button number 9)
     private static final int BUTTON_BASE_X = 100;
     private static final int BUTTON_BASE_Y = 7;
-    private static final int BUTTON_SIZE = 7;
+    private static final int BUTTON_SIZE = 8;
 
     private static final int DPAD_BASE_X = 14;
     private static final int DPAD_BASE_Y = 7;
-    private static final int DPAD_SIZE = 16;
+    private static final int DPAD_SIZE = 20;
 
     private static final int ANALOG_L_BASE_X = 14;
     private static final int ANALOG_L_BASE_Y = 44;
     private static final int ANALOG_R_BASE_X = 93;
     private static final int ANALOG_R_BASE_Y = 36;
-    private static final int ANALOG_SIZE = 15;
+    private static final int ANALOG_SIZE = 19;
 
     private static final int LB_BASE_X = 14;
     private static final int RB_BASE_X = 114;
     private static final int LB_BASE_Y = 30;
     private static final int RB_BASE_Y = 38;
-    private static final int LB_RB_WIDTH = 7;
-    private static final int LB_RB_HEIGHT = 4;
+    private static final int LB_RB_WIDTH = 11;
+    private static final int LB_RB_HEIGHT = 9;
 
     private static final int LT_BASE_X = 79;
     private static final int RT_BASE_X = 114;
     private static final int LT_RT_BASE_Y = 51;
-    private static final int LT_RT_WIDTH = 7;
-    private static final int LT_RT_HEIGHT = 12;
+    private static final int LT_RT_WIDTH = 11;
+    private static final int LT_RT_HEIGHT = 9;
 
-    private static final int START_X = 56;
-    private static final int BACK_X = 43;
+    private static final int START_X = 58;
+    private static final int BACK_X = 42;
     private static final int START_BACK_Y = 1;
-    private static final int START_BACK_WIDTH = 6;
-    private static final int START_BACK_HEIGHT = 4;
+    private static final int START_BACK_WIDTH = 14;
+    private static final int START_BACK_HEIGHT = 7;
 
     public static void createDefaultLayout(final VirtualController controller, final Context context) {
 
