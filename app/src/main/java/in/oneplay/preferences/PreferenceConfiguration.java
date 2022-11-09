@@ -91,7 +91,7 @@ public class PreferenceConfiguration {
     private static final int DEFAULT_VIDEO_PORT = 47998;
     private static final int DEFAULT_CONTROL_PORT = 47999;
     private static final int DEFAULT_RTSP_PORT = 48010;
-    private static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
+    public static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
 
     public static final int FORCE_H265_ON = -1;
     public static final int AUTOSELECT_H265 = 0;

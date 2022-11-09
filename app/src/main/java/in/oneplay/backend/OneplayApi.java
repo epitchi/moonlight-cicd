@@ -1,6 +1,7 @@
 package in.oneplay.backend;
 
-import android.content.Context;
+import static in.oneplay.preferences.PreferenceConfiguration.DEFAULT_PIN_PORT;
+
 import android.net.Uri;
 import android.os.Build;
 
@@ -25,9 +26,7 @@ import javax.net.ssl.X509TrustManager;
 
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
-import in.oneplay.OneplayApp;
 import in.oneplay.nvstream.http.GfeHttpResponseException;
-import in.oneplay.preferences.PreferenceConfiguration;
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
