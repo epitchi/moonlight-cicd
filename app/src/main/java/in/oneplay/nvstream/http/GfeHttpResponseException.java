@@ -23,6 +23,6 @@ public class GfeHttpResponseException extends IOException {
     
     @Override
     public String getMessage() {
-        return "Oops! Lost connection with the server, Error code -"+errorMsg;
+        return "Oops! Lost connection with the server, Error code -"+errorCode;
     }
 }
