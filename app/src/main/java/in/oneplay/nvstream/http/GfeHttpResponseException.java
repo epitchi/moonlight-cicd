@@ -23,6 +23,6 @@ public class GfeHttpResponseException extends IOException {
     
     @Override
     public String getMessage() {
-        return "GeForce Experience returned error: "+errorMsg+" (Error code: "+errorCode+")";
+        return "Oops! Lost connection with the server, Error code -"+errorMsg;
     }
 }
