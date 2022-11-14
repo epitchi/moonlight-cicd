@@ -879,6 +879,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setClientRefreshRateX100((int)(displayRefreshRate * 100))
                 .setAudioConfiguration(prefConfig.audioConfiguration)
                 .setAudioEncryption(true)
+                .setHttpPort(prefConfig.httpPort)
+                .setHttpsPort(prefConfig.httpsPort)
+                .setAudioPort(prefConfig.audioPort)
+                .setVideoPort(prefConfig.videoPort)
+                .setControlPort(prefConfig.controlPort)
+                .setRtspPort(prefConfig.rtspPort)
                 .build();
 
         // Initialize the connection
@@ -2424,7 +2430,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             UiHelper.notifyStreamConnecting(Game.this);
 
             decoderRenderer.setRenderTarget(holder);
-            conn.start(this, new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+            conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
                     decoderRenderer, Game.this);
         }
     }

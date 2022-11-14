@@ -63,6 +63,13 @@ public class MoonBridge {
     public static final int ML_PORT_FLAG_UDP_48000 = 0x0400;
     public static final int ML_PORT_FLAG_UDP_48010 = 0x0800;
 
+    public static final int DEFAULT_HTTP_PORT = 47989;
+    public static final int DEFAULT_HTTPS_PORT = 47984;
+    public static final int DEFAULT_AUDIO_PORT = 48000;
+    public static final int DEFAULT_VIDEO_PORT = 47998;
+    public static final int DEFAULT_CONTROL_PORT = 47999;
+    public static final int DEFAULT_RTSP_PORT = 48010;
+
     public static final int ML_TEST_RESULT_INCONCLUSIVE = 0xFFFFFFFF;
 
     private static AudioRenderer audioRenderer;
@@ -322,6 +329,8 @@ public class MoonBridge {
 
     // The RTT is in the top 32 bits, and the RTT variance is in the bottom 32 bits
     public static native long getEstimatedRttInfo();
+
+    public static native void setPorts(int https, int http, int rtsp, int audio, int video, int control);
 
     public static native void init();
 }

@@ -28,6 +28,14 @@ public class StreamConfiguration {
     private int attachedGamepadMask;
     private int encryptionFlags;
 
+    private int httpPort;
+    private int httpsPort;
+    private int audioPort;
+    private int videoPort;
+    private int controlPort;
+    private int rtspPort;
+    private int pinPort;
+
     public static class Builder {
         private StreamConfiguration config = new StreamConfiguration();
         
@@ -131,6 +139,36 @@ public class StreamConfiguration {
             config.supportsHevc = supportsHevc;
             return this;
         }
+
+        public StreamConfiguration.Builder setHttpPort(int httpPort) {
+            config.httpPort = httpPort;
+            return this;
+        }
+
+        public StreamConfiguration.Builder setHttpsPort(int httpsPort) {
+            config.httpsPort = httpsPort;
+            return this;
+        }
+
+        public StreamConfiguration.Builder setAudioPort(int audioPort) {
+            config.audioPort = audioPort;
+            return this;
+        }
+
+        public StreamConfiguration.Builder setVideoPort(int videoPort) {
+            config.videoPort = videoPort;
+            return this;
+        }
+
+        public StreamConfiguration.Builder setControlPort(int controlPort) {
+            config.controlPort = controlPort;
+            return this;
+        }
+
+        public StreamConfiguration.Builder setRtspPort(int rtspPort) {
+            config.rtspPort = rtspPort;
+            return this;
+        }
         
         public StreamConfiguration build() {
             return config;
@@ -153,6 +191,12 @@ public class StreamConfiguration {
         this.supportsHevc = false;
         this.enableHdr = false;
         this.attachedGamepadMask = 0;
+        this.httpPort = MoonBridge.DEFAULT_HTTP_PORT;
+        this.httpsPort = MoonBridge.DEFAULT_HTTPS_PORT;
+        this.audioPort = MoonBridge.DEFAULT_AUDIO_PORT;
+        this.videoPort = MoonBridge.DEFAULT_VIDEO_PORT;
+        this.controlPort = MoonBridge.DEFAULT_CONTROL_PORT;
+        this.rtspPort = MoonBridge.DEFAULT_RTSP_PORT;
     }
     
     public int getWidth() {
@@ -225,5 +269,29 @@ public class StreamConfiguration {
 
     public int getEncryptionFlags() {
         return encryptionFlags;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
+    }
+
+    public int getHttpsPort() {
+        return httpsPort;
+    }
+
+    public int getAudioPort() {
+        return audioPort;
+    }
+
+    public int getVideoPort() {
+        return videoPort;
+    }
+
+    public int getControlPort() {
+        return controlPort;
+    }
+
+    public int getRtspPort() {
+        return rtspPort;
     }
 }

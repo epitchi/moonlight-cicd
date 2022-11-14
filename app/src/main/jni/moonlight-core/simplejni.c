@@ -160,3 +160,8 @@ Java_in_oneplay_nvstream_jni_MoonBridge_getEstimatedRttInfo(JNIEnv *env, jclass 
 
     return ((uint64_t)rtt << 32U) | variance;
 }
+
+JNIEXPORT void JNICALL
+Java_in_oneplay_nvstream_jni_MoonBridge_setPorts(JNIEnv *env, jclass clazz, jint https, jint http, jint rtsp, jint audio, jint video, jint control) {
+    LiSetPorts(https, http, rtsp, audio, video, control);
+}

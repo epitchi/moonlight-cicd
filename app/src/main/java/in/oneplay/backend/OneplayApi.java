@@ -1,6 +1,6 @@
 package in.oneplay.backend;
 
-import static in.oneplay.preferences.PreferenceConfiguration.DEFAULT_PIN_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTP_PORT;
 
 import android.net.Uri;
 import android.os.Build;
@@ -39,6 +39,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class OneplayApi {
+    public static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
+
     public static int connectionTimeout = 3000;
     public static int readTimeout = 5000;
 
