@@ -154,36 +154,35 @@ public class VirtualControllerConfigurationLoader {
 
 
     // Face buttons are defined based on the Y button (button number 9)
-    private static final int BUTTON_BASE_X = 100;
-    private static final int BUTTON_BASE_Y = 7;
-    private static final int BUTTON_SIZE = 8;
+    private static final int BUTTON_BASE_X = 97;
+    private static final int BUTTON_BASE_Y = 10;
+    private static final int BUTTON_SIZE = 9;
 
-    private static final int DPAD_BASE_X = 14;
-    private static final int DPAD_BASE_Y = 7;
+    private static final int DPAD_BASE_X = 11;
+    private static final int DPAD_BASE_Y = 44;
     private static final int DPAD_SIZE = 20;
 
-    private static final int ANALOG_L_BASE_X = 14;
-    private static final int ANALOG_L_BASE_Y = 44;
-    private static final int ANALOG_R_BASE_X = 93;
-    private static final int ANALOG_R_BASE_Y = 36;
+    private static final int ANALOG_L_BASE_X = 12;
+    private static final int ANALOG_L_BASE_Y = 10;
+    private static final int ANALOG_R_BASE_X = 92;
+    private static final int ANALOG_R_BASE_Y = 44;
     private static final int ANALOG_SIZE = 19;
 
-    private static final int LB_BASE_X = 14;
-    private static final int RB_BASE_X = 114;
-    private static final int LB_BASE_Y = 30;
-    private static final int RB_BASE_Y = 38;
+    private static final int LB_BASE_X = 28;
+    private static final int RB_BASE_X = 84;
+    private static final int LB_RB_BASE_Y = 37;
     private static final int LB_RB_WIDTH = 11;
     private static final int LB_RB_HEIGHT = 9;
 
-    private static final int LT_BASE_X = 79;
-    private static final int RT_BASE_X = 114;
-    private static final int LT_RT_BASE_Y = 51;
+    private static final int LT_BASE_X = 4;
+    private static final int RT_BASE_X = 108;
+    private static final int LT_RT_BASE_Y = 37;
     private static final int LT_RT_WIDTH = 11;
     private static final int LT_RT_HEIGHT = 9;
 
-    private static final int START_X = 58;
-    private static final int BACK_X = 42;
-    private static final int START_BACK_Y = 1;
+    private static final int START_X = 92;
+    private static final int BACK_X = 38;
+    private static final int START_BACK_Y = 57;
     private static final int START_BACK_WIDTH = 14;
     private static final int START_BACK_HEIGHT = 7;
 
@@ -244,7 +243,7 @@ public class VirtualControllerConfigurationLoader {
         );
         controller.addElement(createLeftTrigger(
                 1, "LT", -1, controller, context),
-                screenScale(LT_BASE_X, height) + rightDisplacement,
+                screenScale(LT_BASE_X, height),
                 screenScale(LT_RT_BASE_Y, height),
                 screenScale(LT_RT_WIDTH, height),
                 screenScale(LT_RT_HEIGHT, height)
@@ -260,7 +259,7 @@ public class VirtualControllerConfigurationLoader {
                 VirtualControllerElement.EID_LB,
                 ControllerPacket.LB_FLAG, 0, 1, "LB", -1, controller, context),
                 screenScale(LB_BASE_X, height),
-                screenScale(LB_BASE_Y, height),
+                screenScale(LB_RB_BASE_Y, height),
                 screenScale(LB_RB_WIDTH, height),
                 screenScale(LB_RB_HEIGHT, height)
         );
@@ -268,7 +267,7 @@ public class VirtualControllerConfigurationLoader {
                 VirtualControllerElement.EID_RB,
                 ControllerPacket.RB_FLAG, 0, 1, "RB", -1, controller, context),
                 screenScale(RB_BASE_X, height) + rightDisplacement,
-                screenScale(RB_BASE_Y, height),
+                screenScale(LB_RB_BASE_Y, height),
                 screenScale(LB_RB_WIDTH, height),
                 screenScale(LB_RB_HEIGHT, height)
         );
