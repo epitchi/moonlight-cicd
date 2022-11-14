@@ -110,7 +110,7 @@ android {
             buildConfigField "String", "APP_CONNECTIVITY_TEST_CHECK_DOMAIN", "\"clientconnectivity.ping.oneplay.in\""
             buildConfigField "String", "API_DOMAIN", "\"svrdev.oneplay.in\""
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
-            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session/\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
 
             signingConfig signingConfigs.test
@@ -123,7 +123,7 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            def apiVersion = "v1"
+            def apiVersion = "v2"
 
             buildConfigField "String", "DOMAIN", "\"www.oneplay.in\""
             buildConfigField "String", "CONNECTION_SCHEME", "\"https\""
@@ -139,7 +139,7 @@ android {
             buildConfigField "String", "APP_CONNECTIVITY_TEST_CHECK_DOMAIN", "\"clientconnectivity.ping.oneplay.in\""
             buildConfigField "String", "API_DOMAIN", "\"client-apis.oneplay.in\""
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/\""
-            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session/\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
 
             firebaseCrashlytics {
