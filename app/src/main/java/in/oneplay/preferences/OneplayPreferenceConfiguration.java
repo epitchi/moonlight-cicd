@@ -446,14 +446,13 @@ public class OneplayPreferenceConfiguration {
         setUnlockFps(config.isUnlockFpsEnabled(), editor);
         setVibrateOsc(config.isVibrateOscEnabled(), editor);
         setWindowMode(context, config.getWindowMode(), editor);
-//TODO Temporary disable port autoconfiguration, uncomment it for release dynamic ports feature
-//        setHttpPort(config.getPortDetails().getHttpPort(), editor);
-//        setHttpsPort(config.getPortDetails().getHttpsPort(), editor);
-//        setAudioPort(config.getPortDetails().getAudioPort(), editor);
-//        setVideoPort(config.getPortDetails().getVideoPort(), editor);
-//        setControlPort(config.getPortDetails().getControlPort(), editor);
-//        setRtspPort(config.getPortDetails().getRtspPort(), editor);
-//        setPinPort(config.getPortDetails().getPinPort(), editor);
+        setHttpPort(config.getPortDetails().getHttpPort(), editor);
+        setHttpsPort(config.getPortDetails().getHttpsPort(), editor);
+        setAudioPort(config.getPortDetails().getAudioPort(), editor);
+        setVideoPort(config.getPortDetails().getVideoPort(), editor);
+        setControlPort(config.getPortDetails().getControlPort(), editor);
+        setRtspPort(config.getPortDetails().getRtspPort(), editor);
+        setPinPort(config.getPortDetails().getPinPort(), editor);
 
         editor.apply();
     }
