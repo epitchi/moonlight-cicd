@@ -47,7 +47,7 @@ public class OneplayApi {
     private static volatile OneplayApi instance;
 
     // Print URL and content to logcat on debug builds
-    private static final boolean verbose = BuildConfig.DEBUG;
+    private static final boolean verbose = false;
 
     private static final String userAgent = BuildConfig.USER_AGENT;
     private static final HttpUrl baseStartVmUrl = new HttpUrl.Builder()

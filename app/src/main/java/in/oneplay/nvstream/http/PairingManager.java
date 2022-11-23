@@ -176,7 +176,7 @@ public class PairingManager {
         return serverCert;
     }
     
-    public PairState pair(String serverInfo, String pin) throws IOException, XmlPullParserException, InterruptedException {
+    public PairState pair(String serverInfo, String pin) throws IOException, XmlPullParserException {
         PairingHashAlgorithm hashAlgo;
 
         int serverMajorVersion = http.getServerMajorVersion(serverInfo);
