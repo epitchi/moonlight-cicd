@@ -197,6 +197,12 @@ public class OneplayPreferenceConfiguration {
         editor.apply();
     }
 
+    public static void setSmallIconMode(Context context, boolean isSmallIconModeEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.SMALL_ICONS_PREF_STRING, isSmallIconModeEnabled);
+        editor.apply();
+    }
+
     private static void setLatencyToast(Boolean isPostStreamToastEnabled, SharedPreferences.Editor editor) {
         if (isPostStreamToastEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.LATENCY_TOAST_PREF_STRING, isPostStreamToastEnabled);
