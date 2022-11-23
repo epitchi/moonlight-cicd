@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.view.MotionEvent;
@@ -165,8 +166,11 @@ public class DigitalButton extends VirtualControllerElement {
             d.draw(canvas);
         } else {
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
+            paint.setColor(getDefaultTextColor());
             paint.setStrokeWidth(getDefaultStrokeWidth()/2);
-            canvas.drawText(text, getPercent(getWidth(), 50), getPercent(getHeight(), 63), paint);
+            Rect bounds = new Rect();
+            paint.getTextBounds(text, 0, text.length(), bounds);
+            canvas.drawText(text, getPercent(getWidth(), 50), getPercent(getHeight() + bounds.height(), 50), paint);
         }
     }
 
