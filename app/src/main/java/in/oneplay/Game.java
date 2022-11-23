@@ -354,118 +354,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                         .setChecked(prefConfig.stretchVideo);
 
                                 basicSettingsMenu.show();
-                            } else if (streamMenuItem.getItemId() == R.id.show_audio_settings) {
-                                PopupMenu audioSettingsMenu = createMenu(settingsButton, R.menu.audio_settings_menu, (audioMenuItem) -> {
-                                    if (audioMenuItem.getItemId() == R.id.list_audio_config) {
-                                        createListDialog(
-                                                OneplayPreferenceConfiguration.getAudioConfig(Game.this),
-                                                R.string.title_audio_config_list,
-                                                R.array.audio_config_values,
-                                                R.array.audio_config_names,
-                                                OneplayPreferenceConfiguration::setAudioConfig
-                                        ).show();
-                                    } else if (audioMenuItem.getItemId() == R.id.checkbox_enable_audiofx) {
-                                        initCheckboxBehavior(
-                                                audioMenuItem,
-                                                OneplayPreferenceConfiguration::setEnableAudioFx
-                                        );
-                                    } else {
-                                        return false;
-                                    }
-
-                                    return true;
-                                });
-
-                                // Initialize checkbox
-                                audioSettingsMenu.getMenu().findItem(R.id.checkbox_enable_audiofx)
-                                        .setChecked(prefConfig.enableAudioFx);
-
-                                audioSettingsMenu.show();
-                            } else if (streamMenuItem.getItemId() == R.id.show_input_settings) {
-                                PopupMenu inputSettingMenu = createMenu(settingsButton, R.menu.input_settings_menu, (inputMenuItem) -> {
-                                    if (inputMenuItem.getItemId() == R.id.seekbar_deadzone) {
-                                        createSeekBarDialog(
-                                                prefConfig.deadzonePercentage,
-                                                R.string.title_seekbar_deadzone,
-                                                R.string.suffix_seekbar_deadzone,
-                                                0,
-                                                1,
-                                                20,
-                                                OneplayPreferenceConfiguration::setDeadzonePercentage
-                                        ).show();
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_touchscreen_trackpad) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setTouchscreenTrackpad
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_multi_controller) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setMultipleControllersSupport
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_mouse_nav_buttons) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setMouseNavButtons
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_usb_driver) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setControllerUsbDriverSupport
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_usb_bind_all) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setBindAllUsb
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_mouse_emulation) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setControllerMouseEmulation
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_vibrate_fallback) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setVibrateFallback
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_flip_face_buttons) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setSwapFaceButtons
-                                        );
-                                    } else if (inputMenuItem.getItemId() == R.id.checkbox_absolute_mouse_mode) {
-                                        initCheckboxBehavior(
-                                                inputMenuItem,
-                                                OneplayPreferenceConfiguration::setAbsoluteMouseMode
-                                        );
-                                    } else {
-                                        return false;
-                                    }
-
-                                    return true;
-                                });
-
-                                // Initialize checkbox
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_touchscreen_trackpad)
-                                        .setChecked(prefConfig.touchscreenTrackpad);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_multi_controller)
-                                        .setChecked(prefConfig.multiController);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_mouse_nav_buttons)
-                                        .setChecked(prefConfig.mouseNavButtons);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_usb_driver)
-                                        .setChecked(prefConfig.usbDriver);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_usb_bind_all)
-                                        .setChecked(prefConfig.bindAllUsb);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_mouse_emulation)
-                                        .setChecked(prefConfig.mouseEmulation);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_vibrate_fallback)
-                                        .setChecked(prefConfig.vibrateFallbackToDevice);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_flip_face_buttons)
-                                        .setChecked(prefConfig.flipFaceButtons);
-                                inputSettingMenu.getMenu().findItem(R.id.checkbox_absolute_mouse_mode)
-                                        .setChecked(prefConfig.absoluteMouseMode);
-
-                                inputSettingMenu.show();
                             } else if (streamMenuItem.getItemId() == R.id.show_on_screen_settings) {
                                 PopupMenu onscreenControlSettingMenu = createMenu(settingsButton, R.menu.onscreen_control_settings_menu, (onscreenControlMenuItem) -> {
                                     if (onscreenControlMenuItem.getItemId() == R.id.checkbox_show_onscreen_controls) {
@@ -535,85 +423,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 buttonSaveProfile.setVisible(prefConfig.onscreenController);
 
                                 onscreenControlSettingMenu.show();
-                            } else if (streamMenuItem.getItemId() == R.id.show_host_settings) {
-                                PopupMenu hostSettingMenu = createMenu(settingsButton, R.menu.host_settings_menu, (hostMenuItem) -> {
-                                    if (hostMenuItem.getItemId() == R.id.checkbox_enable_sops) {
-                                        initCheckboxBehavior(
-                                                hostMenuItem,
-                                                OneplayPreferenceConfiguration::setGameOptimizations
-                                        );
-                                    } else if (hostMenuItem.getItemId() == R.id.checkbox_host_audio) {
-                                        initCheckboxBehavior(
-                                                hostMenuItem,
-                                                OneplayPreferenceConfiguration::setPlayAudioOnHost
-                                        );
-                                    } else {
-                                        return false;
-                                    }
-
-                                    return true;
-                                });
-
-                                // Initialize checkbox
-                                hostSettingMenu.getMenu().findItem(R.id.checkbox_enable_sops)
-                                        .setChecked(prefConfig.enableSops);
-                                hostSettingMenu.getMenu().findItem(R.id.checkbox_host_audio)
-                                        .setChecked(prefConfig.playHostAudio);
-
-                                hostSettingMenu.show();
-                            } else if (streamMenuItem.getItemId() == R.id.show_ui_settings) {
-                                PopupMenu uiSettingMenu = createMenu(settingsButton, R.menu.ui_settings_menu, (uiMenuItem) -> {
-                                    if (uiMenuItem.getItemId() == R.id.checkbox_enable_pip) {
-                                        initCheckboxBehavior(
-                                                uiMenuItem,
-                                                OneplayPreferenceConfiguration::setEnablePip
-                                        );
-                                    } else if (uiMenuItem.getItemId() == R.id.list_languages) {
-                                        createListDialog(
-                                                prefConfig.language,
-                                                R.string.title_language_list,
-                                                R.array.language_values,
-                                                R.array.language_names,
-                                                OneplayPreferenceConfiguration::setLanguage
-                                        ).show();
-                                    } else {
-                                        return false;
-                                    }
-
-                                    return true;
-                                });
-
-                                // Initialize checkbox
-                                uiSettingMenu.getMenu().findItem(R.id.checkbox_enable_pip)
-                                        .setChecked(prefConfig.enablePip);
-
-                                uiSettingMenu.show();
                             } else if (streamMenuItem.getItemId() == R.id.show_advanced_settings) {
                                 PopupMenu advancedSettingMenu = createMenu(settingsButton, R.menu.advanced_settings_menu, (advancedMenuItem) -> {
-                                    if (advancedMenuItem.getItemId() == R.id.checkbox_unlock_fps) {
-                                        initCheckboxBehavior(
-                                                advancedMenuItem,
-                                                OneplayPreferenceConfiguration::setUnlockFps
-                                        );
-                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_disable_warnings) {
-                                        initCheckboxBehavior(
-                                                advancedMenuItem,
-                                                OneplayPreferenceConfiguration::setDisableToasts
-                                        );
-                                    } else if (advancedMenuItem.getItemId() == R.id.video_format) {
-                                        createListDialog(
-                                                OneplayPreferenceConfiguration.getVideoCodecConfig(Game.this),
-                                                R.string.title_video_format,
-                                                R.array.video_format_values,
-                                                R.array.video_format_names,
-                                                OneplayPreferenceConfiguration::setVideoCodecConfig
-                                        ).show();
-                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_hdr) {
-                                        initCheckboxBehavior(
-                                                advancedMenuItem,
-                                                OneplayPreferenceConfiguration::setEnableHdr
-                                        );
-                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_perf_overlay) {
+                                    if (advancedMenuItem.getItemId() == R.id.checkbox_enable_perf_overlay) {
                                         initCheckboxBehavior(
                                                 advancedMenuItem,
                                                 (context, value) -> {
@@ -623,11 +435,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                                 },
                                                 false
                                         );
-                                    } else if (advancedMenuItem.getItemId() == R.id.checkbox_enable_post_stream_toast) {
-                                        initCheckboxBehavior(
-                                                advancedMenuItem,
-                                                OneplayPreferenceConfiguration::setLatencyToast
-                                        );
                                     } else {
                                         return false;
                                     }
@@ -636,16 +443,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 });
 
                                 // Initialize checkbox
-                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_unlock_fps)
-                                        .setChecked(prefConfig.unlockFps);
-                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_disable_warnings)
-                                        .setChecked(prefConfig.disableWarnings);
-                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_hdr)
-                                        .setChecked(prefConfig.enableHdr);
                                 advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_perf_overlay)
                                         .setChecked(prefConfig.enablePerfOverlay);
-                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_post_stream_toast)
-                                        .setChecked(prefConfig.enableLatencyToast);
 
                                 advancedSettingMenu.show();
                             } else {
