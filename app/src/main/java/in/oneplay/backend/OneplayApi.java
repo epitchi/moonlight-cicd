@@ -70,6 +70,11 @@ public class OneplayApi {
             .host(BuildConfig.API_DOMAIN)
             .encodedPath(BuildConfig.API_EVENTS_ENDPOINT)
             .build();
+    private static final HttpUrl baseStatsUrl = new HttpUrl.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .host(BuildConfig.API_DOMAIN)
+            .encodedPath(BuildConfig.API_STATS_ENDPOINT)
+            .build();
 
     private final OkHttpClient httpClient;
 
@@ -173,26 +178,52 @@ public class OneplayApi {
         return new JSONObject(response).getBoolean("status");
     }
 
-    public void registerEvent(String text) throws IOException, JSONException {
+    public void registerEvent(String text) throws IOException {
+        String body = "";
+
+        try {
+            body = prepareClientInfoJson()
+                .put("error", text)
+                .toString();
+        } catch (JSONException ignored) {}
+
+        openHttpConnectionPostJsonToString(baseEventsUrl, body);
+    }
+
+    public void sendStats(JSONObject stats) throws IOException {
+        String body = "";
+
+        try {
+            body = prepareClientInfoJson()
+                    .put("stats", stats)
+                    .toString();
+        } catch (JSONException ignored) {}
+
+        openHttpConnectionPostJsonToString(baseStatsUrl, body);
+    }
+
+    private JSONObject prepareClientInfoJson() {
         String userId = session != null && session.getUserId() != null ? session.getUserId() : "";
         String sessionKey = session != null && session.getKey() != null ? session.getKey() : "";
         String gameId = session != null && session.getGameId() != null ? session.getGameId() : "";
         String hostAddress = session != null && session.getHostAddress() != null ? session.getHostAddress() : "";
 
-        String body = new JSONObject()
-                .put("user_id", userId)
-                .put("error", text)
-                .put("token", sessionKey)
-                .put("device", ("android " +
-                        Build.VERSION.RELEASE + " " +
-                        Build.MANUFACTURER + " " +
-                        Build.MODEL).replace(' ', '_'))
-                .put("version", BuildConfig.SHORT_VERSION_NAME)
-                .put("game_id", gameId)
-                .put("vm_ip", hostAddress)
-                .toString();
+        JSONObject json = new JSONObject();
 
-        openHttpConnectionPostJsonToString(baseEventsUrl, body);
+        try {
+            json
+                    .put("user_id", userId)
+                    .put("token", sessionKey)
+                    .put("device", ("android " +
+                            Build.VERSION.RELEASE + " " +
+                            Build.MANUFACTURER + " " +
+                            Build.MODEL).replace(' ', '_'))
+                    .put("version", BuildConfig.SHORT_VERSION_NAME)
+                    .put("game_id", gameId)
+                    .put("vm_ip", hostAddress);
+        } catch (JSONException ignored) {}
+
+        return json;
     }
 
     // This hack is Android-specific but we do it on all platforms

@@ -673,7 +673,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                         new Thread(() -> {
                                             try {
                                                 OneplayApi.getInstance().registerEvent(message);
-                                            } catch (IOException | JSONException e) {
+                                            } catch (IOException e) {
                                                 LimeLog.severe(e);
                                             }
                                         }).start();

@@ -115,6 +115,7 @@ android {
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
             buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
+            buildConfigField "String", "API_STATS_ENDPOINT", "\"/${apiVersion}/client/post_log\""
 
             signingConfig signingConfigs.test
         }
@@ -147,6 +148,7 @@ android {
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/\""
             buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
+            buildConfigField "String", "API_STATS_ENDPOINT", "\"/client/${apiVersion}/post_log\""
 
             firebaseCrashlytics {
                 nativeSymbolUploadEnabled true
