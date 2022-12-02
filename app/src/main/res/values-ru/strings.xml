@@ -2,6 +2,9 @@
 <resources>
     <!-- PC view menu entries -->
     <!-- Network test strings -->
+    <!-- Preparing connection messages -->
+    <string name="getting_server_info">Получение информации о сервере…</string>
+    <string name="configuring_connection">Настройка соединения…</string>
     <!-- Pair messages -->
     <string name="pairing">Создание пары…</string>
     <string name="pair_pc_offline">Компьютер выключен или находится не в сети</string>

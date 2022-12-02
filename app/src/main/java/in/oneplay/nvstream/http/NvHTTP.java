@@ -68,7 +68,7 @@ public class NvHTTP {
     public static int readTimeout = 5000;
 
     // Print URL and content to logcat on debug builds
-    private static final boolean verbose = BuildConfig.DEBUG;
+    private static final boolean verbose = false;
 
     public final int httpsPort;
     public final int httpPort;

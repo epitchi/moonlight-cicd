@@ -5,28 +5,10 @@
         android:title="@string/category_basic_settings" />
 
     <item
-        android:id="@+id/show_audio_settings"
-        android:title="@string/category_audio_settings" />
-
-    <item
-        android:id="@+id/show_input_settings"
-        android:title="@string/category_input_settings" />
-
-    <item
         android:id="@+id/show_on_screen_settings"
         android:title="@string/category_on_screen_controls_settings" />
 
     <item
-        android:id="@+id/show_host_settings"
-        android:title="@string/category_host_settings" />
-
-    <item
-        android:id="@+id/show_ui_settings"
-        android:title="@string/category_ui_settings" />
-
-    <item
         android:id="@+id/show_advanced_settings"
         android:title="@string/category_advanced_settings" />
-
-
 </menu>

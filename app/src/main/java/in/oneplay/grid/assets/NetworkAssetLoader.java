@@ -5,7 +5,6 @@ import android.content.Context;
 import in.oneplay.LimeLog;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.nvstream.http.NvHTTP;
-import in.oneplay.utils.ServerHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +21,7 @@ public class NetworkAssetLoader {
     public InputStream getBitmapStream(CachedAppAssetLoader.LoaderTuple tuple) {
         InputStream in = null;
         try {
-            NvHTTP http = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(tuple.computer), uniqueId,
+            NvHTTP http = new NvHTTP(tuple.computer.activeAddress, uniqueId,
                     tuple.computer.serverCert, PlatformBinding.getCryptoProvider(context));
             in = http.getBoxArt(tuple.app);
         } catch (IOException ignored) {}
