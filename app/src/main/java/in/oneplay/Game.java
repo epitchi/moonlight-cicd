@@ -576,6 +576,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                                 R.array.language_names,
                                                 OneplayPreferenceConfiguration::setLanguage
                                         ).show();
+                                    } else if (uiMenuItem.getItemId() == R.id.checkbox_small_icon_mode) {
+                                        initCheckboxBehavior(
+                                                uiMenuItem,
+                                                OneplayPreferenceConfiguration::setSmallIconMode
+                                        );
                                     } else {
                                         return false;
                                     }
@@ -586,6 +591,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                 // Initialize checkbox
                                 uiSettingMenu.getMenu().findItem(R.id.checkbox_enable_pip)
                                         .setChecked(prefConfig.enablePip);
+                                uiSettingMenu.getMenu().findItem(R.id.checkbox_small_icon_mode)
+                                        .setChecked(prefConfig.smallIconMode);
 
                                 uiSettingMenu.show();
                             } else if (streamMenuItem.getItemId() == R.id.show_advanced_settings) {
