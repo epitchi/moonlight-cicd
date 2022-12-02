@@ -205,4 +205,9 @@
     <string name="menu_quit_stream">Quit Stream</string>
     <string name="menu_relaunch_game">Relaunch game</string>
     <string name="menu_report_issue">Report issue</string>
+
+    <!-- Game Notifications -->
+    <string name="notification_title_controller_connected">Controller connected</string>
+    <string name="notification_text_controller_connected">%1$s connected</string>
+    <string name="notification_text_controller_disconnected">%1$s disconnected</string>
 </resources>
