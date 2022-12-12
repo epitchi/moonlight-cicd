@@ -20,7 +20,7 @@
     <string name="category_host_settings">Gazdabeállítások</string>
     <string name="summary_checkbox_small_icon_mode">Az alkalmazásrács kisebbik rajza lehetővé teszi, hogy több alkalmazás is látható legyen a képernyőn</string>
     <string name="title_checkbox_small_icon_mode">Használjon kis dobozos rajzokat</string>
-    <string name="summary_language_list">A Oneplay-hoz használt nyelv</string>
+    <string name="summary_language_list">A Moonlight-hoz használt nyelv</string>
     <string name="title_language_list">Nyelv</string>
     <string name="summary_checkbox_enable_pip">Lehetővé teszi az adatfolyam megtekintését (de nem vezérlését) multitasking közben</string>
     <string name="title_checkbox_enable_pip">Engedélyezze a Kép a képben megfigyelő módot</string>
@@ -46,10 +46,12 @@
     <string name="title_checkbox_mouse_nav_buttons">Engedélyezze az előre és hátra gombokat</string>
     <string name="summary_checkbox_mouse_emulation">A Start gomb hosszan tartó megnyomásával egér üzemmódba kapcsol a játéktábla</string>
     <string name="title_checkbox_mouse_emulation">Egér emuláció a játékvezérlőn keresztül</string>
-    <string name="summary_checkbox_usb_bind_all">Használja a Oneplay USB-illesztőprogramját az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox vezérlő támogatás van jelen</string>
+    <string name="summary_checkbox_usb_bind_all">Használja a Moonlight USB-illesztőprogramját az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox vezérlő támogatás van jelen</string>
     <string name="title_checkbox_usb_bind_all">Az natív Xbox játéktámogatás felülbírálása</string>
     <string name="summary_checkbox_xb1_driver">Beépített USB-illesztőprogramot engedélyez natív Xbox vezérlő támogatás nélküli eszközökhöz</string>
     <string name="title_checkbox_xb1_driver">Xbox 360 / One USB játékvezérlő</string>
+    <string name="suffix_seekbar_deadzone">%</string>
+    <string name="title_seekbar_deadzone">Állítsa be az analóg bot holtzónáját</string>
     <string name="summary_checkbox_vibrate_fallback">Rezeg a készülék, hogy utánozza a dübörgést, ha a gamepad nem támogatja</string>
     <string name="title_checkbox_vibrate_fallback">A dübörgés támogatását rezgéssel utánozzuk</string>
     <string name="summary_checkbox_multi_controller">Ennek az opciónak a bejelölése arra kényszeríti a játéktáblát, hogy mindig jelen legyen</string>
@@ -87,7 +89,6 @@
     <string name="slow_connection_msg">Lassú kapcsolat a PC-vel
 \nCsökkentse a bitrátát</string>
     <string name="delete_pc_msg">Biztosan törli ezt a számítógépet\?</string>
-    <string name="help">Segítség</string>
     <string name="no">Nem</string>
     <string name="yes">Igen</string>
     <string name="conn_terminated_msg">A kapcsolat megszakadt</string>
@@ -110,7 +111,7 @@
     <string name="error_usb_prohibited">Az USB-hozzáférést az eszköz rendszergazdája tiltja. Ellenőrizze a Knox vagy az MDM beállításait.</string>
     <string name="message_decoding_reset">Az eszköz videodekóderje továbbra is összeomlik a kiválasztott adatfolyam-beállításoknál. A streaming beállításait visszaállította az alapértelmezettre.</string>
     <string name="title_decoding_reset">Videó Beállítások Alapra</string>
-    <string name="message_decoding_error">A Oneplay összeomlott, mert inkompatibilis volt az eszköz videó dekóderével. Győződjön meg arról, hogy a GeForce Experience frissítve van a számítógép legújabb verziójára. Próbálja meg módosítani a streaming beállításokat, ha az összeomlások továbbra is fennállnak.</string>
+    <string name="message_decoding_error">A Moonlight összeomlott, mert inkompatibilis volt az eszköz videó dekóderével. Győződjön meg arról, hogy a GeForce Experience frissítve van a számítógép legújabb verziójára. Próbálja meg módosítani a streaming beállításokat, ha az összeomlások továbbra is fennállnak.</string>
     <string name="title_decoding_error">A videó dekóder összeomlott</string>
     <string name="error_404">A GFE HTTP 404 hibát adott vissza. Győződjön meg arról, hogy a számítógépen támogatott GPU fut. A távoli asztali szoftver használata szintén ezt a hibát okozhatja. Próbálja újraindítani a gépet, vagy telepítse újra a GFE-t.</string>
     <string name="conn_error_title">Csatlakozási hiba</string>
@@ -124,7 +125,7 @@
     <string name="pair_incorrect_pin">Hibás PIN</string>
     <string name="pair_pc_ingame">A számítógép jelenleg játékban van. A párosítás előtt be kell zárni a játékot.</string>
     <string name="pair_pc_offline">A számítógép nem elérhető</string>
-    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Oneplay-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.</string>
+    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streaming nem működik, ha csatlakozik ehhez a hálózathoz.</string>
     <string name="help_loading_msg">Segítségek betöltés alatt…</string>
     <string name="help_loading_title">Segítség megtekintő</string>
 </resources>

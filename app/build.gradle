@@ -4,7 +4,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 ext {
     buildNumber = (Long) (System.currentTimeMillis() / 1000L)
-    defaultVersionName = '1.1.1'
+    defaultVersionName = '1.1.2'
 }
 
 android {
@@ -13,10 +13,10 @@ android {
     compileSdk 33
 
     defaultConfig {
-        minSdk 19
+        minSdk 23
         targetSdk 33
 
-        versionCode 111
+        versionCode 112
         versionName "$defaultVersionName build: $buildNumber"
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
@@ -93,6 +93,9 @@ android {
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            firebaseCrashlytics {
+                mappingFileUploadEnabled false
+            }
 
             def apiVersion =  "v0"
 
@@ -110,8 +113,9 @@ android {
             buildConfigField "String", "APP_CONNECTIVITY_TEST_CHECK_DOMAIN", "\"clientconnectivity.ping.oneplay.in\""
             buildConfigField "String", "API_DOMAIN", "\"svrdev.oneplay.in\""
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/${apiVersion}/frontend/start_game\""
-            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session/\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/${apiVersion}/client/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
+            buildConfigField "String", "API_STATS_ENDPOINT", "\"/${apiVersion}/client/post_log\""
 
             signingConfig signingConfigs.test
         }
@@ -122,8 +126,11 @@ android {
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            firebaseCrashlytics {
+                mappingFileUploadEnabled true
+            }
 
-            def apiVersion = "v1"
+            def apiVersion = "v2"
 
             buildConfigField "String", "DOMAIN", "\"www.oneplay.in\""
             buildConfigField "String", "CONNECTION_SCHEME", "\"https\""
@@ -139,8 +146,9 @@ android {
             buildConfigField "String", "APP_CONNECTIVITY_TEST_CHECK_DOMAIN", "\"clientconnectivity.ping.oneplay.in\""
             buildConfigField "String", "API_DOMAIN", "\"client-apis.oneplay.in\""
             buildConfigField "String", "API_START_VM_ENDPOINT", "\"/\""
-            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session/\""
+            buildConfigField "String", "API_GET_SESSION_ENDPOINT", "\"/client/${apiVersion}/get_session\""
             buildConfigField "String", "API_EVENTS_ENDPOINT", "\"/backend/events/register\""
+            buildConfigField "String", "API_STATS_ENDPOINT", "\"/client/${apiVersion}/post_log\""
 
             firebaseCrashlytics {
                 nativeSymbolUploadEnabled true
@@ -157,6 +165,9 @@ android {
     }
 
     compileOptions {
+        // Flag to enable support for new language APIs
+        coreLibraryDesugaringEnabled true
+        
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -176,4 +187,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-crashlytics-ndk'
     implementation 'com.google.android.play:app-update:2.0.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 }

@@ -69,7 +69,7 @@ public class NvConnection {
         return new SecureRandom().nextInt();
     }
 
-    public void stop() {
+    public void stop(Runnable doAfterStop) {
         // Interrupt any pending connection. This is thread-safe.
         MoonBridge.interruptConnection();
 
@@ -78,6 +78,10 @@ public class NvConnection {
         synchronized (MoonBridge.class) {
             MoonBridge.stopConnection();
             MoonBridge.cleanupBridge();
+        }
+
+        if (doAfterStop != null) {
+            doAfterStop.run();
         }
 
         // Now a pending connection can be processed
@@ -127,7 +131,7 @@ public class NvConnection {
         }
         else if (context.streamConfig.getHeight() >= 2160 && !h.supports4K(serverInfo)) {
             // Client wants 4K but the server can't do it
-            context.connListener.displayTransientMessage("You must update GeForce Experience to stream in 4K. The stream will be 1080p.");
+            context.connListener.displayTransientMessage("4K stream unavailable at the moment, switching to 1080p.");
             
             // Lower resolution to 1080p
             context.negotiatedWidth = 1920;
@@ -232,7 +236,7 @@ public class NvConnection {
         return true;
     }
 
-    public void start(Context appContext, final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
+    public void start(final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
     {
         new Thread(new Runnable() {
             public void run() {
@@ -276,6 +280,12 @@ public class NvConnection {
                 // Moonlight-core is not thread-safe with respect to connection start and stop, so
                 // we must not invoke that functionality in parallel.
                 synchronized (MoonBridge.class) {
+                    MoonBridge.setPorts(context.streamConfig.getHttpsPort(),
+                            context.streamConfig.getHttpPort(),
+                            context.streamConfig.getRtspPort(),
+                            context.streamConfig.getAudioPort(),
+                            context.streamConfig.getVideoPort(),
+                            context.streamConfig.getControlPort());
                     MoonBridge.setupBridge(videoDecoderRenderer, audioRenderer, connectionListener);
                     int ret = MoonBridge.startConnection(context.serverAddress,
                             context.serverAppVersion, context.serverGfeVersion, context.rtspSessionUrl,

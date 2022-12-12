@@ -6,7 +6,7 @@
     <string name="help_loading_msg">Chargement de la page d\'aide…</string>
     <!-- PC view menu entries -->
     <!-- Network test strings -->
-    <string name="nettest_text_blocked">La connexion réseau actuelle de votre appareil bloque Oneplay. Le streaming sur Internet peut ne pas fonctionner lorsqu’il est connecté à ce réseau.</string>
+    <string name="nettest_text_blocked">La connexion réseau actuelle de votre appareil bloque Moonlight. Le streaming sur Internet peut ne pas fonctionner lorsqu’il est connecté à ce réseau.</string>
     <!-- Pair messages -->
     <string name="pairing">Appariement…</string>
     <string name="pair_pc_offline">L\'ordinateur est hors ligne</string>
@@ -23,7 +23,7 @@
         L\'utilisation d\'un logiciel de bureau à distance peut également provoquer cette erreur. Essayez de redémarrer votre machine ou de réinstaller GFE.
     </string>
     <string name="title_decoding_error">Le décodeur vidéo s\'est écrasé</string>
-    <string name="message_decoding_error">Oneplay s\'est arrêté en raison d\'une incompatibilité avec le décodeur vidéo de cet appareil. Assurez-vous que GeForce Experience soit mis à jour vers la dernière version sur votre PC. Essayez de régler les paramètres de diffusion si les plantages continuent.</string>
+    <string name="message_decoding_error">Moonlight s\'est arrêté en raison d\'une incompatibilité avec le décodeur vidéo de cet appareil. Assurez-vous que GeForce Experience soit mis à jour vers la dernière version sur votre PC. Essayez de régler les paramètres de diffusion si les plantages continuent.</string>
     <string name="title_decoding_reset">Paramètres vidéo réinitialiser</string>
     <string name="message_decoding_reset">Le décodeur vidéo de votre appareil continue de planter avec les paramètres de diffusion sélectionnés. Vos paramètres de diffusion ont été réinitialisés par défaut.</string>
     <string name="error_usb_prohibited">L\'accès USB est interdit par votre appareil. Vérifiez vos paramètres Knox ou MDM.</string>
@@ -42,7 +42,6 @@
     <!-- General strings -->
     <string name="yes">Oui</string>
     <string name="no">Non</string>
-    <string name="help">Aide</string>
     <string name="delete_pc_msg">Êtes-vous sûr de vouloir supprimer ce PC \?</string>
     <string name="slow_connection_msg">Connexion lente au PC\nRéduisez votre débit</string>
     <string name="poor_connection_msg">Mauvaise connexion au PC</string>
@@ -82,10 +81,12 @@
     <string name="summary_checkbox_multi_controller">Lorsqu\'elle n\'est pas cochée, tous les contrôleurs sont regroupés</string>
     <string name="title_checkbox_vibrate_fallback">Emuler support vibration de secours</string>
     <string name="summary_checkbox_vibrate_fallback">Emuler des tremblements si votre manette ne le prend pas en charge</string>
+    <string name="title_seekbar_deadzone">Régler la zone morte du stick analogique</string>
+    <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Pilote de contrôleur Xbox 360/One</string>
     <string name="summary_checkbox_xb1_driver">Active un pilote USB intégré pour les périphériques sans prise en charge du contrôleur Xbox natif</string>
     <string name="title_checkbox_usb_bind_all">Ignorer le support du contrôleur Android</string>
-    <string name="summary_checkbox_usb_bind_all">Force le pilote USB de Oneplay à prendre en charge tous les gamepads Xbox pris en charge</string>
+    <string name="summary_checkbox_usb_bind_all">Force le pilote USB de Moonlight à prendre en charge tous les gamepads Xbox pris en charge</string>
     <string name="title_checkbox_mouse_emulation">Emulation de la souris via le gamepad</string>
     <string name="summary_checkbox_mouse_emulation">Appuyez longuement sur le bouton Start pour faire basculer la manette en mode souris</string>
     <string name="title_checkbox_mouse_nav_buttons">Activer les boutons de la souris arrière et avant</string>
@@ -109,7 +110,7 @@
     <string name="suffix_osc_opacity">%</string>
     <string name="category_ui_settings">Paramètres de l\'interface utilisateur</string>
     <string name="title_language_list">Langue</string>
-    <string name="summary_language_list">Langue à utiliser pour Oneplay</string>
+    <string name="summary_language_list">Langue à utiliser pour Moonlight</string>
     <string name="title_checkbox_small_icon_mode">Utiliser des petites icônes</string>
     <string name="summary_checkbox_small_icon_mode">Utilisez les petites icônes dans les éléments de la grille pour permettre plus d\'éléments à l\'écran</string>
     <string name="category_host_settings">Paramètres de l\'hôte</string>
@@ -163,15 +164,8 @@
     <string name="resolution_1440p">1440p</string>
     <string name="resolution_1080p">1080p</string>
     <string name="resolution_4k">4K</string>
-    <string name="category_help">Aide</string>
-    <string name="title_setup_guide">Guide de configuration</string>
-    <string name="title_troubleshooting">Guide de dépannage</string>
-    <string name="title_privacy_policy">Politique de confidentialité</string>
-    <string name="summary_privacy_policy">Voir la politique de confidentialité de Oneplay</string>
-    <string name="summary_setup_guide">Afficher les instructions sur la façon de configurer votre PC de jeu pour le streaming</string>
-    <string name="summary_troubleshooting">Afficher des conseils pour diagnostiquer et résoudre les problèmes de streaming courants</string>
     <string name="pacing_balanced_alt">Équilibré avec limite FPS</string>
     <string name="title_checkbox_absolute_mouse_mode">Mode souris pour bureau à distance</string>
-    <string name="summary_seekbar_deadzone">Remarque : Certains jeux peuvent imposer une zone morte plus grande que celle que Oneplay est configuré pour utiliser.</string>
+    <string name="summary_seekbar_deadzone">Remarque : Certains jeux peuvent imposer une zone morte plus grande que celle que Moonlight est configuré pour utiliser.</string>
     <string name="summary_checkbox_absolute_mouse_mode">Cela peut rendre l\'accélération de la souris plus naturelle pour l\'utilisation du bureau à distance, mais elle est incompatible avec de nombreux jeux.</string>
 </resources>

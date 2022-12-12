@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 
 import in.oneplay.R;
 import in.oneplay.backend.ClientConfig;
+import in.oneplay.binding.input.virtual_controller.VirtualControllerConfigurationLoader;
 
 public class OneplayPreferenceConfiguration {
     private static void setAbsoluteTouchMode(Boolean isAbsoluteTouchModeEnabled, SharedPreferences.Editor editor) {
@@ -14,10 +15,22 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setTouchscreenTrackpad(Context context, boolean isTouchscreenTrackpadEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.TOUCHSCREEN_TRACKPAD_PREF_STRING, isTouchscreenTrackpadEnabled);
+        editor.apply();
+    }
+
     private static void setGameOptimizations(Boolean isGameOptimizationsEnabled, SharedPreferences.Editor editor) {
         if (isGameOptimizationsEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.SOPS_PREF_STRING, isGameOptimizationsEnabled);
         }
+    }
+
+    public static void setGameOptimizations(Context context, boolean isGameOptimizationsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.SOPS_PREF_STRING, isGameOptimizationsEnabled);
+        editor.apply();
     }
 
     private static void setMultipleControllersSupport(Boolean isMultipleControllersSupportEnabled, SharedPreferences.Editor editor) {
@@ -26,16 +39,34 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setMultipleControllersSupport(Context context, boolean isMultipleControllersSupportEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.MULTI_CONTROLLER_PREF_STRING, isMultipleControllersSupportEnabled);
+        editor.apply();
+    }
+
     private static void setPlayAudioOnHost(Boolean isPlayAudioOnHostEnabled, SharedPreferences.Editor editor) {
         if (isPlayAudioOnHostEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.HOST_AUDIO_PREF_STRING, isPlayAudioOnHostEnabled);
         }
     }
 
+    public static void setPlayAudioOnHost(Context context, boolean isPlayAudioOnHostEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.HOST_AUDIO_PREF_STRING, isPlayAudioOnHostEnabled);
+        editor.apply();
+    }
+
     private static void setSwapFaceButtons(Boolean isSwapFaceButtonsEnabled, SharedPreferences.Editor editor) {
         if (isSwapFaceButtonsEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.FLIP_FACE_BUTTONS_PREF_STRING, isSwapFaceButtonsEnabled);
         }
+    }
+
+    public static void setSwapFaceButtons(Context context, boolean isSwapFaceButtonsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.FLIP_FACE_BUTTONS_PREF_STRING, isSwapFaceButtonsEnabled);
+        editor.apply();
     }
 
     private static void setAudioConfig(Context context, String audioType, SharedPreferences.Editor editor) {
@@ -52,6 +83,22 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setAudioConfig(Context context, String audioType) {
+        if (audioType != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.AUDIO_CONFIG_PREF_STRING, audioType);
+            editor.apply();
+        }
+    }
+
+    public static void setEnableAudioFx(Context context, Boolean isAudioFxEnabled) {
+        if (isAudioFxEnabled != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putBoolean(PreferenceConfiguration.ENABLE_AUDIO_FX_PREF_STRING, isAudioFxEnabled);
+            editor.apply();
+        }
+    }
+
     private static void setBitrateKbps(Integer bitrateKbps, SharedPreferences.Editor editor) {
         if (bitrateKbps != null) {
             editor.putInt(PreferenceConfiguration.BITRATE_PREF_STRING, bitrateKbps);
@@ -61,7 +108,7 @@ public class OneplayPreferenceConfiguration {
     public static void setBitrateKbps(Context context, Integer bitrateKbps) {
         if (bitrateKbps != null) {
             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-            editor.putInt(PreferenceConfiguration.BITRATE_PREF_STRING, bitrateKbps);
+            editor.putInt(PreferenceConfiguration.BITRATE_PREF_STRING, bitrateKbps * 1000);
             editor.apply();
         }
     }
@@ -72,10 +119,40 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setControllerMouseEmulation(Context context, boolean isControllerMouseEmulationEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.MOUSE_EMULATION_STRING, isControllerMouseEmulationEnabled);
+        editor.apply();
+    }
+
     private static void setControllerUsbDriverSupport(Boolean isControllerUsbDriverSupportEnabled, SharedPreferences.Editor editor) {
         if (isControllerUsbDriverSupportEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.USB_DRIVER_PREF_SRING, isControllerUsbDriverSupportEnabled);
         }
+    }
+
+    public static void setControllerUsbDriverSupport(Context context, boolean isControllerUsbDriverSupportEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.USB_DRIVER_PREF_SRING, isControllerUsbDriverSupportEnabled);
+        editor.apply();
+    }
+
+    public static void setBindAllUsb(Context context, boolean isBindAllUsbEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.BIND_ALL_USB_STRING, isBindAllUsbEnabled);
+        editor.apply();
+    }
+
+    public static void setVibrateFallback(Context context, boolean isVibrateFallbackEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.VIBRATE_FALLBACK_PREF_STRING, isVibrateFallbackEnabled);
+        editor.apply();
+    }
+
+    public static void setAbsoluteMouseMode(Context context, boolean isAbsoluteMouseModeEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ABSOLUTE_MOUSE_MODE_PREF_STRING, isAbsoluteMouseModeEnabled);
+        editor.apply();
     }
 
     private static void setDisableFrameDrop(Boolean isFrameDropDisabled, SharedPreferences.Editor editor) {
@@ -90,10 +167,22 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setEnableHdr(Context context, boolean isHdrEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ENABLE_HDR_PREF_STRING, isHdrEnabled);
+        editor.apply();
+    }
+
     private static void setEnablePerfOverlay(Boolean isPerfOverlayEnabled, SharedPreferences.Editor editor) {
         if (isPerfOverlayEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.ENABLE_PERF_OVERLAY_STRING, isPerfOverlayEnabled);
         }
+    }
+
+    public static void setEnablePerfOverlay(Context context, boolean isPerfOverlayEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ENABLE_PERF_OVERLAY_STRING, isPerfOverlayEnabled);
+        editor.apply();
     }
 
     private static void setEnablePip(Boolean isPipEnabled, SharedPreferences.Editor editor) {
@@ -102,15 +191,49 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setEnablePip(Context context, boolean isPipEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ENABLE_PIP_PREF_STRING, isPipEnabled);
+        editor.apply();
+    }
+
+    public static void setSmallIconMode(Context context, boolean isSmallIconModeEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.SMALL_ICONS_PREF_STRING, isSmallIconModeEnabled);
+        editor.apply();
+    }
+
     private static void setLatencyToast(Boolean isPostStreamToastEnabled, SharedPreferences.Editor editor) {
         if (isPostStreamToastEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.LATENCY_TOAST_PREF_STRING, isPostStreamToastEnabled);
         }
     }
 
+    public static void setLatencyToast(Context context, boolean isPostStreamToastEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.LATENCY_TOAST_PREF_STRING, isPostStreamToastEnabled);
+        editor.apply();
+    }
+
     private static void setFps(Integer fps, SharedPreferences.Editor editor) {
         if (fps != null) {
             editor.putString(PreferenceConfiguration.FPS_PREF_STRING, fps.toString());
+        }
+    }
+
+    public static void setFps(Context context, String fps) {
+        if (fps != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.FPS_PREF_STRING, fps);
+            editor.apply();
+        }
+    }
+
+    public static void setFramePacing(Context context, String framePacing) {
+        if (framePacing != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.FRAME_PACING_PREF_STRING, framePacing);
+            editor.apply();
         }
     }
 
@@ -126,10 +249,22 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setMouseNavButtons(Context context, boolean isMouseNavButtonsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.MOUSE_NAV_BUTTONS_STRING, isMouseNavButtonsEnabled);
+        editor.apply();
+    }
+
     private static void setOnscreenController(Boolean isOnscreenControlsEnabled, SharedPreferences.Editor editor) {
         if (isOnscreenControlsEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.ONSCREEN_CONTROLLER_PREF_STRING, isOnscreenControlsEnabled);
         }
+    }
+
+    public static void setOnscreenController(Context context, boolean isOnscreenControlsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ONSCREEN_CONTROLLER_PREF_STRING, isOnscreenControlsEnabled);
+        editor.apply();
     }
 
     private static void setScreenResolution(String screenResolution, SharedPreferences.Editor editor) {
@@ -142,6 +277,14 @@ public class OneplayPreferenceConfiguration {
         if (screenResolution != null) {
             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
             editor.putString(PreferenceConfiguration.RESOLUTION_PREF_STRING, screenResolution);
+            editor.apply();
+        }
+    }
+
+    public static void setLanguage(Context context, String language) {
+        if (language != null) {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+            editor.putString(PreferenceConfiguration.LANGUAGE_PREF_STRING, language);
             editor.apply();
         }
     }
@@ -166,10 +309,34 @@ public class OneplayPreferenceConfiguration {
         }
     }
 
+    public static void setUnlockFps(Context context, boolean isUnlockFpsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.UNLOCK_FPS_STRING, isUnlockFpsEnabled);
+        editor.apply();
+    }
+
     private static void setVibrateOsc(Boolean isVibrateOscEnabled, SharedPreferences.Editor editor) {
         if (isVibrateOscEnabled != null) {
             editor.putBoolean(PreferenceConfiguration.VIBRATE_OSC_PREF_STRING, isVibrateOscEnabled);
         }
+    }
+
+    public static void setVibrateOsc(Context context, boolean isVibrateOscEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.VIBRATE_OSC_PREF_STRING, isVibrateOscEnabled);
+        editor.apply();
+    }
+
+    public static void setOnlyShowL2R3(Context context, boolean isOnlyShowL2R3) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.ONLY_L3_R3_PREF_STRING, isOnlyShowL2R3);
+        editor.apply();
+    }
+
+    public static void setOscOpacity(Context context, int oscOpacity) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putInt(PreferenceConfiguration.OSC_OPACITY_PREF_STRING, oscOpacity);
+        editor.apply();
     }
 
     private static void setWindowMode(Context context, String windowMode, SharedPreferences.Editor editor) {
@@ -183,6 +350,31 @@ public class OneplayPreferenceConfiguration {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putBoolean(PreferenceConfiguration.STRETCH_PREF_STRING, isWindowModeDisable);
         editor.apply();
+    }
+
+    public static void setDeadzonePercentage(Context context, int deadzonePercentage) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putInt(PreferenceConfiguration.DEADZONE_PREF_STRING, deadzonePercentage);
+        editor.apply();
+    }
+
+    public static void setSmallIcons(Context context, boolean isSmallIconsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.SMALL_ICONS_PREF_STRING, isSmallIconsEnabled);
+        editor.apply();
+    }
+
+    public static void setDisableToasts(Context context, boolean isDisableToastsEnabled) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean(PreferenceConfiguration.DISABLE_TOASTS_PREF_STRING, isDisableToastsEnabled);
+        editor.apply();
+    }
+
+    public static void resetOsc(Context context) {
+        context.getSharedPreferences(VirtualControllerConfigurationLoader.OSC_PREFERENCE, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply();
     }
 
     private static void setHttpPort(Integer port, SharedPreferences.Editor editor) {
@@ -279,5 +471,10 @@ public class OneplayPreferenceConfiguration {
     public static String getVideoCodecConfig(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(PreferenceConfiguration.VIDEO_FORMAT_PREF_STRING, PreferenceConfiguration.DEFAULT_VIDEO_FORMAT);
+    }
+
+    public static String getAudioConfig(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(PreferenceConfiguration.AUDIO_CONFIG_PREF_STRING, PreferenceConfiguration.DEFAULT_AUDIO_CONFIG);
     }
 }

@@ -20,6 +20,7 @@ import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -64,10 +66,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import in.oneplay.backend.OneplayApi;
+import in.oneplay.backend.UserSession;
 import in.oneplay.binding.PlatformBinding;
 import in.oneplay.binding.audio.AndroidAudioRenderer;
+import in.oneplay.binding.crypto.AndroidCryptoProvider;
 import in.oneplay.binding.input.ControllerHandler;
 import in.oneplay.binding.input.KeyboardTranslator;
 import in.oneplay.binding.input.capture.InputCaptureManager;
@@ -82,11 +87,15 @@ import in.oneplay.binding.video.CrashListener;
 import in.oneplay.binding.video.MediaCodecDecoderRenderer;
 import in.oneplay.binding.video.MediaCodecHelper;
 import in.oneplay.binding.video.PerfOverlayListener;
+import in.oneplay.computers.IdentityManager;
 import in.oneplay.nvstream.NvConnection;
 import in.oneplay.nvstream.NvConnectionListener;
 import in.oneplay.nvstream.StreamConfiguration;
+import in.oneplay.nvstream.http.ComputerDetails;
 import in.oneplay.nvstream.http.GfeHttpResponseException;
 import in.oneplay.nvstream.http.NvApp;
+import in.oneplay.nvstream.http.NvHTTP;
+import in.oneplay.nvstream.http.PairingManager;
 import in.oneplay.nvstream.input.KeyboardPacket;
 import in.oneplay.nvstream.input.MouseButtonPacket;
 import in.oneplay.nvstream.jni.MoonBridge;
@@ -165,7 +174,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private WifiManager.WifiLock lowLatencyWifiLock;
 
     private boolean isNeedRefresh = false;
-    private boolean isNeedRelaunch = false;
+    private boolean isNeedReload = false;
 
     private boolean connectedToUsbDriverService = false;
     private ServiceConnection usbDriverServiceConnection = new ServiceConnection() {
@@ -184,10 +193,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     };
 
+    private Intent currentIntent;
+    private IdentityManager idManager;
+
     public static final String EXTRA_HOST = "Host";
     public static final String EXTRA_APP_NAME = "AppName";
     public static final String EXTRA_APP_ID = "AppId";
-    public static final String EXTRA_UNIQUEID = "UniqueId";
+    public static final String EXTRA_UNIQUE_ID = "UniqueId";
     public static final String EXTRA_PC_UUID = "UUID";
     public static final String EXTRA_PC_NAME = "PcName";
     public static final String EXTRA_APP_HDR = "HDR";
@@ -197,7 +209,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setResult(RESULT_OK);
+
+        new Thread(() -> {
+            // Force a keypair to be generated early to avoid discovery delays
+            new AndroidCryptoProvider(Game.this).getClientCertificate();
+        }).start();
+
+        currentIntent = getIntent();
 
         UiHelper.setLocale(this);
 
@@ -261,138 +279,183 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         streamView.setInputCallbacks(this);
 
         settingsButton = findViewById(R.id.settingsButton);
+        settingsButton.setAlpha(0.13f);
+        settingsButton.setFocusable(false);
 
         settingsButton.setOnClickListener((view) -> {
             Handler handler = new Handler();
             handler.postDelayed(() -> {
-                PopupMenu settingsMenu = new PopupMenu(Game.this, settingsButton);
-                settingsMenu.getMenuInflater().inflate(R.menu.game_setting_menu, settingsMenu.getMenu());
-                settingsMenu.setOnMenuItemClickListener((menuItem) -> {
+                createMenu(settingsButton, R.menu.game_setting_menu, (menuItem) -> {
                     if (menuItem.getItemId() == R.id.show_keyboard) {
-                        settingsMenu.setOnDismissListener(menu -> {
-                            Runnable showKeyboardRunnable = this::toggleKeyboard;
-                            streamView.postDelayed(showKeyboardRunnable, 500);
-                            streamView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                                @Override
-                                public void onViewAttachedToWindow(View v) {}
-
-                                @Override
-                                public void onViewDetachedFromWindow(View v) {
-                                    streamView.removeOnAttachStateChangeListener(this);
-                                    view.removeCallbacks(showKeyboardRunnable);
-                                }
-                            });
-                        });
-                    } else if (menuItem.getItemId() == R.id.show_hide_stats) {
-                        boolean isPerformanceOverlayViewVisible = performanceOverlayView.getVisibility() == View.VISIBLE;
-                        performanceOverlayView.setVisibility((isPerformanceOverlayViewVisible) ? View.GONE : View.VISIBLE);
-                        prefConfig.enablePerfOverlay = !isPerformanceOverlayViewVisible;
-                    } else if (menuItem.getItemId() == R.id.toggle_full_screen) {
-                        OneplayPreferenceConfiguration.setWindowMode(Game.this, !prefConfig.stretchVideo);
-                        isNeedRefresh = true;
-                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                        finish();
-                    } else if (menuItem.getItemId() == R.id.quit_stream) {
-                        finish();
-                    } else if (menuItem.getItemId() == R.id.change_resolution) {
-                        String currentResolution = OneplayPreferenceConfiguration.getResolution(Game.this);
-                        List<String> resolutions = Arrays.asList(getResources().getStringArray(R.array.resolution_values));
-                        int currentResolutionIndex = resolutions.indexOf(currentResolution);
-                        AtomicInteger selectedResolutionIndex = new AtomicInteger(currentResolutionIndex);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        builder.setTitle(R.string.menu_change_resolution)
-                                .setSingleChoiceItems(R.array.resolution_names, currentResolutionIndex,
-                                        (dialog, which) -> selectedResolutionIndex.set(which))
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentResolutionIndex != selectedResolutionIndex.get()) {
-                                        OneplayPreferenceConfiguration.setScreenResolution(Game.this, resolutions.get(selectedResolutionIndex.get()));
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else if (menuItem.getItemId() == R.id.change_bitrate) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        LayoutInflater inflater = Game.this.getLayoutInflater();
-
-                        View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
-
-                        int currentBitrate = prefConfig.bitrate;
-                        final int[] selectedBitrate = {currentBitrate};
-
-                        ((TextView)seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(R.string.menu_change_bitrate);
-                        ((TextView)seekBarView.findViewById(R.id.seekbar_value_label)).setText("kbps");
-
-                        TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
-                        dialogSeekBarValue.setText(String.valueOf(selectedBitrate[0]));
-
-                        int minValue = 500;
-
-                        SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+                        Runnable showKeyboardRunnable = this::toggleKeyboard;
+                        streamView.postDelayed(showKeyboardRunnable, 500);
+                        streamView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                             @Override
-                            public void onStopTrackingTouch(SeekBar seekBar) { }
+                            public void onViewAttachedToWindow(View v) {}
 
                             @Override
-                            public void onStartTrackingTouch(SeekBar seekBar) { }
-
-                            @Override
-                            public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
-                                progress = minValue + progress;
-                                progress = progress / 500;
-                                progress = progress * 500;
-                                dialogSeekBarValue.setText(String.valueOf(progress));
-                                selectedBitrate[0] = progress;
+                            public void onViewDetachedFromWindow(View v) {
+                                streamView.removeOnAttachStateChangeListener(this);
+                                view.removeCallbacks(showKeyboardRunnable);
                             }
-                        };
-
-                        SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
-                        dialogSeekBar.setMax(prefConfig.maxBitrate - minValue);
-                        dialogSeekBar.incrementProgressBy(500);
-                        dialogSeekBar.setProgress(selectedBitrate[0]);
-                        dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
-
-                        builder.setView(seekBarView)
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentBitrate != selectedBitrate[0]) {
-                                        OneplayPreferenceConfiguration.setBitrateKbps(Game.this, selectedBitrate[0]);
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
+                        });
+                    } else if (menuItem.getItemId() == R.id.show_stream_settings) {
+                        createMenu(settingsButton, R.menu.stream_settings_menu, (streamMenuItem) -> {
+                            if (streamMenuItem.getItemId() == R.id.show_basic_settings) {
+                                PopupMenu basicSettingsMenu = createMenu(settingsButton, R.menu.basic_settings_menu, (basicMenuItem) -> {
+                                    if (basicMenuItem.getItemId() == R.id.list_resolution) {
+                                        createListDialog(
+                                                OneplayPreferenceConfiguration.getResolution(Game.this),
+                                                R.string.title_resolution_list,
+                                                R.array.resolution_values,
+                                                R.array.resolution_names,
+                                                OneplayPreferenceConfiguration::setScreenResolution
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.list_fps) {
+                                        createListDialog(
+                                                prefConfig.fps,
+                                                R.string.title_fps_list,
+                                                R.array.fps_values,
+                                                R.array.fps_names,
+                                                OneplayPreferenceConfiguration::setFps
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.seekbar_bitrate_kbps) {
+                                        createSeekBarDialog(
+                                                prefConfig.bitrate / 1000,
+                                                R.string.title_seekbar_bitrate,
+                                                R.string.suffix_seekbar_bitrate_mbps,
+                                                1,
+                                                1,
+                                                prefConfig.maxBitrate / 1000,
+                                                OneplayPreferenceConfiguration::setBitrateKbps
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.frame_pacing) {
+                                        createListDialog(
+                                                prefConfig.framePacing,
+                                                R.string.title_fps_list,
+                                                R.array.video_frame_pacing_values,
+                                                R.array.video_frame_pacing_names,
+                                                OneplayPreferenceConfiguration::setFramePacing
+                                        ).show();
+                                    } else if (basicMenuItem.getItemId() == R.id.checkbox_stretch_video) {
+                                        initCheckboxBehavior(
+                                                basicMenuItem,
+                                                OneplayPreferenceConfiguration::setWindowMode
+                                        );
                                     } else {
-                                        dialog.dismiss();
+                                        return false;
                                     }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else if (menuItem.getItemId() == R.id.change_decoder) {
-                        String currentDecoder = OneplayPreferenceConfiguration.getVideoCodecConfig(this);
-                        List<String> videoFormatValues = Arrays.asList(getResources().getStringArray(R.array.video_format_values));
-                        int currentDecoderIndex = videoFormatValues.indexOf(currentDecoder);
-                        AtomicInteger selectedDecoderIndex = new AtomicInteger(currentDecoderIndex);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
-                        builder.setTitle(R.string.menu_change_decoder)
-                                .setSingleChoiceItems(R.array.video_format_names, currentDecoderIndex,
-                                        (dialog, which) -> selectedDecoderIndex.set(which))
-                                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
-                                    if (currentDecoderIndex != selectedDecoderIndex.get()) {
-                                        OneplayPreferenceConfiguration.setVideoCodecConfig(Game.this, videoFormatValues.get(selectedDecoderIndex.get()));
-                                        isNeedRefresh = true;
-                                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
-                                        finish();
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                basicSettingsMenu.getMenu().findItem(R.id.checkbox_stretch_video)
+                                        .setChecked(prefConfig.stretchVideo);
+
+                                basicSettingsMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_on_screen_settings) {
+                                PopupMenu onscreenControlSettingMenu = createMenu(settingsButton, R.menu.onscreen_control_settings_menu, (onscreenControlMenuItem) -> {
+                                    if (onscreenControlMenuItem.getItemId() == R.id.checkbox_show_onscreen_controls) {
+                                        initCheckboxBehavior(
+                                                onscreenControlMenuItem,
+                                                OneplayPreferenceConfiguration::setOnscreenController
+                                        );
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.checkbox_vibrate_osc) {
+                                        initCheckboxBehavior(
+                                                onscreenControlMenuItem,
+                                                OneplayPreferenceConfiguration::setVibrateOsc
+                                        );
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.seekbar_osc_opacity) {
+                                        createSeekBarDialog(
+                                                prefConfig.oscOpacity,
+                                                R.string.dialog_title_osc_opacity,
+                                                R.string.suffix_osc_opacity,
+                                                0,
+                                                1,
+                                                100,
+                                                OneplayPreferenceConfiguration::setOscOpacity
+                                        ).show();
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_move_buttons) {
+                                        if (virtualController != null) {
+                                            virtualController.setControllerMode(VirtualController.ControllerMode.MoveButtons);
+                                        }
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_resize_buttons) {
+                                        if (virtualController != null) {
+                                            virtualController.setControllerMode(VirtualController.ControllerMode.ResizeButtons);
+                                        }
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.button_save_profile) {
+                                        if (virtualController != null) {
+                                            virtualController.saveProfile();
+                                        }
+                                    } else if (onscreenControlMenuItem.getItemId() == R.id.reset_osc) {
+                                        createSimpleDialog(
+                                                R.string.dialog_title_reset_osc,
+                                                R.string.dialog_text_reset_osc,
+                                                () -> {
+                                                    OneplayPreferenceConfiguration.resetOsc(Game.this);
+                                                    Toast.makeText(Game.this, R.string.toast_reset_osc_success, Toast.LENGTH_SHORT).show();
+                                                    if (virtualController != null) {
+                                                        virtualController.refreshLayout();
+                                                    }
+                                                }
+                                        ).show();
+                                    } else {
+                                        return false;
                                     }
-                                })
-                                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                MenuItem checkboxShowOnscreenControls = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_show_onscreen_controls);
+                                checkboxShowOnscreenControls.setChecked(prefConfig.onscreenController);
+                                MenuItem checkboxVibrateOsc = onscreenControlSettingMenu.getMenu().findItem(R.id.checkbox_vibrate_osc);
+                                checkboxVibrateOsc.setChecked(prefConfig.vibrateOsc);
+                                checkboxVibrateOsc.setVisible(prefConfig.onscreenController);
+                                MenuItem seekbarOscOpacity = onscreenControlSettingMenu.getMenu().findItem(R.id.seekbar_osc_opacity);
+                                seekbarOscOpacity.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonMoveButtons = onscreenControlSettingMenu.getMenu().findItem(R.id.button_move_buttons);
+                                buttonMoveButtons.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonResizeButtons = onscreenControlSettingMenu.getMenu().findItem(R.id.button_resize_buttons);
+                                buttonResizeButtons.setVisible(prefConfig.onscreenController);
+                                MenuItem buttonSaveProfile = onscreenControlSettingMenu.getMenu().findItem(R.id.button_save_profile);
+                                buttonSaveProfile.setVisible(prefConfig.onscreenController);
+
+                                onscreenControlSettingMenu.show();
+                            } else if (streamMenuItem.getItemId() == R.id.show_advanced_settings) {
+                                PopupMenu advancedSettingMenu = createMenu(settingsButton, R.menu.advanced_settings_menu, (advancedMenuItem) -> {
+                                    if (advancedMenuItem.getItemId() == R.id.checkbox_enable_perf_overlay) {
+                                        initCheckboxBehavior(
+                                                advancedMenuItem,
+                                                (context, value) -> {
+                                                    performanceOverlayView.setVisibility(value ? View.VISIBLE : View.GONE);
+                                                    prefConfig.enablePerfOverlay = value;
+                                                    OneplayPreferenceConfiguration.setEnablePerfOverlay(context, value);
+                                                },
+                                                false
+                                        );
+                                    } else {
+                                        return false;
+                                    }
+
+                                    return true;
+                                });
+
+                                // Initialize checkbox
+                                advancedSettingMenu.getMenu().findItem(R.id.checkbox_enable_perf_overlay)
+                                        .setChecked(prefConfig.enablePerfOverlay);
+
+                                advancedSettingMenu.show();
+                            } else {
+                                return false;
+                            }
+
+                            return true;
+                        }).show();
                     } else if (menuItem.getItemId() == R.id.relaunch_game) {
-                        isNeedRefresh = false;
-                        isNeedRelaunch = true;
-                        setResult(ServerHelper.ONEPLAY_GAME_RESULT_REFRESH_ACTIVITY, getIntent());
+                        reloadActivity();
+                    } else if (menuItem.getItemId() == R.id.quit_stream) {
                         finish();
                     } else if (menuItem.getItemId() == R.id.report_issue) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(Game.this);
@@ -409,7 +472,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                         new Thread(() -> {
                                             try {
                                                 OneplayApi.getInstance().registerEvent(message);
-                                            } catch (IOException | JSONException e) {
+                                            } catch (IOException e) {
                                                 LimeLog.severe(e);
                                             }
                                         }).start();
@@ -426,9 +489,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     }
 
                     return true;
-                });
-
-                settingsMenu.show();
+                }).show();
             }, 200);
 
             ResultReceiver callback = new ResultReceiver(handler);
@@ -453,241 +514,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             });
         }
 
-        // Warn the user if they're on a metered connection
-        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connMgr.isActiveNetworkMetered()) {
-            displayTransientMessage(getResources().getString(R.string.conn_metered));
-        }
-
-        // Make sure Wi-Fi is fully powered up
-        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        try {
-            highPerfWifiLock = wifiMgr.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Moonlight High Perf Lock");
-            highPerfWifiLock.setReferenceCounted(false);
-            highPerfWifiLock.acquire();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                lowLatencyWifiLock = wifiMgr.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "Moonlight Low Latency Lock");
-                lowLatencyWifiLock.setReferenceCounted(false);
-                lowLatencyWifiLock.acquire();
-            }
-        } catch (SecurityException e) {
-            // Some Samsung Galaxy S10+/S10e devices throw a SecurityException from
-            // WifiLock.acquire() even though we have android.permission.WAKE_LOCK in our manifest.
-            LimeLog.warning(e);
-        }
-
-        appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
-        pcName = Game.this.getIntent().getStringExtra(EXTRA_PC_NAME);
-
-        String host = Game.this.getIntent().getStringExtra(EXTRA_HOST);
-        int appId = Game.this.getIntent().getIntExtra(EXTRA_APP_ID, StreamConfiguration.INVALID_APP_ID);
-        String uniqueId = Game.this.getIntent().getStringExtra(EXTRA_UNIQUEID);
-        String uuid = Game.this.getIntent().getStringExtra(EXTRA_PC_UUID);
-        boolean appSupportsHdr = Game.this.getIntent().getBooleanExtra(EXTRA_APP_HDR, false);
-        X509Certificate derCert = (X509Certificate) Game.this.getIntent().getSerializableExtra(EXTRA_SERVER_CERT);
-
-        X509Certificate serverCert = null;
-        try {
-            if (derCert != null) {
-                serverCert = (X509Certificate) CertificateFactory.getInstance("X.509")
-                        .generateCertificate(new ByteArrayInputStream(derCert.getEncoded()));
-            }
-        } catch (CertificateException e) {
-            LimeLog.warning(e);
-        }
-
-        if (appId == StreamConfiguration.INVALID_APP_ID) {
-            finish();
-            return;
-        }
-
-        // Initialize the MediaCodec helper before creating the decoder
-        GlPreferences glPrefs = GlPreferences.readPreferences(this);
-        MediaCodecHelper.initialize(this, glPrefs.glRenderer);
-
-        // Check if the user has enabled HDR
-        boolean willStreamHdr = false;
-        if (prefConfig.enableHdr) {
-            // Start our HDR checklist
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Display display = getWindowManager().getDefaultDisplay();
-                Display.HdrCapabilities hdrCaps = display.getHdrCapabilities();
-
-                // We must now ensure our display is compatible with HDR10
-                if (hdrCaps != null) {
-                    // getHdrCapabilities() returns null on Lenovo Lenovo Mirage Solo (vega), Android 8.0
-                    for (int hdrType : hdrCaps.getSupportedHdrTypes()) {
-                        if (hdrType == Display.HdrCapabilities.HDR_TYPE_HDR10) {
-                            willStreamHdr = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!willStreamHdr) {
-                    // Nope, no HDR for us :(
-                    Toast.makeText(this, "Display does not support HDR10", Toast.LENGTH_LONG).show();
-                }
-            }
-            else {
-                Toast.makeText(this, "HDR requires Android 7.0 or later", Toast.LENGTH_LONG).show();
-            }
-        }
-
-        // Check if the user has enabled performance stats overlay
-        if (prefConfig.enablePerfOverlay) {
-            performanceOverlayView.setVisibility(View.VISIBLE);
-        }
-
-        decoderRenderer = new MediaCodecDecoderRenderer(
-                this,
-                prefConfig,
-                new CrashListener() {
-                    @Override
-                    public void notifyCrash(Exception e) {
-                        // The MediaCodec instance is going down due to a crash
-                        // let's tell the user something when they open the app again
-
-                        // We must use commit because the app will crash when we return from this function
-                        tombstonePrefs.edit().putInt("CrashCount", tombstonePrefs.getInt("CrashCount", 0) + 1).commit();
-                        reportedCrash = true;
-                    }
-                },
-                tombstonePrefs.getInt("CrashCount", 0),
-                connMgr.isActiveNetworkMetered(),
-                willStreamHdr,
-                glPrefs.glRenderer,
-                this);
-
-        // Don't stream HDR if the decoder can't support it
-        if (willStreamHdr && !decoderRenderer.isHevcMain10Hdr10Supported()) {
-            willStreamHdr = false;
-            Toast.makeText(this, "Decoder does not support HEVC Main10HDR10", Toast.LENGTH_LONG).show();
-        }
-
-        // Display a message to the user if HEVC was forced on but we still didn't find a decoder
-        if (prefConfig.videoFormat == PreferenceConfiguration.FORCE_H265_ON && !decoderRenderer.isHevcSupported()) {
-            Toast.makeText(this, "No HEVC decoder found.\nFalling back to H.264.", Toast.LENGTH_LONG).show();
-        }
-
-        int gamepadMask = ControllerHandler.getAttachedControllerMask(this);
-        if (!prefConfig.multiController) {
-            // Always set gamepad 1 present for when multi-controller is
-            // disabled for games that don't properly support detection
-            // of gamepads removed and replugged at runtime.
-            gamepadMask = 1;
-        }
-        if (prefConfig.onscreenController) {
-            // If we're using OSC, always set at least gamepad 1.
-            gamepadMask |= 1;
-        }
-
-        // Set to the optimal mode for streaming
-        float displayRefreshRate = prepareDisplayForRendering();
-        LimeLog.info("Display refresh rate: "+displayRefreshRate);
-
-        // If the user requested frame pacing using a capped FPS, we will need to change our
-        // desired FPS setting here in accordance with the active display refresh rate.
-        int roundedRefreshRate = Math.round(displayRefreshRate);
-        int chosenFrameRate = prefConfig.fps;
-        if (prefConfig.framePacing == PreferenceConfiguration.FRAME_PACING_CAP_FPS) {
-            if (prefConfig.fps >= roundedRefreshRate) {
-                if (prefConfig.fps > roundedRefreshRate + 3) {
-                    // Use frame drops when rendering above the screen frame rate
-                    prefConfig.framePacing = PreferenceConfiguration.FRAME_PACING_BALANCED;
-                    LimeLog.info("Using drop mode for FPS > Hz");
-                } else if (roundedRefreshRate <= 49) {
-                    // Let's avoid clearly bogus refresh rates and fall back to legacy rendering
-                    prefConfig.framePacing = PreferenceConfiguration.FRAME_PACING_BALANCED;
-                    LimeLog.info("Bogus refresh rate: " + roundedRefreshRate);
-                }
-                else {
-                    chosenFrameRate = roundedRefreshRate - 1;
-                    LimeLog.info("Adjusting FPS target for screen to " + chosenFrameRate);
-                }
-            }
-        }
-
-        boolean vpnActive = NetHelper.isActiveNetworkVpn(this);
-        if (vpnActive) {
-            LimeLog.info("Detected active network is a VPN");
-        }
-
-        StreamConfiguration config = new StreamConfiguration.Builder()
-                .setResolution(prefConfig.width, prefConfig.height)
-                .setLaunchRefreshRate(prefConfig.fps)
-                .setRefreshRate(chosenFrameRate)
-                .setApp(new NvApp(appName != null ? appName : "app", appId, appSupportsHdr))
-                .setBitrate(prefConfig.bitrate)
-                .setEnableSops(prefConfig.enableSops)
-                .enableLocalAudioPlayback(prefConfig.playHostAudio)
-                .setMaxPacketSize(vpnActive ? 1024 : 1392) // Lower MTU on VPN
-                .setRemoteConfiguration(vpnActive ? // Use remote optimizations on VPN
-                        StreamConfiguration.STREAM_CFG_REMOTE :
-                        StreamConfiguration.STREAM_CFG_AUTO)
-                .setHevcBitratePercentageMultiplier(75)
-                .setHevcSupported(decoderRenderer.isHevcSupported())
-                .setEnableHdr(willStreamHdr)
-                .setAttachedGamepadMask(gamepadMask)
-                .setClientRefreshRateX100((int)(displayRefreshRate * 100))
-                .setAudioConfiguration(prefConfig.audioConfiguration)
-                .setAudioEncryption(true)
-                .build();
-
-        // Initialize the connection
-        conn = new NvConnection(host, uniqueId, config, PlatformBinding.getCryptoProvider(this), serverCert);
-        controllerHandler = new ControllerHandler(this, conn, this, prefConfig);
-        keyboardTranslator = new KeyboardTranslator();
-
-        InputManager inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
-        inputManager.registerInputDeviceListener(controllerHandler, null);
-        inputManager.registerInputDeviceListener(keyboardTranslator, null);
-
-        // Initialize touch contexts
-        for (int i = 0; i < touchContextMap.length; i++) {
-            if (!prefConfig.touchscreenTrackpad) {
-                touchContextMap[i] = new AbsoluteTouchContext(conn, i, streamView);
-            }
-            else {
-                touchContextMap[i] = new RelativeTouchContext(conn, i,
-                        REFERENCE_HORIZ_RES, REFERENCE_VERT_RES,
-                        streamView, prefConfig);
-            }
-        }
-
-        // Use sustained performance mode on N+ to ensure consistent
-        // CPU availability
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            getWindow().setSustainedPerformanceMode(true);
-        }
-
-        if (prefConfig.onscreenController) {
-            // create virtual onscreen controller
-            virtualController = new VirtualController(controllerHandler,
-                    (FrameLayout)streamView.getParent(),
-                    this);
-            virtualController.refreshLayout();
-            virtualController.show();
-        }
-
-        if (prefConfig.usbDriver) {
-            // Start the USB driver
-            bindService(new Intent(this, UsbDriverService.class),
-                    usbDriverServiceConnection, Service.BIND_AUTO_CREATE);
-        }
-
-        if (!decoderRenderer.isAvcSupported()) {
-            if (spinner != null) {
-                spinner.dismiss();
-                spinner = null;
-            }
-
-            // If we can't find an AVC decoder, we can't proceed
-            Dialog.displayDialog(this, getResources().getString(R.string.conn_error_title),
-                    "This device or ROM doesn't support hardware accelerated H.264 playback.", true);
-            return;
-        }
+        idManager = new IdentityManager(this);
 
         // The connection will be started when the surface gets created
         streamView.getHolder().addCallback(this);
@@ -1131,6 +958,272 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        currentIntent = intent;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (Intent.ACTION_VIEW.equals(currentIntent.getAction()) && currentIntent.getData() != null) {
+            getServerInfo(currentIntent.getData());
+            return;
+        }
+
+        if (attemptedConnection) {
+            return;
+        } else {
+            attemptedConnection = true;
+        }
+
+        appName = currentIntent.getStringExtra(EXTRA_APP_NAME);
+        pcName = currentIntent.getStringExtra(EXTRA_PC_NAME);
+
+        String host = currentIntent.getStringExtra(EXTRA_HOST);
+        int appId = currentIntent.getIntExtra(EXTRA_APP_ID, StreamConfiguration.INVALID_APP_ID);
+        String uniqueId = currentIntent.getStringExtra(EXTRA_UNIQUE_ID);
+        String uuid = currentIntent.getStringExtra(EXTRA_PC_UUID);
+        boolean appSupportsHdr = currentIntent.getBooleanExtra(EXTRA_APP_HDR, false);
+        X509Certificate derCert = (X509Certificate) currentIntent.getSerializableExtra(EXTRA_SERVER_CERT);
+
+        // Warn the user if they're on a metered connection
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connMgr.isActiveNetworkMetered()) {
+            displayTransientMessage(getResources().getString(R.string.conn_metered));
+        }
+
+        // Make sure Wi-Fi is fully powered up
+        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        try {
+            highPerfWifiLock = wifiMgr.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Moonlight High Perf Lock");
+            highPerfWifiLock.setReferenceCounted(false);
+            highPerfWifiLock.acquire();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                lowLatencyWifiLock = wifiMgr.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "Moonlight Low Latency Lock");
+                lowLatencyWifiLock.setReferenceCounted(false);
+                lowLatencyWifiLock.acquire();
+            }
+        } catch (SecurityException e) {
+            // Some Samsung Galaxy S10+/S10e devices throw a SecurityException from
+            // WifiLock.acquire() even though we have android.permission.WAKE_LOCK in our manifest.
+            LimeLog.warning(e);
+        }
+
+        X509Certificate serverCert = null;
+        try {
+            if (derCert != null) {
+                serverCert = (X509Certificate) CertificateFactory.getInstance("X.509")
+                        .generateCertificate(new ByteArrayInputStream(derCert.getEncoded()));
+            }
+        } catch (CertificateException e) {
+            LimeLog.warning(e);
+        }
+
+        if (appId == StreamConfiguration.INVALID_APP_ID) {
+            finish();
+            return;
+        }
+
+        // Initialize the MediaCodec helper before creating the decoder
+        GlPreferences glPrefs = GlPreferences.readPreferences(this);
+        MediaCodecHelper.initialize(this, glPrefs.glRenderer);
+
+        // Check if the user has enabled HDR
+        boolean willStreamHdr = false;
+        if (prefConfig.enableHdr) {
+            // Start our HDR checklist
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Display display = getWindowManager().getDefaultDisplay();
+                Display.HdrCapabilities hdrCaps = display.getHdrCapabilities();
+
+                // We must now ensure our display is compatible with HDR10
+                if (hdrCaps != null) {
+                    // getHdrCapabilities() returns null on Lenovo Lenovo Mirage Solo (vega), Android 8.0
+                    for (int hdrType : hdrCaps.getSupportedHdrTypes()) {
+                        if (hdrType == Display.HdrCapabilities.HDR_TYPE_HDR10) {
+                            willStreamHdr = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!willStreamHdr) {
+                    // Nope, no HDR for us :(
+                    Toast.makeText(this, "Display does not support HDR10", Toast.LENGTH_LONG).show();
+                }
+            }
+            else {
+                Toast.makeText(this, "HDR requires Android 7.0 or later", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        // Check if the user has enabled performance stats overlay
+        if (prefConfig.enablePerfOverlay) {
+            performanceOverlayView.setVisibility(View.VISIBLE);
+        }
+
+        decoderRenderer = new MediaCodecDecoderRenderer(
+                this,
+                prefConfig,
+                new CrashListener() {
+                    @Override
+                    public void notifyCrash(Exception e) {
+                        // The MediaCodec instance is going down due to a crash
+                        // let's tell the user something when they open the app again
+
+                        // We must use commit because the app will crash when we return from this function
+                        tombstonePrefs.edit().putInt("CrashCount", tombstonePrefs.getInt("CrashCount", 0) + 1).commit();
+                        reportedCrash = true;
+                    }
+                },
+                tombstonePrefs.getInt("CrashCount", 0),
+                connMgr.isActiveNetworkMetered(),
+                willStreamHdr,
+                glPrefs.glRenderer,
+                this);
+
+        // Don't stream HDR if the decoder can't support it
+        if (willStreamHdr && !decoderRenderer.isHevcMain10Hdr10Supported()) {
+            willStreamHdr = false;
+            Toast.makeText(this, "Decoder does not support HEVC Main10HDR10", Toast.LENGTH_LONG).show();
+        }
+
+        // Display a message to the user if HEVC was forced on but we still didn't find a decoder
+        if (prefConfig.videoFormat == PreferenceConfiguration.FORCE_H265_ON && !decoderRenderer.isHevcSupported()) {
+            Toast.makeText(this, "No HEVC decoder found.\nFalling back to H.264.", Toast.LENGTH_LONG).show();
+        }
+
+        int gamepadMask = ControllerHandler.getAttachedControllerMask(this);
+        if (!prefConfig.multiController) {
+            // Always set gamepad 1 present for when multi-controller is
+            // disabled for games that don't properly support detection
+            // of gamepads removed and replugged at runtime.
+            gamepadMask = 1;
+        }
+        if (prefConfig.onscreenController) {
+            // If we're using OSC, always set at least gamepad 1.
+            gamepadMask |= 1;
+        }
+
+        // Set to the optimal mode for streaming
+        float displayRefreshRate = prepareDisplayForRendering();
+        LimeLog.info("Display refresh rate: "+displayRefreshRate);
+
+        // If the user requested frame pacing using a capped FPS, we will need to change our
+        // desired FPS setting here in accordance with the active display refresh rate.
+        int roundedRefreshRate = Math.round(displayRefreshRate);
+        int chosenFrameRate = prefConfig.fps;
+        if (prefConfig.framePacing == PreferenceConfiguration.FRAME_PACING_CAP_FPS) {
+            if (prefConfig.fps >= roundedRefreshRate) {
+                if (prefConfig.fps > roundedRefreshRate + 3) {
+                    // Use frame drops when rendering above the screen frame rate
+                    prefConfig.framePacing = PreferenceConfiguration.FRAME_PACING_BALANCED;
+                    LimeLog.info("Using drop mode for FPS > Hz");
+                } else if (roundedRefreshRate <= 49) {
+                    // Let's avoid clearly bogus refresh rates and fall back to legacy rendering
+                    prefConfig.framePacing = PreferenceConfiguration.FRAME_PACING_BALANCED;
+                    LimeLog.info("Bogus refresh rate: " + roundedRefreshRate);
+                }
+                else {
+                    chosenFrameRate = roundedRefreshRate - 1;
+                    LimeLog.info("Adjusting FPS target for screen to " + chosenFrameRate);
+                }
+            }
+        }
+
+        boolean vpnActive = NetHelper.isActiveNetworkVpn(this);
+        if (vpnActive) {
+            LimeLog.info("Detected active network is a VPN");
+        }
+
+        StreamConfiguration config = new StreamConfiguration.Builder()
+                .setResolution(prefConfig.width, prefConfig.height)
+                .setLaunchRefreshRate(prefConfig.fps)
+                .setRefreshRate(chosenFrameRate)
+                .setApp(new NvApp(appName != null ? appName : "app", appId, appSupportsHdr))
+                .setBitrate(prefConfig.bitrate)
+                .setEnableSops(prefConfig.enableSops)
+                .enableLocalAudioPlayback(prefConfig.playHostAudio)
+                .setMaxPacketSize(vpnActive ? 1024 : 1392) // Lower MTU on VPN
+                .setRemoteConfiguration(vpnActive ? // Use remote optimizations on VPN
+                        StreamConfiguration.STREAM_CFG_REMOTE :
+                        StreamConfiguration.STREAM_CFG_AUTO)
+                .setHevcBitratePercentageMultiplier(75)
+                .setHevcSupported(decoderRenderer.isHevcSupported())
+                .setEnableHdr(willStreamHdr)
+                .setAttachedGamepadMask(gamepadMask)
+                .setClientRefreshRateX100((int)(displayRefreshRate * 100))
+                .setAudioConfiguration(prefConfig.audioConfiguration)
+                .setAudioEncryption(true)
+                .setHttpPort(prefConfig.httpPort)
+                .setHttpsPort(prefConfig.httpsPort)
+                .setAudioPort(prefConfig.audioPort)
+                .setVideoPort(prefConfig.videoPort)
+                .setControlPort(prefConfig.controlPort)
+                .setRtspPort(prefConfig.rtspPort)
+                .build();
+
+        // Initialize the connection
+        conn = new NvConnection(host, uniqueId, config, PlatformBinding.getCryptoProvider(this), serverCert);
+        controllerHandler = new ControllerHandler(this, conn, this, prefConfig);
+        keyboardTranslator = new KeyboardTranslator();
+
+        InputManager inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
+        inputManager.registerInputDeviceListener(controllerHandler, null);
+        inputManager.registerInputDeviceListener(keyboardTranslator, null);
+
+        // Initialize touch contexts
+        for (int i = 0; i < touchContextMap.length; i++) {
+            if (!prefConfig.touchscreenTrackpad) {
+                touchContextMap[i] = new AbsoluteTouchContext(conn, i, streamView);
+            }
+            else {
+                touchContextMap[i] = new RelativeTouchContext(conn, i,
+                        REFERENCE_HORIZ_RES, REFERENCE_VERT_RES,
+                        streamView, prefConfig);
+            }
+        }
+
+        // Use sustained performance mode on N+ to ensure consistent
+        // CPU availability
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            getWindow().setSustainedPerformanceMode(true);
+        }
+
+        if (prefConfig.onscreenController) {
+            // create virtual onscreen controller
+            virtualController = new VirtualController(controllerHandler,
+                    (FrameLayout)streamView.getParent(),
+                    this);
+            virtualController.refreshLayout();
+            virtualController.show();
+        }
+
+        if (prefConfig.usbDriver) {
+            // Start the USB driver
+            bindService(new Intent(this, UsbDriverService.class),
+                    usbDriverServiceConnection, Service.BIND_AUTO_CREATE);
+        }
+
+        if (!decoderRenderer.isAvcSupported()) {
+            // If we can't find an AVC decoder, we can't proceed
+            showErrorDialog(getString(R.string.conn_error_title),
+                    "This device or ROM doesn't support hardware accelerated H.264 playback.");
+            return;
+        }
+
+        // Update GameManager state to indicate we're "loading" while connecting
+        UiHelper.notifyStreamConnecting(Game.this);
+
+        decoderRenderer.setRenderTarget(streamView.getHolder());
+        conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+                decoderRenderer, Game.this);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
 
@@ -1216,44 +1309,46 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
-        // Quit app
-        new Thread(() -> {
-            if (!isNeedRefresh) {
-                String appName = Game.this.getIntent().getStringExtra(EXTRA_APP_NAME);
-                LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
-                try {
-                    if (conn.stopApp()) {
-                        LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
-                    } else {
-                        LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
-                    }
-                } catch (GfeHttpResponseException e) {
-                    if (e.getErrorCode() == 599) {
-                        LimeLog.severe("This session wasn't started by this device," +
-                                " so it cannot be quit. End streaming on the original " +
-                                "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
-                    } else {
-                        LimeLog.severe(e);
-                    }
-                } catch (UnknownHostException e) {
-                    LimeLog.severe(getString(R.string.error_unknown_host), e);
-                } catch (FileNotFoundException e) {
-                    LimeLog.severe(getString(R.string.error_404), e);
-                } catch (IOException | XmlPullParserException e) {
-                    LimeLog.severe(e.getMessage());
-                } finally {
-                    if (!isNeedRelaunch) {
-                        try {
-                            String sessionKey = Game.this.getIntent().getStringExtra(EXTRA_SESSION_KEY);
-                            OneplayApi.getInstance().stopVm(sessionKey);
-                        } catch (IOException e) {
-                            LimeLog.severe(e);
-                        }
-                    }
-                }
+        finish();
+    }
+
+    private void quitApp(Runnable doAfterQuit) {
+        String appName = currentIntent.getStringExtra(EXTRA_APP_NAME);
+        LimeLog.info(getString(R.string.applist_quit_app) + " " + appName + "...");
+        try {
+            if (conn.stopApp()) {
+                LimeLog.info(getString(R.string.applist_quit_success) + " " + appName);
+            } else {
+                LimeLog.severe(getString(R.string.applist_quit_fail) + " " + appName);
             }
-            finish();
-        }).start();
+        } catch (GfeHttpResponseException e) {
+            if (e.getErrorCode() == 599) {
+                LimeLog.severe("This session wasn't started by this device," +
+                        " so it cannot be quit. End streaming on the original " +
+                        "device or the PC itself. (Error code: " + e.getErrorCode() + ")", e);
+            } else {
+                LimeLog.severe(e);
+            }
+        } catch (UnknownHostException e) {
+            LimeLog.severe(getString(R.string.error_unknown_host), e);
+        } catch (FileNotFoundException e) {
+            LimeLog.severe(getString(R.string.error_404), e);
+        } catch (IOException | XmlPullParserException e) {
+            LimeLog.severe(e.getMessage());
+        } finally {
+            if (doAfterQuit != null) {
+                doAfterQuit.run();
+            }
+        }
+    }
+
+    private void stopVm() {
+        try {
+            String sessionKey = currentIntent.getStringExtra(EXTRA_SESSION_KEY);
+            OneplayApi.getInstance().stopVm(sessionKey);
+        } catch (IOException e) {
+            LimeLog.severe(e);
+        }
     }
 
     private final Runnable toggleGrab = new Runnable() {
@@ -1929,7 +2024,21 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // during the process of stopping this one.
             new Thread() {
                 public void run() {
-                    conn.stop();
+                    conn.stop(() -> {
+                        if (isNeedRefresh) {
+                            isNeedRefresh = false;
+                            restartActivity();
+                        } else {
+                            quitApp(() -> {
+                                if (isNeedReload) {
+                                    isNeedReload = false;
+                                    restartActivity();
+                                } else {
+                                    stopVm();
+                                }
+                            });
+                        }
+                    });
                 }
             }.start();
         }
@@ -1944,11 +2053,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (spinner != null) {
-                    spinner.dismiss();
-                    spinner = null;
-                }
-
                 if (!displayedFailureDialog) {
                     displayedFailureDialog = true;
                     LimeLog.severe(new Exception(stage + " failed: " + errorCode));
@@ -1969,7 +2073,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         dialogText += "\n\n" + getResources().getString(R.string.nettest_text_blocked);
                     }
 
-                    Dialog.displayDialog(Game.this, getResources().getString(R.string.conn_error_title), dialogText, true);
+                    showErrorDialog(getString(R.string.conn_error_title), dialogText);
                 }
             }
         });
@@ -2033,9 +2137,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                                     MoonBridge.stringifyPortFlags(portFlags, "\n");
                         }
 
-                        Dialog.displayDialog(Game.this, getResources().getString(R.string.conn_terminated_title),
-                                message, true);
                         LimeLog.severe(new Exception("Connection terminated: " + errorCode + ". " + message));
+                        showErrorDialog(getString(R.string.conn_terminated_title), message);
                     }
                     else {
                         finish();
@@ -2155,17 +2258,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         if (!surfaceCreated) {
             throw new IllegalStateException("Surface changed before creation!");
-        }
-
-        if (!attemptedConnection) {
-            attemptedConnection = true;
-
-            // Update GameManager state to indicate we're "loading" while connecting
-            UiHelper.notifyStreamConnecting(Game.this);
-
-            decoderRenderer.setRenderTarget(holder);
-            conn.start(this, new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
-                    decoderRenderer, Game.this);
         }
     }
 
@@ -2302,5 +2394,275 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void onUsbPermissionPromptCompleted() {
         suppressPipRefCount--;
         updatePipAutoEnter();
+    }
+
+    private void reloadActivity() {
+        isNeedReload = true;
+        stopConnection();
+    }
+
+    private void refreshActivity() {
+        isNeedRefresh = true;
+        stopConnection();
+    }
+
+    private void restartActivity() {
+        runOnUiThread(() -> {
+            finish();
+            ServerHelper.doStart(Game.this, currentIntent);
+        });
+    }
+
+    private PopupMenu createMenu(View anchor, int menuRes, PopupMenu.OnMenuItemClickListener listener) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenuInflater().inflate(menuRes, menu.getMenu());
+        menu.setOnMenuItemClickListener(listener);
+        return menu;
+    }
+
+    private void initCheckboxBehavior(MenuItem item, BiConsumer<Context, Boolean> setter) {
+        initCheckboxBehavior(item, setter, true);
+    }
+
+    private void initCheckboxBehavior(MenuItem item, BiConsumer<Context, Boolean> setter, boolean isNeedRestart) {
+        item.setChecked(!item.isChecked());
+        setter.accept(this, item.isChecked());
+        if (isNeedRestart) {
+            refreshActivity();
+        }
+    }
+
+    private AlertDialog createSimpleDialog(int resTitle, int message, Runnable setMethod) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(resTitle).setMessage(message)
+                .setPositiveButton(android.R.string.yes, (dialog, id) -> setMethod.run())
+                .setNegativeButton(android.R.string.no, (dialog, id) -> dialog.dismiss());
+        return builder.create();
+    }
+
+    private AlertDialog createListDialog(Object currentValue, int resTitle, int resValuesArray,
+                                         int resNamesArray, BiConsumer<Context, String> setMethod) {
+        List<String> valuesList = Arrays.asList(getResources().getStringArray(resValuesArray));
+        int currentIndex = valuesList.indexOf(String.valueOf(currentValue));
+        AtomicInteger selectedIndex = new AtomicInteger(currentIndex);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(resTitle)
+                .setSingleChoiceItems(resNamesArray, currentIndex, (dialog, which) -> selectedIndex.set(which))
+                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                    if (currentIndex != selectedIndex.get()) {
+                        setMethod.accept(this, valuesList.get(selectedIndex.get()));
+                        refreshActivity();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+        return builder.create();
+    }
+
+    private AlertDialog createSeekBarDialog(int currentValue, int resTitle, int resValueLabel,
+                                            int minValue, int stepValue, int maxValue,
+                                            BiConsumer<Context, Integer> setMethod) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        View seekBarView = inflater.inflate(R.layout.dialog_seekbar, findViewById(R.id.dialog_seekbar));
+
+        final int[] selectedValue = {currentValue};
+
+        ((TextView) seekBarView.findViewById(R.id.dialog_seekbar_title)).setText(resTitle);
+        ((TextView) seekBarView.findViewById(R.id.seekbar_value_label)).setText(resValueLabel);
+
+        TextView dialogSeekBarValue = seekBarView.findViewById(R.id.seekbar_value);
+        dialogSeekBarValue.setText(String.valueOf(selectedValue[0]));
+
+        SeekBar.OnSeekBarChangeListener dialogSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBark, int progress, boolean fromUser) {
+                progress = minValue + progress;
+                progress = progress / stepValue;
+                progress = progress * stepValue;
+                dialogSeekBarValue.setText(String.valueOf(progress));
+                selectedValue[0] = progress;
+            }
+        };
+
+        SeekBar dialogSeekBar = seekBarView.findViewById(R.id.seekbar);
+        dialogSeekBar.setMax(maxValue - minValue);
+        dialogSeekBar.incrementProgressBy(stepValue);
+        dialogSeekBar.setProgress(selectedValue[0]);
+        dialogSeekBar.setOnSeekBarChangeListener(dialogSeekBarListener);
+
+        builder.setView(seekBarView)
+                .setPositiveButton(android.R.string.ok, (dialog, id) -> {
+                    if (currentValue != selectedValue[0]) {
+                        setMethod.accept(this, selectedValue[0]);
+                        refreshActivity();
+                    } else {
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, id) -> dialog.dismiss());
+
+        return builder.create();
+    }
+
+    private void getServerInfo(Uri uri) {
+        spinner.setMessage(getString(R.string.getting_server_info));
+
+        if (BuildConfig.DEBUG) {
+            LimeLog.info(getResources().getString(R.string.getting_server_info));
+        }
+
+        new Thread(() -> {
+            try {
+                UserSession session = OneplayApi.getInstance().connectTo(uri);
+                OneplayPreferenceConfiguration.savePreferences(this, session.getConfig());
+                doAddPc(session);
+            } catch (IOException | JSONException e) {
+                LimeLog.severe(e);
+
+                showErrorDialog(getString(R.string.conn_error_title),
+                        getString(R.string.unable_to_connect_error));
+            }
+        }).start();
+    }
+
+    private void doAddPc(UserSession session) {
+        runOnUiThread(() -> spinner.setMessage(getString(R.string.configuring_connection)));
+
+        if (BuildConfig.DEBUG) {
+            LimeLog.info(getResources().getString(R.string.configuring_connection));
+        }
+
+        int portTestResult;
+        ComputerDetails computer = new ComputerDetails();
+        computer.activeAddress = session.getHostAddress();
+
+        try {
+            NvHTTP http = new NvHTTP(computer.activeAddress, idManager.getUniqueId(), computer.serverCert,
+                    PlatformBinding.getCryptoProvider(Game.this));
+
+            computer.update(http.getComputerDetails());
+
+            if (computer.state == ComputerDetails.State.ONLINE) {
+                doPair(http, computer, session);
+            } else {
+                throw new IllegalStateException();
+            }
+        } catch (Exception e) {
+            // IllegalArgumentException can be thrown from OkHttp if the host fails to canonicalize to a valid name.
+            // https://github.com/square/okhttp/blob/okhttp_27/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java#L705
+
+            String message;
+
+            if (e instanceof IllegalStateException) {
+                message = getResources().getString(R.string.pair_pc_offline);
+            } else {
+                // Run the test before dismissing the spinner because it can take a few seconds.
+                portTestResult = MoonBridge.testClientConnectivity(ServerHelper.CONNECTION_TEST_SERVER, 443,
+                        MoonBridge.ML_PORT_FLAG_TCP_47984 | MoonBridge.ML_PORT_FLAG_TCP_47989);
+
+                if (portTestResult != 0) {
+                    message = getResources().getString(R.string.nettest_text_blocked);
+                } else {
+                    message = getResources().getString(R.string.addpc_fail);
+                }
+            }
+
+            LimeLog.severe(message, e);
+
+            showErrorDialog(getString(R.string.conn_error_title), message);
+        }
+    }
+
+    private void doPair(NvHTTP http, ComputerDetails computer, UserSession session) {
+        runOnUiThread(() -> spinner.setMessage(getString(R.string.pairing)));
+
+        if (BuildConfig.DEBUG) {
+            LimeLog.info(getResources().getString(R.string.pairing));
+        }
+
+        String message;
+
+        try {
+            if (computer.runningGameId != 0) {
+                throw new IllegalStateException();
+            }
+
+            PairingManager pm = http.getPairingManager();
+            PairingManager.PairState pairState = pm.pair(http.getServerInfo(), session.getKey());
+            if (pairState == PairingManager.PairState.PIN_WRONG) {
+                message = getResources().getString(R.string.pair_incorrect_pin);
+            } else if (pairState == PairingManager.PairState.ALREADY_IN_PROGRESS) {
+                message = getResources().getString(R.string.pair_already_in_progress);
+            } else if (pairState == PairingManager.PairState.PAIRED) {
+                // Pin this certificate for later HTTPS use
+                computer.pairState = pairState;
+                computer.serverCert = pm.getPairedCert();
+
+                startGame(
+                        http,
+                        computer.activeAddress,
+                        idManager.getUniqueId(),
+                        computer.uuid,
+                        computer.name,
+                        computer.serverCert,
+                        session.getKey()
+                );
+
+                return;
+            } else {
+                message = getResources().getString(R.string.pair_fail);
+            }
+        } catch (Exception e) {
+            if (e instanceof  UnknownHostException) {
+                message = getResources().getString(R.string.error_unknown_host);
+            } else if (e instanceof FileNotFoundException) {
+                message = getResources().getString(R.string.error_404);
+            } else if (e instanceof IllegalStateException) {
+                message = getResources().getString(R.string.pair_pc_ingame);
+            } else {
+                message = getResources().getString(R.string.pair_fail);
+            }
+
+            LimeLog.severe(message, e);
+        }
+
+        showErrorDialog(getString(R.string.conn_error_title), message);
+    }
+
+    private void startGame(NvHTTP http, String host, String uniqueId, String uuid, String pcName,
+                           X509Certificate serverCert, String sessionKey) {
+        try {
+            NvApp currentApp = http.getAppByName("Desktop"); // Always get first app (Desktop)
+
+            Intent intent = ServerHelper.createStartIntent(this, host, currentApp, uniqueId,
+                    uuid, pcName, serverCert, sessionKey);
+            runOnUiThread(() -> ServerHelper.doStart(this, intent));
+        } catch (XmlPullParserException | IOException e) {
+            String message = getString(R.string.applist_refresh_error_msg);
+
+            LimeLog.severe(message, e);
+
+            showErrorDialog(getString(R.string.conn_error_title), message);
+        }
+    }
+
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            if (spinner != null) {
+                spinner.dismiss();
+                spinner = null;
+            }
+
+            Dialog.displayDialog(Game.this, title, message, true);
+        });
     }
 }

@@ -13,8 +13,6 @@ public class ComputerDetails {
     public String name;
     public String localAddress;
     public String remoteAddress;
-    public String manualAddress;
-    public String ipv6Address;
     public String macAddress;
     public X509Certificate serverCert;
 
@@ -49,12 +47,6 @@ public class ComputerDetails {
         if (details.remoteAddress != null) {
             this.remoteAddress = details.remoteAddress;
         }
-        if (details.manualAddress != null) {
-            this.manualAddress = details.manualAddress;
-        }
-        if (details.ipv6Address != null) {
-            this.ipv6Address = details.ipv6Address;
-        }
         if (details.macAddress != null && !details.macAddress.equals("00:00:00:00:00:00")) {
             this.macAddress = details.macAddress;
         }
@@ -75,8 +67,6 @@ public class ComputerDetails {
         str.append("UUID: ").append(uuid).append("\n");
         str.append("Local Address: ").append(localAddress).append("\n");
         str.append("Remote Address: ").append(remoteAddress).append("\n");
-        str.append("IPv6 Address: ").append(ipv6Address).append("\n");
-        str.append("Manual Address: ").append(manualAddress).append("\n");
         str.append("MAC Address: ").append(macAddress).append("\n");
         str.append("Pair State: ").append(pairState).append("\n");
         str.append("Running Game ID: ").append(runningGameId).append("\n");

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/show_basic_settings"
+        android:title="@string/category_basic_settings" />
+
+    <item
+        android:id="@+id/show_on_screen_settings"
+        android:title="@string/category_on_screen_controls_settings" />
+
+    <item
+        android:id="@+id/show_advanced_settings"
+        android:title="@string/category_advanced_settings" />
+</menu>

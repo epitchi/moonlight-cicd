@@ -68,7 +68,7 @@ public class NvHTTP {
     public static int readTimeout = 5000;
 
     // Print URL and content to logcat on debug builds
-    private static final boolean verbose = BuildConfig.DEBUG;
+    private static final boolean verbose = false;
 
     public final int httpsPort;
     public final int httpPort;
@@ -273,7 +273,7 @@ public class NvHTTP {
                 // Special case handling an audio capture error which GFE doesn't
                 // provide any useful status message for.
                 statusCode = 418;
-                statusMsg = "Missing audio capture device. Reinstall GeForce Experience.";
+                statusMsg = "Failed to capture audio from the server, please launch again.";
             }
             throw new GfeHttpResponseException(statusCode, statusMsg);
         }

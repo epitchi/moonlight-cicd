@@ -2,13 +2,13 @@
 <resources>
     <string name="help_loading_title">Lihat bantuan</string>
     <string name="help_loading_msg">Memuat laman bantuan…</string>
-    <string name="nettest_text_blocked">Koneksi jaringan perangkat anda memblokir Oneplay. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.</string>
+    <string name="nettest_text_blocked">Koneksi jaringan perangkat anda memblokir Moonlight. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.</string>
     <string name="pair_pc_offline">Komputer tidak tersedia</string>
     <string name="pair_incorrect_pin">PIN salah</string>
     <string name="pair_fail">Pemasangan gagal</string>
     <string name="pair_already_in_progress">Pemasangan sedang berlangsung</string>
     <string name="title_decoding_error">Dekoder video berhenti bekerja</string>
-    <string name="message_decoding_error">Oneplay telah berhenti bekerja dikarenakan inkompatibilitas dengan dekoder video perangkat ini. Pastikan GeForce Experience sudah diperbarui ke versi terkini pada komputer Anda. Coba ganti pengaturan stream jika masih berlanjut.</string>
+    <string name="message_decoding_error">Moonlight telah berhenti bekerja dikarenakan inkompatibilitas dengan dekoder video perangkat ini. Pastikan GeForce Experience sudah diperbarui ke versi terkini pada komputer Anda. Coba ganti pengaturan stream jika masih berlanjut.</string>
     <string name="title_decoding_reset">Pengaturan video dipulihkan</string>
     <string name="message_decoding_reset">Dekoder video perangkat Anda terus-menerus berhenti pada pengaturan stream yang dipilih. Pengaturan stream Anda telah dipulihkan ke bawaan.</string>
     <string name="error_usb_prohibited">Akses USB dilarang oleh Administrator perangkat Anda. Cek pengaturan Knox atau MDM Anda.</string>
@@ -45,5 +45,4 @@
 \nPastikan tidak ada konten yang dilindungi DRM yang terbuka di komputer host Anda. Coba mulai ulang komputer host.
 \n
 \nJika masalah berkelanjutan, coba install ulang GeForce Experience dan driver video grafis Anda.</string>
-    <string name="help">Bantuan</string>
 </resources>

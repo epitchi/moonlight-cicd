@@ -1,5 +1,13 @@
 package in.oneplay.preferences;
 
+import static in.oneplay.backend.OneplayApi.DEFAULT_PIN_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_AUDIO_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_CONTROL_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTPS_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTP_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_RTSP_PORT;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_VIDEO_PORT;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -19,34 +27,34 @@ public class PreferenceConfiguration {
     private static final String BITRATE_PREF_OLD_STRING = "seekbar_bitrate";
     static final String STRETCH_PREF_STRING = "checkbox_stretch_video";
     static final String SOPS_PREF_STRING = "checkbox_enable_sops";
-    private static final String DISABLE_TOASTS_PREF_STRING = "checkbox_disable_warnings";
+    static final String DISABLE_TOASTS_PREF_STRING = "checkbox_disable_warnings";
     static final String HOST_AUDIO_PREF_STRING = "checkbox_host_audio";
-    private static final String DEADZONE_PREF_STRING = "seekbar_deadzone";
-    private static final String OSC_OPACITY_PREF_STRING = "seekbar_osc_opacity";
-    private static final String LANGUAGE_PREF_STRING = "list_languages";
-    private static final String SMALL_ICONS_PREF_STRING = "checkbox_small_icon_mode";
+    static final String DEADZONE_PREF_STRING = "seekbar_deadzone";
+    static final String OSC_OPACITY_PREF_STRING = "seekbar_osc_opacity";
+    static final String LANGUAGE_PREF_STRING = "list_languages";
+    static final String SMALL_ICONS_PREF_STRING = "checkbox_small_icon_mode";
     static final String MULTI_CONTROLLER_PREF_STRING = "checkbox_multi_controller";
     static final String AUDIO_CONFIG_PREF_STRING = "list_audio_config";
     static final String USB_DRIVER_PREF_SRING = "checkbox_usb_driver";
     static final String VIDEO_FORMAT_PREF_STRING = "video_format";
     static final String ONSCREEN_CONTROLLER_PREF_STRING = "checkbox_show_onscreen_controls";
-    private static final String ONLY_L3_R3_PREF_STRING = "checkbox_only_show_L3R3";
+    static final String ONLY_L3_R3_PREF_STRING = "checkbox_only_show_L3R3";
     static final String LEGACY_DISABLE_FRAME_DROP_PREF_STRING = "checkbox_disable_frame_drop";
     static final String ENABLE_HDR_PREF_STRING = "checkbox_enable_hdr";
     static final String ENABLE_PIP_PREF_STRING = "checkbox_enable_pip";
     static final String ENABLE_PERF_OVERLAY_STRING = "checkbox_enable_perf_overlay";
-    private static final String BIND_ALL_USB_STRING = "checkbox_usb_bind_all";
+    static final String BIND_ALL_USB_STRING = "checkbox_usb_bind_all";
     static final String MOUSE_EMULATION_STRING = "checkbox_mouse_emulation";
     static final String MOUSE_NAV_BUTTONS_STRING = "checkbox_mouse_nav_buttons";
     static final String UNLOCK_FPS_STRING = "checkbox_unlock_fps";
     static final String VIBRATE_OSC_PREF_STRING = "checkbox_vibrate_osc";
-    private static final String VIBRATE_FALLBACK_PREF_STRING = "checkbox_vibrate_fallback";
+    static final String VIBRATE_FALLBACK_PREF_STRING = "checkbox_vibrate_fallback";
     static final String FLIP_FACE_BUTTONS_PREF_STRING = "checkbox_flip_face_buttons";
     static final String TOUCHSCREEN_TRACKPAD_PREF_STRING = "checkbox_touchscreen_trackpad";
     static final String LATENCY_TOAST_PREF_STRING = "checkbox_enable_post_stream_toast";
-    private static final String FRAME_PACING_PREF_STRING = "frame_pacing";
-    private static final String ABSOLUTE_MOUSE_MODE_PREF_STRING = "checkbox_absolute_mouse_mode";
-    private static final String ENABLE_AUDIO_FX_PREF_STRING = "checkbox_enable_audiofx";
+    static final String FRAME_PACING_PREF_STRING = "frame_pacing";
+    static final String ABSOLUTE_MOUSE_MODE_PREF_STRING = "checkbox_absolute_mouse_mode";
+    static final String ENABLE_AUDIO_FX_PREF_STRING = "checkbox_enable_audiofx";
     static final String CUSTOM_HTTP_PORT_STRING = "http_port";
     static final String CUSTOM_HTTPS_PORT_STRING = "https_port";
     static final String CUSTOM_AUDIO_PORT_STRING = "audio_port";
@@ -80,18 +88,11 @@ public class PreferenceConfiguration {
     private static final boolean DEFAULT_VIBRATE_FALLBACK = false;
     private static final boolean DEFAULT_FLIP_FACE_BUTTONS = false;
     private static final boolean DEFAULT_TOUCHSCREEN_TRACKPAD = true;
-    private static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
+    static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "latency";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
     private static final boolean DEFAULT_ENABLE_AUDIO_FX = false;
-    private static final int DEFAULT_HTTP_PORT = 47989;
-    private static final int DEFAULT_HTTPS_PORT = 47984;
-    private static final int DEFAULT_AUDIO_PORT = 48000;
-    private static final int DEFAULT_VIDEO_PORT = 47998;
-    private static final int DEFAULT_CONTROL_PORT = 47999;
-    private static final int DEFAULT_RTSP_PORT = 48010;
-    private static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
 
     public static final int FORCE_H265_ON = -1;
     public static final int AUTOSELECT_H265 = 0;

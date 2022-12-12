@@ -2,6 +2,8 @@ package in.oneplay.binding.input;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.hardware.input.InputManager;
 import android.hardware.usb.UsbDevice;
@@ -20,7 +22,12 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
 import in.oneplay.LimeLog;
+import in.oneplay.R;
 import in.oneplay.binding.input.driver.AbstractController;
 import in.oneplay.binding.input.driver.UsbDriverListener;
 import in.oneplay.binding.input.driver.UsbDriverService;
@@ -34,10 +41,14 @@ import in.oneplay.utils.Vector2d;
 import org.cgutman.shieldcontrollerextensions.SceManager;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class ControllerHandler implements InputManager.InputDeviceListener, UsbDriverListener {
+
+    private static final CharSequence CHANNEL_NAME = "OnePlay channel";
+    private static final String CHANNEL_ID = "in.oneplay.notifications.controller";
 
     private static final int MAXIMUM_BUMPER_UP_DELAY_MS = 100;
 
@@ -128,6 +139,10 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
         // currentControllers set which will allow them to properly unplug
         // if they are removed.
         initialControllers = getAttachedControllerMask(activityContext);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+        }
     }
 
     private static InputDevice.MotionRange getMotionRangeForJoystickAxis(InputDevice dev, int axis) {
@@ -145,7 +160,56 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
 
     @Override
     public void onInputDeviceAdded(int deviceId) {
-        // Nothing happening here yet
+        showNotification(activityContext, deviceId);
+    }
+
+    private static void showNotification(Context context, int deviceId) {
+        showNotification(context, deviceId, false);
+    }
+
+    private static void showNotification(Context context, int deviceId, boolean isUsbDevice) {
+        String deviceName;
+
+        if (isUsbDevice) {
+            deviceName = "USB device";
+        } else {
+            InputManager im = (InputManager) context.getSystemService(Context.INPUT_SERVICE);
+            InputDevice device = im.getInputDevice(deviceId);
+            deviceName = device.getName();
+        }
+
+        String text = context.getString(R.string.notification_text_controller_connected, deviceName);
+
+        NotificationCompat.Builder builder = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                ? new NotificationCompat.Builder(context, CHANNEL_ID)
+                : new NotificationCompat.Builder(context);
+
+        builder.setSmallIcon(R.drawable.ic_gamepad)
+                .setContentTitle(context.getString(R.string.notification_title_controller_connected))
+                .setContentText(text)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
+                .setOngoing(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify(deviceId, builder.build());
+
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+    }
+
+    private static void hideNotification(Context context, int deviceId, String name) {
+        NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+        notificationManager.cancel(deviceId);
+
+        String text = context.getString(R.string.notification_text_controller_disconnected, name);
+
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void createNotificationChannel() {
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW);
+        NotificationManager notificationManager = activityContext.getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
     }
 
     @Override
@@ -156,6 +220,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
             releaseControllerNumber(context);
             context.destroy();
             inputDeviceContexts.remove(deviceId);
+
+            hideNotification(activityContext, deviceId, context.name);
         }
     }
 
@@ -194,11 +260,13 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
     public void stop() {
         for (int i = 0; i < inputDeviceContexts.size(); i++) {
             InputDeviceContext deviceContext = inputDeviceContexts.valueAt(i);
+            hideNotification(activityContext, deviceContext.id, deviceContext.name);
             deviceContext.destroy();
         }
 
         for (int i = 0; i < usbDeviceContexts.size(); i++) {
             UsbDeviceContext deviceContext = usbDeviceContexts.valueAt(i);
+            hideNotification(activityContext, deviceContext.id, "USB device");
             deviceContext.destroy();
         }
 
@@ -267,6 +335,7 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
             if (hasJoystickAxes(dev)) {
                 LimeLog.info("Counting InputDevice: "+dev.getName());
                 mask |= 1 << count++;
+                showNotification(context, dev.getId());
             }
         }
 
@@ -280,6 +349,7 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
                         !UsbDriverService.isRecognizedInputDevice(dev)) {
                     LimeLog.info("Counting UsbDevice: "+dev.getDeviceName());
                     mask |= 1 << count++;
+                    showNotification(context, dev.getDeviceId());
                 }
             }
         }
@@ -1869,6 +1939,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
             releaseControllerNumber(context);
             context.destroy();
             usbDeviceContexts.remove(controller.getControllerId());
+
+            hideNotification(activityContext, controller.getControllerId(), "USB device");
         }
     }
 
@@ -1876,6 +1948,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
     public void deviceAdded(AbstractController controller) {
         UsbDeviceContext context = createUsbDeviceContextForDevice(controller);
         usbDeviceContexts.put(controller.getControllerId(), context);
+        
+        showNotification(activityContext, controller.getControllerId(), true);
     }
 
     static class GenericControllerContext {

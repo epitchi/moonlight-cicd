@@ -5,20 +5,16 @@
 package in.oneplay.binding.input.virtual_controller;
 
 import android.content.Context;
-import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.Toast;
-
-import in.oneplay.LimeLog;
-import in.oneplay.R;
-import in.oneplay.binding.input.ControllerHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import in.oneplay.LimeLog;
+import in.oneplay.binding.input.ControllerHandler;
 
 public class VirtualController {
     public static class ControllerInputContext {
@@ -49,46 +45,12 @@ public class VirtualController {
     ControllerMode currentMode = ControllerMode.Active;
     ControllerInputContext inputContext = new ControllerInputContext();
 
-    private Button buttonConfigure = null;
-
     private List<VirtualControllerElement> elements = new ArrayList<>();
 
     public VirtualController(final ControllerHandler controllerHandler, FrameLayout layout, final Context context) {
         this.controllerHandler = controllerHandler;
         this.frame_layout = layout;
         this.context = context;
-
-        buttonConfigure = new Button(context);
-        buttonConfigure.setAlpha(0.25f);
-        buttonConfigure.setFocusable(false);
-        buttonConfigure.setBackgroundResource(R.drawable.ic_settings);
-        buttonConfigure.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message;
-
-                if (currentMode == ControllerMode.Active){
-                    currentMode = ControllerMode.MoveButtons;
-                    message = "Entering configuration mode (Move buttons)";
-                } else if (currentMode == ControllerMode.MoveButtons) {
-                    currentMode = ControllerMode.ResizeButtons;
-                    message = "Entering configuration mode (Resize buttons)";
-                } else {
-                    currentMode = ControllerMode.Active;
-                    VirtualControllerConfigurationLoader.saveProfile(VirtualController.this, context);
-                    message = "Exiting configuration mode";
-                }
-
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-
-                buttonConfigure.invalidate();
-
-                for (VirtualControllerElement element : elements) {
-                    element.invalidate();
-                }
-            }
-        });
-
     }
 
     public void hide() {
@@ -97,16 +59,12 @@ public class VirtualController {
         for (VirtualControllerElement element : elements) {
             element.setVisibility(View.INVISIBLE);
         }
-
-        buttonConfigure.setVisibility(View.INVISIBLE);
     }
 
     public void show() {
         for (VirtualControllerElement element : elements) {
             element.setVisibility(View.VISIBLE);
         }
-
-        buttonConfigure.setVisibility(View.VISIBLE);
 
         // HACK: GFE sometimes discards gamepad packets when they are received
         // very shortly after another. This can be critical if an axis zeroing packet
@@ -126,8 +84,6 @@ public class VirtualController {
             frame_layout.removeView(element);
         }
         elements.clear();
-
-        frame_layout.removeView(buttonConfigure);
     }
 
     public void setOpacity(int opacity) {
@@ -158,19 +114,26 @@ public class VirtualController {
     public void refreshLayout() {
         removeElements();
 
-        DisplayMetrics screen = context.getResources().getDisplayMetrics();
-
-        int buttonSize = (int)(screen.heightPixels*0.06f);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(buttonSize, buttonSize);
-        params.leftMargin = 15;
-        params.topMargin = 15;
-        frame_layout.addView(buttonConfigure, params);
-
         // Start with the default layout
         VirtualControllerConfigurationLoader.createDefaultLayout(this, context);
 
         // Apply user preferences onto the default layout
         VirtualControllerConfigurationLoader.loadFromPreferences(this, context);
+    }
+
+    public void setControllerMode(ControllerMode controllerMode) {
+        if (this.currentMode != controllerMode) {
+            this.currentMode = controllerMode;
+
+            for (VirtualControllerElement element : elements) {
+                element.invalidate();
+            }
+        };
+    }
+
+    public void saveProfile() {
+        VirtualControllerConfigurationLoader.saveProfile(VirtualController.this, context);
+        setControllerMode(ControllerMode.Active);
     }
 
     public ControllerMode getControllerMode() {

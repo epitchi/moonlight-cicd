@@ -1,6 +1,7 @@
 package in.oneplay.backend;
 
-import android.content.Context;
+import static in.oneplay.nvstream.jni.MoonBridge.DEFAULT_HTTP_PORT;
+
 import android.net.Uri;
 import android.os.Build;
 
@@ -14,6 +15,8 @@ import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -25,12 +28,10 @@ import javax.net.ssl.X509TrustManager;
 
 import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
-import in.oneplay.OneplayApp;
-import in.oneplay.nvstream.http.GfeHttpResponseException;
-import in.oneplay.preferences.PreferenceConfiguration;
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -38,13 +39,15 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class OneplayApi {
+    public static final int DEFAULT_PIN_PORT = DEFAULT_HTTP_PORT + 1;
+
     public static int connectionTimeout = 3000;
     public static int readTimeout = 5000;
 
     private static volatile OneplayApi instance;
 
     // Print URL and content to logcat on debug builds
-    private static final boolean verbose = BuildConfig.DEBUG;
+    private static final boolean verbose = false;
 
     private static final String userAgent = BuildConfig.USER_AGENT;
     private static final HttpUrl baseStartVmUrl = new HttpUrl.Builder()
@@ -67,6 +70,11 @@ public class OneplayApi {
             .host(BuildConfig.API_DOMAIN)
             .encodedPath(BuildConfig.API_EVENTS_ENDPOINT)
             .build();
+    private static final HttpUrl baseStatsUrl = new HttpUrl.Builder()
+            .scheme(BuildConfig.CONNECTION_SCHEME)
+            .host(BuildConfig.API_DOMAIN)
+            .encodedPath(BuildConfig.API_STATS_ENDPOINT)
+            .build();
 
     private final OkHttpClient httpClient;
 
@@ -88,12 +96,6 @@ public class OneplayApi {
     }
 
     private OneplayApi() {
-        Context context = OneplayApp.getAppContext();
-        if (context != null) {
-            PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(context);
-            this.pinPort = prefConfig.pinPort;
-        }
-
         this.httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
@@ -102,12 +104,14 @@ public class OneplayApi {
     }
 
     public UserSession connectTo(Uri uri) throws IOException, JSONException {
-        HttpUrl serverInfoUrl = baseServerInfoUrl.newBuilder()
-                .addEncodedPathSegment(uri.getQueryParameter("payload"))
-                .build();
-        String serverInfo = openHttpConnectionPostToString(serverInfoUrl);
+        HttpUrl serverInfoUrl = baseServerInfoUrl.newBuilder().build();
+
+        String serverInfo = openHttpConnectionPostFormToString(serverInfoUrl,
+                new HashMap<>() {{put("stream_session_token", uri.getQueryParameter("payload"));}});
 
         this.session = UserSession.formJsonString(serverInfo);
+        Integer pinPort = this.session.getConfig().getPortDetails().getPinPort();
+        this.pinPort = (pinPort != null) ? pinPort : DEFAULT_PIN_PORT;
 
         if (!unpairAll()) {
             throw new IOException("Unable to unpair clients.");
@@ -129,7 +133,7 @@ public class OneplayApi {
                 .build();
 
         String body = new JSONObject().put("pin", key).toString();
-        String response = openHttpConnectionPostToString(pinRequestUrl, body);
+        String response = openHttpConnectionPostJsonToString(pinRequestUrl, body);
 
         return (new JSONObject(response).getBoolean("status"));
     }
@@ -138,7 +142,7 @@ public class OneplayApi {
         HttpUrl startVmUrl = baseStartVmUrl.newBuilder()
                 .addEncodedQueryParameter("vm_ip", serverAddress)
                 .build();
-        String response = openHttpConnectionPostToString(startVmUrl);
+        String response = openHttpConnectionPostJsonToString(startVmUrl);
 
         String sessionSignature = "";
         JSONObject responseData = new JSONObject(response).getJSONObject("data");
@@ -152,7 +156,7 @@ public class OneplayApi {
                 .addEncodedQueryParameter("session_id", sessionKey)
                 .addEncodedQueryParameter("source", "android_app_" + BuildConfig.SHORT_VERSION_NAME)
                 .build();
-        openHttpConnectionPostToString(stopVmUrl);
+        openHttpConnectionPostJsonToString(stopVmUrl);
 
         return true;
     }
@@ -169,31 +173,57 @@ public class OneplayApi {
                 .addEncodedPathSegments("api/clients/unpair")
                 .build();
 
-        String response = openHttpConnectionPostToString(unpairAllUrl);
+        String response = openHttpConnectionPostJsonToString(unpairAllUrl);
 
         return new JSONObject(response).getBoolean("status");
     }
 
-    public void registerEvent(String text) throws IOException, JSONException {
+    public void registerEvent(String text) throws IOException {
+        String body = "";
+
+        try {
+            body = prepareClientInfoJson()
+                .put("error", text)
+                .toString();
+        } catch (JSONException ignored) {}
+
+        openHttpConnectionPostJsonToString(baseEventsUrl, body);
+    }
+
+    public void sendStats(JSONObject stats) throws IOException {
+        String body = "";
+
+        try {
+            body = prepareClientInfoJson()
+                    .put("stats", stats)
+                    .toString();
+        } catch (JSONException ignored) {}
+
+        openHttpConnectionPostJsonToString(baseStatsUrl, body);
+    }
+
+    private JSONObject prepareClientInfoJson() {
         String userId = session != null && session.getUserId() != null ? session.getUserId() : "";
         String sessionKey = session != null && session.getKey() != null ? session.getKey() : "";
         String gameId = session != null && session.getGameId() != null ? session.getGameId() : "";
         String hostAddress = session != null && session.getHostAddress() != null ? session.getHostAddress() : "";
 
-        String body = new JSONObject()
-                .put("user_id", userId)
-                .put("error", text)
-                .put("token", sessionKey)
-                .put("device", ("android " +
-                        Build.VERSION.RELEASE + " " +
-                        Build.MANUFACTURER + " " +
-                        Build.MODEL).replace(' ', '_'))
-                .put("version", BuildConfig.SHORT_VERSION_NAME)
-                .put("game_id", gameId)
-                .put("vm_ip", hostAddress)
-                .toString();
+        JSONObject json = new JSONObject();
 
-        openHttpConnectionPostToString(baseEventsUrl, body);
+        try {
+            json
+                    .put("user_id", userId)
+                    .put("token", sessionKey)
+                    .put("device", ("android " +
+                            Build.VERSION.RELEASE + " " +
+                            Build.MANUFACTURER + " " +
+                            Build.MODEL).replace(' ', '_'))
+                    .put("version", BuildConfig.SHORT_VERSION_NAME)
+                    .put("game_id", gameId)
+                    .put("vm_ip", hostAddress);
+        } catch (JSONException ignored) {}
+
+        return json;
     }
 
     // This hack is Android-specific but we do it on all platforms
@@ -237,7 +267,17 @@ public class OneplayApi {
         }
     }
 
-    private ResponseBody openHttpConnectionPost(HttpUrl baseUrl, String requestBodyString) throws IOException {
+    private ResponseBody openHttpConnectionPostForm(HttpUrl baseUrl, RequestBody formBody) throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl)
+                .header("User-Agent", userAgent)
+                .post(formBody)
+                .build();
+
+        return openHttpConnection(baseUrl, request);
+    }
+
+    private ResponseBody openHttpConnectionPostJson(HttpUrl baseUrl, String requestBodyString) throws IOException {
         Request request = new Request.Builder()
                 .url(baseUrl)
                 .header("User-Agent", userAgent)
@@ -245,6 +285,11 @@ public class OneplayApi {
                         requestBodyString,
                         MediaType.get("application/json; charset=utf-8")))
                 .build();
+
+        return openHttpConnection(baseUrl, request);
+    }
+
+    private ResponseBody openHttpConnection(HttpUrl baseUrl, Request request) throws IOException {
         Response response = performAndroidTlsHackOnePlay(httpClient).newCall(request).execute();
 
         ResponseBody body = response.body();
@@ -262,21 +307,52 @@ public class OneplayApi {
             throw new FileNotFoundException(baseUrl.toString());
         }
         else {
-            throw new GfeHttpResponseException(response.code(), response.message());
+            throw new IOException("Server returned error: "+response.message()+" (Error code: "+response.code()+")");
         }
     }
 
-    private String openHttpConnectionPostToString(HttpUrl baseUrl) throws IOException {
-        return openHttpConnectionPostToString(baseUrl, "");
+    private String openHttpConnectionPostJsonToString(HttpUrl baseUrl) throws IOException {
+        return openHttpConnectionPostJsonToString(baseUrl, "");
     }
 
-    private String openHttpConnectionPostToString(HttpUrl baseUrl, String requestBodyString) throws IOException {
+    private String openHttpConnectionPostJsonToString(HttpUrl baseUrl, String requestBodyString) throws IOException {
         try {
             if (verbose) {
                 LimeLog.info("Requesting URL: "+baseUrl+"\nBody: "+requestBodyString);
             }
 
-            ResponseBody resp = openHttpConnectionPost(baseUrl, requestBodyString);
+            ResponseBody resp = openHttpConnectionPostJson(baseUrl, requestBodyString);
+            String respString = resp.string();
+            resp.close();
+
+            if (verbose) {
+                LimeLog.info(baseUrl+" -> "+respString);
+            }
+
+            return respString;
+        } catch (IOException e) {
+            LimeLog.severe(e);
+
+            throw e;
+        }
+    }
+
+    private String openHttpConnectionPostFormToString(HttpUrl baseUrl, Map<String, String> data) throws IOException {
+        try {
+            MultipartBody.Builder bodyBuilder = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM);
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+                bodyBuilder.addFormDataPart(entry.getKey(), entry.getValue());
+            }
+
+
+            RequestBody formBody = bodyBuilder.build();
+
+            if (verbose) {
+                LimeLog.info("Requesting URL: "+baseUrl+"\nData: "+data);
+            }
+
+            ResponseBody resp = openHttpConnectionPostForm(baseUrl, formBody);
             String respString = resp.string();
             resp.close();
 
