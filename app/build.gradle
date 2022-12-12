@@ -4,7 +4,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 ext {
     buildNumber = (Long) (System.currentTimeMillis() / 1000L)
-    defaultVersionName = '1.1.1'
+    defaultVersionName = '1.1.2'
 }
 
 android {
@@ -16,7 +16,7 @@ android {
         minSdk 23
         targetSdk 33
 
-        versionCode 111
+        versionCode 112
         versionName "$defaultVersionName build: $buildNumber"
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
