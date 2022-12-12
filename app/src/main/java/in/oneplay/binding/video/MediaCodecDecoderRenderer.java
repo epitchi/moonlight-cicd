@@ -1,5 +1,6 @@
 package in.oneplay.binding.video;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Locale;
@@ -8,9 +9,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import in.oneplay.BuildConfig;
 import in.oneplay.LimeLog;
 import in.oneplay.R;
+import in.oneplay.backend.OneplayApi;
 import in.oneplay.nvstream.av.video.VideoDecoderRenderer;
 import in.oneplay.nvstream.jni.MoonBridge;
 import in.oneplay.preferences.PreferenceConfiguration;
@@ -83,6 +88,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
     private VideoStats lastWindowVideoStats;
     private VideoStats globalVideoStats;
 
+    private long sendStatsTimestamp;
     private long lastTimestampUs;
     private int lastFrameNumber;
     private int refreshRate;
@@ -856,6 +862,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         if (lastFrameNumber == 0) {
             activeWindowVideoStats.measurementStartTimestamp = SystemClock.uptimeMillis();
+            sendStatsTimestamp = SystemClock.uptimeMillis();
         } else if (frameNumber != lastFrameNumber && frameNumber != lastFrameNumber + 1) {
             // We can receive the same "frame" multiple times if it's an IDR frame.
             // In that case, each frame start NALU is submitted independently.
@@ -866,25 +873,30 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         lastFrameNumber = frameNumber;
 
+        final boolean isNeedShowStats = prefs.enablePerfOverlay && SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000;
+        final boolean isNeedSendStats = SystemClock.uptimeMillis() >= sendStatsTimestamp + 1000 * 60 * 10;
+
         // Flip stats windows roughly every second
-        if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000) {
+        if (isNeedShowStats || isNeedSendStats) {
+
+            VideoStats lastTwo = new VideoStats();
+            lastTwo.add(lastWindowVideoStats);
+            lastTwo.add(activeWindowVideoStats);
+            VideoStatsFps fps = lastTwo.getFps();
+            String decoder;
+
+            if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H264) != 0) {
+                decoder = avcDecoder.getName();
+            } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H265) != 0) {
+                decoder = hevcDecoder.getName();
+            } else {
+                decoder = "(unknown)";
+            }
+
+            float decodeTimeMs = (float)lastTwo.decoderTimeMs / lastTwo.totalFramesReceived;
+            long rttInfo = MoonBridge.getEstimatedRttInfo();
+
             if (prefs.enablePerfOverlay) {
-                VideoStats lastTwo = new VideoStats();
-                lastTwo.add(lastWindowVideoStats);
-                lastTwo.add(activeWindowVideoStats);
-                VideoStatsFps fps = lastTwo.getFps();
-                String decoder;
-
-                if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H264) != 0) {
-                    decoder = avcDecoder.getName();
-                } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H265) != 0) {
-                    decoder = hevcDecoder.getName();
-                } else {
-                    decoder = "(unknown)";
-                }
-
-                float decodeTimeMs = (float)lastTwo.decoderTimeMs / lastTwo.totalFramesReceived;
-                long rttInfo = MoonBridge.getEstimatedRttInfo();
                 StringBuilder sb = new StringBuilder();
                 sb.append(context.getString(R.string.perf_overlay_streamdetails, initialWidth + "x" + initialHeight, fps.totalFps)).append('\n');
                 sb.append(context.getString(R.string.perf_overlay_decoder, decoder)).append('\n');
@@ -896,6 +908,33 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                         (int)(rttInfo >> 32), (int)rttInfo)).append('\n');
                 sb.append(context.getString(R.string.perf_overlay_dectime, decodeTimeMs));
                 perfListener.onPerfUpdate(sb.toString());
+            }
+
+            if (isNeedSendStats) {
+                new Thread(() -> {
+                    JSONObject stats = new JSONObject();
+
+                    try {
+                        stats
+                                .put("resolution", initialWidth + "x" + initialHeight)
+                                .put("total_fps", fps.totalFps)
+                                .put("decoder", decoder)
+                                .put("received_fps", fps.receivedFps)
+                                .put("rendered_fps", fps.renderedFps)
+                                .put("net_drops", (float)lastTwo.framesLost / lastTwo.totalFrames * 100)
+                                .put("net_latency", (int)(rttInfo >> 32))
+                                .put("variance", (int)rttInfo)
+                                .put("decode_time", decodeTimeMs);
+                    } catch (JSONException ignored) {}
+
+                    try {
+                        OneplayApi.getInstance().sendStats(stats);
+                    } catch (IOException e) {
+                        LimeLog.severe(e);
+                    }
+                }).start();
+
+                sendStatsTimestamp = SystemClock.uptimeMillis();
             }
 
             globalVideoStats.add(activeWindowVideoStats);
