@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: apk-debug
-          path: ./app/build/outputs/apk/root/debug
+          path: ./app/build/outputs/apk
       
   release-project: 
     name: Release Project
@@ -58,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.run_number }}
-          release_name: Release ${{ github.run_number }}
+          tag_name: v$(${{github.workspace}}/gradlew -q printVersionName)-beta
+          release_name: OnePlay Cloud Gaming - Client v$(${{github.workspace}}/gradlew -q printVersionName)-beta
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         env: 
@@ -67,5 +67,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_new_release.outputs.upload_url }}
           asset_path: apk-debug.zip
-          asset_name: oneplayapp-v${{ github.run_number }}-root-debug.zip
+          asset_name: in.oneplay.app-v$(${{github.workspace}}/gradlew -q printVersionName)-$(date +%s%N).zip
           asset_content_type: application/zip
