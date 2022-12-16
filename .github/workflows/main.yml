@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-img:
+  build-apk:
+    name: Build APK
     runs-on: ubuntu-latest
-    
     steps:
       - name: Install NDK
         uses: nttld/setup-ndk@v1
@@ -34,44 +34,39 @@ jobs:
           configuration-cache-enabled: true
       
       - name: Upload debug apk
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: apk-debug
           path: ./
-      - name: Create Release
-        id: create_release
+      
+  release-project: 
+    name: Release Project
+    runs-on: ubuntu-latest
+    needs: build-apk
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: apk-debug
+      - name: Archive site content
+        uses: thedoctor0/zip-release@master
+        with:
+          filename: site.zip
+      - name: Create Github Release
+        id: create_new_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_new_release.outputs.upload_url }}
+          asset_path: ./site.zip
+          asset_name: apk-v${{ github.run_number }}.zip
+          asset_content_type: application/zip
 
