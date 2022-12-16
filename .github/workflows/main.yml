@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: apk-debug
-          path: ./
+          path: ./app/build/outputs/apk/root/debug
       
   release-project: 
     name: Release Project
