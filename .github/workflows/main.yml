@@ -12,6 +12,7 @@ jobs:
         uses: nttld/setup-ndk@v1
         with: 
           ndk-version: r23c
+          local-cache: true
       
       - name: Checkout repository
         uses: actions/checkout@v2
