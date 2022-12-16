@@ -1,0 +1,29 @@
+name: CLIENT_PRODUCTION
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-img:
+    runs-on: ubuntu-latest
+    
+    steps:      
+    - name: Setup Android NDK
+      # You may pin to the exact commit or the version.
+      # uses: nttld/setup-ndk@8c3b609ff4d54576ea420551943fd34b4d03b0dc
+      uses: nttld/setup-ndk@v1.2.0
+      with:
+        # Exact version to use
+        ndk-version: 23.2.8568313
+        # Add installation directory to the PATH
+        add-to-path: true
+        # Use the local job cache on top of the runner tool cache
+        local-cache: true
+        
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Build
+      run: |
+        ./gradlew.bat build
+      
