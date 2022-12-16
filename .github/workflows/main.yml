@@ -14,7 +14,7 @@ jobs:
       uses: nttld/setup-ndk@v1.2.0
       with:
         # Exact version to use
-        ndk-version: 23.2.8568313
+        ndk-version: r23c
         # Add installation directory to the PATH
         add-to-path: true
         # Use the local job cache on top of the runner tool cache
