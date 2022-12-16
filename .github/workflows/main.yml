@@ -9,15 +9,18 @@ jobs:
     
     steps:
       - name: Install NDK
-        uses: | 
-          actions/checkout@v2
-          nttld/setup-ndk@v1
-            with:
-              ndk-version: r23c
+        uses: nttld/setup-ndk@v1
+        with: 
+          ndk-version: r23c
+      
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
       - name: Build NDK
         run: |
           git submodule update --init --recursive
           ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./app/src/main/jni/Android.mk NDK_APPLICATION_MK=./app/src/main/jni/Application.mk
+      
       - name: Build APK
         run: |
           chmod +x gradlew
