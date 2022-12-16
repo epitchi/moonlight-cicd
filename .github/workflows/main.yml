@@ -12,5 +12,7 @@ jobs:
       - uses: nttld/setup-ndk@v1
         with:
           ndk-version: r23c
-      - run: ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./app/src/main/jni/Android.mk NDK_APPLICATION_MK=./app/src/main/jni/Application.mk
-      
+      - name: Build sdk
+        run: |
+          git submodule update --init --recursive
+          ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./app/src/main/jni/Android.mk NDK_APPLICATION_MK=./app/src/main/jni/Application.mk
