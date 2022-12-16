@@ -22,6 +22,11 @@ jobs:
         
     - name: Checkout repository
       uses: actions/checkout@v2
+      
+    - name: setup environment android sdk
+      run: |
+        export ANDROID_HOME=/opt/android-sdk-linux
+        export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
     
     - name: Build
       run: |
