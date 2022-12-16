@@ -51,7 +51,7 @@ jobs:
       - name: Archive site content
         uses: thedoctor0/zip-release@master
         with:
-          filename: site.zip
+          filename: site.apk
       - name: Create Github Release
         id: create_new_release
         uses: actions/create-release@v1
@@ -66,7 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_new_release.outputs.upload_url }}
-          asset_path: ./site.zip
-          asset_name: apk-v${{ github.run_number }}.zip
-          asset_content_type: application/zip
+          asset_path: ./site.apk
+          asset_name: apk-v${{ github.run_number }}.apk
+          asset_content_type: application/apk
 
