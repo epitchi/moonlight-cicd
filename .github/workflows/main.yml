@@ -25,4 +25,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
+          artifacts:
+            paths:
+            - app/build/outputs/
           
