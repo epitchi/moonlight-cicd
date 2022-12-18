@@ -41,7 +41,7 @@ jobs:
       - name: Upload debug apk
         uses: actions/upload-artifact@v3
         with:
-          name: in.oneplay.app-v${{ steps.version.outputs.version }}
+          name: apk-debug
           path: ./app/build/outputs/apk
           
 
@@ -50,11 +50,11 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: in.oneplay.app-v${{ steps.version.outputs.version }}
+          name: apk-debug
       - name: Archive site content
         uses: thedoctor0/zip-release@master
         with:
-          filename: in.oneplay.app-v${{ steps.version.outputs.version }}
+          filename: apk-debug
       - name: Create Github Release
         id: create_new_release
         uses: actions/create-release@v1
@@ -70,6 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_new_release.outputs.upload_url }}
-          asset_path: ./in.oneplay.app-v${{ steps.version.outputs.version }}.zip
+          asset_path: apk-debug.zip
           asset_name: in.oneplay.app-v${{ steps.version.outputs.version }}.zip
           asset_content_type: application/zip
