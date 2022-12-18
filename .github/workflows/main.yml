@@ -45,6 +45,10 @@ jobs:
     outputs:
       version: ${{ steps.step_version.outputs.version }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
       - id: step_version
         run: echo "::set-output name=version=$(./gradlew -q printVersionName)" 
       
