@@ -174,7 +174,7 @@ android {
 
     task printVersionName {
         doLast {
-            println android.defaultConfig.versionName.replace(" ", "_")
+            println android.defaultConfig.versionName.replace(" ", "_").replace(":", "")
         }
     }
     
