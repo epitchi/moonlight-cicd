@@ -69,5 +69,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_new_release.outputs.upload_url }}
           asset_path: apk-debug.zip
-          asset_name: in.oneplay.app-v${{ steps.versioncode.outputs.versioncode }}.zip
+          asset_name: in.oneplay.app-v${{ steps.versioncode.outputs.version }}.zip
           asset_content_type: application/zip
