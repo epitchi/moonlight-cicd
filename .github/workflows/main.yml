@@ -38,15 +38,21 @@ jobs:
         with:
           name: apk-debug
           path: ./app/build/outputs/apk
+          
+  get-android-build-version:
+    name: Get android version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.step_version.outputs.version }}
+    steps:
+      - id: step_version
+        run: echo "::set-output name=version=$(./gradlew -q printVersionName)" 
       
   release-project: 
     name: Release Project
     runs-on: ubuntu-latest
     needs: build-apk
     steps:
-      - name: get version android build
-        id: versionAndroid
-        run: echo "::set-output versionAndroid=$(./gradlew -q printVersionName)"  
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
@@ -61,8 +67,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.versionAndroid.outputs.versionAndroid }}
-          release_name: ${{ steps.versionAndroid.outputs.versionAndroid }}
+          tag_name:  ${{ needs.get-android-build-version.outputs.version }}
+          release_name: ${{ needs.get-android-build-version.outputs.version }}
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         env: 
