@@ -177,6 +177,12 @@ android {
             println android.defaultConfig.versionName.replace(" ", "_")
         }
     }
+    
+    task printVersionCode {
+        doLast {
+            println defaultVersionName
+        }
+    }
 }
 
 dependencies {
