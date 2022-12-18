@@ -58,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version.outputs.version }} 
-          release_name: ${{ steps.version.outputs.version }} 
+          tag_name: ${{ github.run_number }}
+          release_name: OnePlay Cloud Gaming - Client v${{ steps.version.outputs.version }}-beta
           
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
