@@ -32,27 +32,29 @@ jobs:
           distributions-cache-enabled: true
           dependencies-cache-enabled: true
           configuration-cache-enabled: true
-      
-      - name: Upload debug apk
-        uses: actions/upload-artifact@v3
-        with:
-          name: apk-debug-file
-          path: ./app/build/outputs/apk
           
       - id: version
         run: echo "::set-output name=version::$(./gradlew -q printVersionName)" 
       - id: versioncode
         run: echo "::set-output name=versioncode::$(./gradlew -q printVersionCode)" 
+        
+      - name: Upload debug apk
+        uses: actions/upload-artifact@v3
+        with:
+          name: in.oneplay.app-v${{ steps.version.outputs.version }}
+          path: ./app/build/outputs/apk
+          
+
 
     
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: apk-debug-file
+          name: in.oneplay.app-v${{ steps.version.outputs.version }}
       - name: Archive site content
         uses: thedoctor0/zip-release@master
         with:
-          filename: apk-debug-file
+          filename: in.oneplay.app-v${{ steps.version.outputs.version }}
       - name: Create Github Release
         id: create_new_release
         uses: actions/create-release@v1
@@ -67,7 +69,7 @@ jobs:
         env: 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_new_release.outputs.upload_url }}
-          asset_path: ./apk-debug-file.zip
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./in.oneplay.app-v${{ steps.version.outputs.version }}.zip
           asset_name: in.oneplay.app-v${{ steps.version.outputs.version }}.zip
           asset_content_type: application/zip
